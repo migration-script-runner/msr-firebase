@@ -22,7 +22,8 @@
     "test:coverage:coveralls": "nyc report --reporter=text-lcov | coveralls",
     "test:report": "rimraf ./reports && npm run lint:report && npm run test:coverage",
     "lint": "eslint ./src/",
-    "lint:report": "eslint ./src/ --format junit --output-file ./reports/eslint.xml"
+    "lint:report": "eslint ./src/ --format junit --output-file ./reports/eslint.xml",
+    "prepare": "husky"
   },
   "keywords": [
     "firebase",
