@@ -1,4 +1,4 @@
-import { IDatabaseMigrationHandler, IBackupService, ISchemaVersionService } from '@migration-script-runner/core';
+import { IDatabaseMigrationHandler, IBackupService, ISchemaVersion } from '@migration-script-runner/core';
 import { version } from '../../package.json';
 
 import {
@@ -20,7 +20,7 @@ import { IFirebaseDB } from '../interface';
 export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
     db: IFirebaseDB;
     backup: IBackupService;
-    schemaVersion: ISchemaVersionService<IFirebaseDB>;
+    schemaVersion: ISchemaVersion<IFirebaseDB>;
 
     private constructor(
         public cfg: AppConfig,
