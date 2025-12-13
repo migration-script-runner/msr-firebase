@@ -1,6 +1,6 @@
-import {IEntity} from "../interface";
-import {MigrationScript} from "migration-script-runner";
+import { IEntity, IFirebaseDB } from '../interface';
+import { MigrationScript } from '@migration-script-runner/core';
 
-export class MigrationInfo extends MigrationScript implements IEntity{
+export class MigrationInfo extends MigrationScript<IFirebaseDB> implements IEntity {
     key: string | undefined;
 }

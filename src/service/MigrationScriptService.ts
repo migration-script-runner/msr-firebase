@@ -41,7 +41,8 @@ export class MigrationScriptService implements IMigrationScript<IFirebaseDB> {
      * @param details - Migration execution details
      */
     async save(details: IMigrationInfo): Promise<void> {
-        const migrationInfo = Object.assign(new MigrationInfo(), details);
+        const migrationInfo = new MigrationInfo(details.name, '', details.timestamp);
+        Object.assign(migrationInfo, details);
         await this.entityService.save(migrationInfo);
     }
 
