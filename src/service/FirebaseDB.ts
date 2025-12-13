@@ -41,7 +41,7 @@ export class FirebaseDB implements IFirebaseDB {
         try {
             await this.database.ref('.info/connected').once('value');
             return true;
-        } catch (error) {
+        } catch {
             return false;
         }
     }

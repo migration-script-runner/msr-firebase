@@ -21,8 +21,8 @@
     "test:coverage": "nyc npm run test:mocha:report",
     "test:coverage:coveralls": "nyc report --reporter=text-lcov | coveralls",
     "test:report": "rimraf ./reports && npm run lint:report && npm run test:coverage",
-    "lint": "eslint ./src/ --ext .ts",
-    "lint:report": "eslint ./src/ --ext .ts --format junit --output-file ./reports/eslint.xml"
+    "lint": "eslint ./src/",
+    "lint:report": "eslint ./src/ --format junit --output-file ./reports/eslint.xml"
   },
   "keywords": [
     "firebase",
@@ -41,6 +41,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/chai": "^4.3.9",
     "@types/chai-as-promised": "^7.1.7",
     "@types/chai-spies": "^1.0.5",
@@ -66,7 +67,8 @@
     "rimraf": "^5.0.5",
     "sinon": "^17.0.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0"
   },
   "dependencies": {
     "@migration-script-runner/core": "^0.7.0",
