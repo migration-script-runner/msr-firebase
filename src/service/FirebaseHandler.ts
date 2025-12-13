@@ -1,31 +1,53 @@
-import {IDatabaseMigrationHandler} from "migration-script-runner";
-import {database} from "firebase-admin";
-import {version} from '../../package.json'
+import { IDatabaseMigrationHandler, IBackupService, ISchemaVersionService } from '@migration-script-runner/core';
+import { version } from '../../package.json';
 
 import {
     AppConfig,
     BackupService,
     SchemaVersionService,
     MigrationScriptService,
-    DBConnector
-} from "../index";
+    DBConnector,
+    FirebaseDB
+} from '../index';
+import { IFirebaseDB } from '../interface';
 
-export class FirebaseHandler implements IDatabaseMigrationHandler {
+/**
+ * Firebase Realtime Database migration handler.
+ *
+ * Implements MSR Core's IDatabaseMigrationHandler interface for Firebase Realtime Database,
+ * providing migration execution, schema versioning, and backup capabilities.
+ */
+export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
+    db: IFirebaseDB;
+    backup: IBackupService;
+    schemaVersion: ISchemaVersionService<IFirebaseDB>;
 
-    backup:BackupService
-    schemaVersion:SchemaVersionService
-
-    private constructor(public cfg:AppConfig,
-                        public db:database.Database) {
-        this.backup = new BackupService(db)
-        const mss = new MigrationScriptService(db, this.cfg.buildPath(this.cfg.tableName))
-        this.schemaVersion = new SchemaVersionService(mss, cfg)
+    private constructor(
+        public cfg: AppConfig,
+        firebaseDatabase: FirebaseDB
+    ) {
+        this.db = firebaseDatabase;
+        this.backup = new BackupService(firebaseDatabase.database);
+        const mss = new MigrationScriptService(firebaseDatabase.database, this.cfg.buildPath(this.cfg.tableName));
+        this.schemaVersion = new SchemaVersionService(mss, cfg);
     }
 
-    public static async getInstance(cfg:AppConfig):Promise<FirebaseHandler> {
-        const db = await DBConnector.connect(cfg)
-        return new FirebaseHandler(cfg, db)
+    /**
+     * Creates a new FirebaseHandler instance.
+     *
+     * Connects to Firebase Realtime Database using the provided configuration
+     * and initializes all required services.
+     *
+     * @param cfg - Application configuration
+     * @returns Promise resolving to configured FirebaseHandler
+     */
+    public static async getInstance(cfg: AppConfig): Promise<FirebaseHandler> {
+        const database = await DBConnector.connect(cfg);
+        const firebaseDb = new FirebaseDB(database);
+        return new FirebaseHandler(cfg, firebaseDb);
     }
 
-    getName = () => `Firebase v${version}`
+    getName = () => 'Firebase Realtime Database Handler';
+
+    getVersion = () => version;
 }
