@@ -1,8 +1,8 @@
 import {expect} from "chai"
 import {database} from "firebase-admin"
 
-import {BackupService, EntityService} from "../../src"
-import {TestEntity, TestConfig, TestUtils} from "../index"
+import {BackupService, EntityService} from "../../../src"
+import {TestEntity, TestConfig, TestUtils} from "../../index"
 
 describe('BackupService', () => {
     let db:database.Database

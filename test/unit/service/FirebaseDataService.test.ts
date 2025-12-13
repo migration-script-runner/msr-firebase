@@ -1,6 +1,6 @@
-import {TestUtils} from "../TestUtils";
-import {TestConfig} from "../TestConfig";
-import {FirebaseDataService} from "../../src";
+import {TestUtils} from "../../TestUtils";
+import {TestConfig} from "../../TestConfig";
+import {FirebaseDataService} from "../../../src";
 import {expect} from "chai";
 
 describe("FirebaseDataService", () => {

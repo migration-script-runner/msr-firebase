@@ -3,8 +3,8 @@ import sinon from 'sinon';
 import { afterEach, after } from 'mocha';
 import { MigrationScriptExecutor } from '@migration-script-runner/core';
 
-import { EntityService, FirebaseHandler, IFirebaseDB } from '../../src';
-import { TestConfig, TestUtils, TestEntity } from '../index';
+import { EntityService, FirebaseHandler, IFirebaseDB } from '../../../src';
+import { TestConfig, TestUtils, TestEntity } from '../../index';
 
 let processExit = sinon.stub(process, 'exit');
 

@@ -1,7 +1,7 @@
-import {TestUtils} from "../TestUtils";
-import {TestConfig} from "../TestConfig";
-import {EntityService} from "../../src";
-import {TestEntity} from "../TestEntity";
+import {TestUtils} from "../../TestUtils";
+import {TestConfig} from "../../TestConfig";
+import {EntityService} from "../../../src";
+import {TestEntity} from "../../TestEntity";
 import {expect} from "chai";
 
 describe('EntityService', () => {
