@@ -40,7 +40,7 @@
     "email": "volodyalavrynovych@gmail.com",
     "url": "https://www.instagram.com/vlavrynovych/"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/chai": "^4.3.9",
