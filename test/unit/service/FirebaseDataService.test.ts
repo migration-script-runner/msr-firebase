@@ -153,7 +153,7 @@ describe("FirebaseDataService", () => {
 
         expect(() => {
             res4.key = 3
-        }).to.throw(`Cannot assign to read only property 'key' of object '#<Object>'`);
+        }).to.throw(TypeError, `Cannot assign to read only property 'key' of object '#<Object>'`);
     })
 
     it("getSnapshot", async () => {

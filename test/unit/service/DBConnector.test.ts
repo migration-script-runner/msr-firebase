@@ -18,7 +18,7 @@ describe("DBConnector", () => {
         cfg.applicationCredentials = undefined
 
         // when: establish connection we expect an error
-        await expect(DBConnector.connect(cfg)).to.be.rejectedWith("Application credentials not found");
+        await expect(DBConnector.connect(cfg)).to.be.rejectedWith(Error, "Application credentials not found");
     })
 
     it("connect: no Database URL", async () => {
@@ -27,7 +27,7 @@ describe("DBConnector", () => {
         cfg.databaseUrl = undefined
 
         // when: establish connection we expect an error
-        await expect(DBConnector.connect(cfg)).to.be.rejectedWith("Can't determine Firebase Database URL");
+        await expect(DBConnector.connect(cfg)).to.be.rejectedWith(Error, "Can't determine Firebase Database URL");
     })
 
     it("connect: wrong Database URL", async () => {
@@ -36,6 +36,6 @@ describe("DBConnector", () => {
         cfg.databaseUrl = "http://localhost/test"
 
         // when: establish connection we expect an error
-        await expect(DBConnector.connect(cfg)).to.be.rejectedWith("FIREBASE FATAL ERROR: Database URL must point to the root of a Firebase Database (not including a child path).");
+        await expect(DBConnector.connect(cfg)).to.be.rejectedWith(Error, "FIREBASE FATAL ERROR: Database URL must point to the root of a Firebase Database (not including a child path).");
     })
 })

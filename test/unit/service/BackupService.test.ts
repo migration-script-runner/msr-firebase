@@ -41,8 +41,9 @@ describe('BackupService', () => {
     it("Restore", async () => {
         // having: data to restore
         const testSuiteKey = TestUtils.shift.replace('/', '')
-        const data = {} as any
-        data['/'] = {}
+        const data: Record<string, Record<string, unknown>> = {
+            '/': {}
+        };
         data['/'][testSuiteKey] = {
             "data": {
                 "-NlKhl6V1CSxyKlJc7vW": {
@@ -54,7 +55,6 @@ describe('BackupService', () => {
         // when: restore this data
         const backupService = new BackupService(db)
         const stringValue = JSON.stringify(data);
-        console.log(stringValue);
         await backupService.restore(stringValue)
 
         // check the data after restore
