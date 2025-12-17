@@ -8,3 +8,8 @@
 # coverage folders
 /reports
 .nyc_output
+
+# firebase emulator
+*-debug.log
+ui-debug.log
+.firebase/

@@ -1,21 +1,22 @@
-import {TestUtils} from "../../TestUtils";
-import {TestConfig} from "../../TestConfig";
-import {FirebaseDataService} from "../../../src";
+import {DBConnector, FirebaseDataService} from "../../../src";
+import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
+import {database} from "firebase-admin";
 
 describe("FirebaseDataService", () => {
 
-    const cfg = new TestConfig()
+    const cfg = new IntegrationTestConfig()
     const basePath = cfg.buildPath('test')
     let service:FirebaseDataService
+    let db:database.Database
 
     before(async () => {
-        const db = await TestUtils.getDB()
+        db = await DBConnector.connect(cfg)
         service = new FirebaseDataService(db)
     })
 
     after(async () => {
-        await TestUtils.clean()
+        await db.ref(cfg.shift!).remove()
     })
 
     it("setObject", async () => {

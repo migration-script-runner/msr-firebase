@@ -1,21 +1,22 @@
 import {expect} from "chai"
 import {database} from "firebase-admin"
 
-import {BackupService, EntityService} from "../../../src"
-import {TestEntity, TestConfig, TestUtils} from "../../index"
+import {BackupService, EntityService, DBConnector} from "../../../src"
+import {TestEntity} from "../../TestEntity"
+import {IntegrationTestConfig} from "../../IntegrationTestConfig"
 
 describe('BackupService', () => {
     let db:database.Database
     let dataService:EntityService<TestEntity>
+    const cfg = new IntegrationTestConfig()
 
     before(async () => {
-        db = await TestUtils.getDB()
-        const cfg = new TestConfig()
+        db = await DBConnector.connect(cfg)
         dataService = new EntityService<TestEntity>(db, cfg.buildPath("data"))
     })
 
     after(async () => {
-        await TestUtils.clean()
+        await db.ref(cfg.shift!).remove()
     })
 
     it("Backup", async () => {
@@ -32,7 +33,7 @@ describe('BackupService', () => {
         expect(dump).not.undefined
 
         // and: verify
-        const testSuiteKey = TestUtils.shift.replace('/', '')
+        const testSuiteKey = cfg.shift!.replace('/', '')
         let res = dump['/'][testSuiteKey]['data'][key] as TestEntity
         expect(res).not.undefined
         expect(res.test).eq("20", 'Should be a previously stored 20 in a test property')
@@ -40,7 +41,7 @@ describe('BackupService', () => {
 
     it("Restore", async () => {
         // having: data to restore
-        const testSuiteKey = TestUtils.shift.replace('/', '')
+        const testSuiteKey = cfg.shift!.replace('/', '')
         const data: Record<string, Record<string, unknown>> = {
             '/': {}
         };
