@@ -56,16 +56,10 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run integration tests with Firebase Emulator
-        run: npm run test:integration
+      - name: Run tests with coverage
+        run: npm run test:coverage
         env:
           FIREBASE_EMULATOR_DOWNLOAD_CACHE: ~/.cache/firebase/emulators
-
-      - name: Generate coverage report
-        run: npm run test:coverage
 
       - name: Upload coverage to Coveralls
         uses: coverallsapp/github-action@v2
