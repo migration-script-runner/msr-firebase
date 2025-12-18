@@ -229,57 +229,53 @@ describe("Smoke Test: Complete Migration Workflow", () => {
         });
     });
 
-    // TEMPORARILY DISABLED: Down migration tests failing due to MSR Core v0.7.0 bug
-    // Issue reported: https://github.com/migration-script-runner/msr-core/issues/139
-    // Error: "TypeError: s.init is not a function" in MigrationRollbackManager
-    //
-    // describe("9. Down Migration (Rollback)", () => {
-    //     it("should rollback last migration (settings)", async function() {
-    //         this.timeout(15000);
-    //         const result = await runner.down(202501010003);
-    //         expect(result.success).to.be.true;
-    //         expect(result.executed).to.have.lengthOf(1);
-    //     });
+    describe("9. Down Migration (Rollback)", () => {
+        it("should rollback last migration (settings)", async function() {
+            this.timeout(15000);
+            const result = await runner.down(202501010003);
+            expect(result.success).to.be.true;
+            expect(result.executed).to.have.lengthOf(1);
+        });
 
-    //     it("should verify settings was removed", async () => {
-    //         const settingsRef = handler.db.database.ref(handler.cfg.buildPath("settings"));
-    //         const snapshot = await settingsRef.once("value");
-    //         expect(snapshot.exists()).to.be.false;
-    //     });
+        it("should verify settings was removed", async () => {
+            const settingsRef = handler.db.database.ref(handler.cfg.buildPath("settings"));
+            const snapshot = await settingsRef.once("value");
+            expect(snapshot.exists()).to.be.false;
+        });
 
-    //     it("should show only 3 migrations in history", async () => {
-    //         const history = await handler.schemaVersion.migrationRecords.getAllExecuted();
-    //         expect(history).to.have.lengthOf(3);
-    //         expect(history.map(m => m.name)).to.not.include("create_settings");
-    //     });
+        it("should show only 3 migrations in history", async () => {
+            const history = await handler.schemaVersion.migrationRecords.getAllExecuted();
+            expect(history).to.have.lengthOf(3);
+            expect(history.map(m => m.name)).to.not.include("create_settings");
+        });
 
-    //     it("should rollback two more migrations", async function() {
-    //         this.timeout(15000);
-    //         const result = await runner.down(202501010001);
-    //         expect(result.success).to.be.true;
-    //         expect(result.executed).to.have.lengthOf(2);
-    //     });
+        it("should rollback two more migrations", async function() {
+            this.timeout(15000);
+            const result = await runner.down(202501010001);
+            expect(result.success).to.be.true;
+            expect(result.executed).to.have.lengthOf(2);
+        });
 
-    //     it("should verify comments and posts were removed", async () => {
-    //         const commentsSnapshot = await handler.db.database.ref(handler.cfg.buildPath("comments")).once("value");
-    //         expect(commentsSnapshot.exists()).to.be.false;
+        it("should verify comments and posts were removed", async () => {
+            const commentsSnapshot = await handler.db.database.ref(handler.cfg.buildPath("comments")).once("value");
+            expect(commentsSnapshot.exists()).to.be.false;
 
-    //         const postsSnapshot = await handler.db.database.ref(handler.cfg.buildPath("posts")).once("value");
-    //         expect(postsSnapshot.exists()).to.be.false;
-    //     });
+            const postsSnapshot = await handler.db.database.ref(handler.cfg.buildPath("posts")).once("value");
+            expect(postsSnapshot.exists()).to.be.false;
+        });
 
-    //     it("should show only 1 migration in history", async () => {
-    //         const history = await handler.schemaVersion.migrationRecords.getAllExecuted();
-    //         expect(history).to.have.lengthOf(1);
-    //         expect(history[0].name).to.include("create_users");
-    //     });
+        it("should show only 1 migration in history", async () => {
+            const history = await handler.schemaVersion.migrationRecords.getAllExecuted();
+            expect(history).to.have.lengthOf(1);
+            expect(history[0].name).to.include("create_users");
+        });
 
-    //     it("should still have users data", async () => {
-    //         const usersRef = handler.db.database.ref(handler.cfg.buildPath("users"));
-    //         const snapshot = await usersRef.once("value");
-    //         expect(snapshot.exists()).to.be.true;
-    //     });
-    // });
+        it("should still have users data", async () => {
+            const usersRef = handler.db.database.ref(handler.cfg.buildPath("users"));
+            const snapshot = await usersRef.once("value");
+            expect(snapshot.exists()).to.be.true;
+        });
+    });
 
     // describe("10. Re-run Migrations After Rollback", () => {
     //     it("should run migrations again after rollback", async function() {
