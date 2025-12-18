@@ -9,7 +9,7 @@ interface ILockData {
     lockedAt: number;
     expiresAt: number;
     hostname?: string;
-    processId?: number;
+    processId?: number | null;
 }
 
 /**
@@ -124,7 +124,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
                         lockedAt: now,
                         expiresAt,
                         hostname,
-                        processId: isNaN(processId!) ? undefined : processId
+                        processId: processId !== undefined && !isNaN(processId) ? processId : null
                     };
                 }
 
@@ -135,7 +135,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
                         lockedAt: now,
                         expiresAt,
                         hostname,
-                        processId: isNaN(processId!) ? undefined : processId
+                        processId: processId !== undefined && !isNaN(processId) ? processId : null
                     };
                 }
 

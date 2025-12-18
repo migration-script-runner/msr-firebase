@@ -277,29 +277,29 @@ describe("Smoke Test: Complete Migration Workflow", () => {
         });
     });
 
-    // describe("10. Re-run Migrations After Rollback", () => {
-    //     it("should run migrations again after rollback", async function() {
-    //         this.timeout(15000);
-    //         const result = await runner.migrate();
-    //         expect(result.success).to.be.true;
-    //         expect(result.executed).to.have.lengthOf(3); // posts, comments, settings
-    //     });
+    describe("10. Re-run Migrations After Rollback", () => {
+        it("should run migrations again after rollback", async function() {
+            this.timeout(15000);
+            const result = await runner.migrate();
+            expect(result.success).to.be.true;
+            expect(result.executed).to.have.lengthOf(3); // posts, comments, settings
+        });
 
-    //     it("should have all 4 migrations applied again", async () => {
-    //         const history = await handler.schemaVersion.migrationRecords.getAllExecuted();
-    //         expect(history).to.have.lengthOf(4);
-    //     });
+        it("should have all 4 migrations applied again", async () => {
+            const history = await handler.schemaVersion.migrationRecords.getAllExecuted();
+            expect(history).to.have.lengthOf(4);
+        });
 
-    //     it("should verify all data was recreated", async () => {
-    //         const nodes = await runner.listNodes();
-    //         expect(nodes).to.include("users");
-    //         expect(nodes).to.include("posts");
-    //         expect(nodes).to.include("comments");
-    //         expect(nodes).to.include("settings");
-    //     });
-    // });
+        it("should verify all data was recreated", async () => {
+            const nodes = await runner.listNodes();
+            expect(nodes).to.include("users");
+            expect(nodes).to.include("posts");
+            expect(nodes).to.include("comments");
+            expect(nodes).to.include("settings");
+        });
+    });
 
-    describe("9. Final Verification", () => {
+    describe("11. Final Verification", () => {
         it("should backup all current nodes", async () => {
             const backup = await runner.backupNodes(["users", "posts", "comments", "settings"]);
             expect(backup.users).to.exist;
