@@ -1,4 +1,4 @@
-import { IDatabaseMigrationHandler, IBackupService, ISchemaVersion } from '@migration-script-runner/core';
+import { IDatabaseMigrationHandler, IBackupService, ISchemaVersion, ILockingService } from '@migration-script-runner/core';
 import { version } from '../../package.json';
 
 import {
@@ -7,7 +7,8 @@ import {
     SchemaVersionService,
     MigrationScriptService,
     DBConnector,
-    FirebaseDB
+    FirebaseDB,
+    FirebaseLockingService
 } from '../index';
 import { IFirebaseDB } from '../interface';
 
@@ -21,6 +22,7 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
     db: IFirebaseDB;
     backup: IBackupService;
     schemaVersion: ISchemaVersion<IFirebaseDB>;
+    lockingService?: ILockingService<IFirebaseDB>;
 
     private constructor(
         public cfg: AppConfig,
@@ -30,6 +32,15 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
         this.backup = new BackupService(firebaseDatabase.database);
         const mss = new MigrationScriptService(firebaseDatabase.database, this.cfg.buildPath(this.cfg.tableName));
         this.schemaVersion = new SchemaVersionService(mss, cfg);
+
+        // Initialize locking service if locking is enabled in config
+        if (cfg.locking?.enabled) {
+            this.lockingService = new FirebaseLockingService(
+                firebaseDatabase,
+                cfg.locking,
+                cfg.shift
+            );
+        }
     }
 
     /**
@@ -44,7 +55,14 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
     public static async getInstance(cfg: AppConfig): Promise<FirebaseHandler> {
         const database = await DBConnector.connect(cfg);
         const firebaseDb = new FirebaseDB(database);
-        return new FirebaseHandler(cfg, firebaseDb);
+        const handler = new FirebaseHandler(cfg, firebaseDb);
+
+        // Initialize lock storage if locking is enabled
+        if (handler.lockingService && 'initLockStorage' in handler.lockingService) {
+            await (handler.lockingService as FirebaseLockingService).initLockStorage();
+        }
+
+        return handler;
     }
 
     getName = () => 'Firebase Realtime Database Handler';
