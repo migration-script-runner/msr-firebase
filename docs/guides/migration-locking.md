@@ -418,16 +418,3 @@ function isStuckLock(status) {
 }
 ```
 
-## Related Documentation
-
-- [Configuration Guide]({% link docs/guides/configuration.md %})
-- [CLI Usage]({% link docs/guides/cli-usage.md %})
-- [FirebaseHandler API]({% link docs/api/FirebaseHandler.md %})
-- [MSR Core Locking Guide](https://core.msr.lavr.site/guides/migration-locking.html)
-
-## Next Steps
-
-1. [Configure locking]({% link docs/guides/configuration.md %}) for your environment
-2. Test with [Docker Compose example]({% link docs/examples/index.md %})
-3. Deploy with [Kubernetes configuration]({% link docs/examples/index.md %})
-4. Monitor using [lock:status]({% link docs/guides/cli-usage.md %}) command
