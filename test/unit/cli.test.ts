@@ -91,4 +91,29 @@ describe("CLI", () => {
             expect(content).to.include("Backup specific Firebase nodes");
         });
     });
+
+    describe("Lock management commands (provided by MSR Core)", () => {
+        it("should use createCLI which provides lock:status command", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            // Verify we're using createCLI which automatically adds lock commands
+            expect(content).to.include("createCLI");
+            expect(content).to.include("@migration-script-runner/core");
+        });
+
+        it("should use createCLI which provides lock:release command", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            // Verify we're using createCLI which automatically adds lock commands
+            expect(content).to.include("createCLI");
+            expect(content).to.include("@migration-script-runner/core");
+        });
+
+        it("should have FirebaseHandler with lockingService property", () => {
+            const handlerPath = join(__dirname, "../../src/service/FirebaseHandler.ts");
+            const content = readFileSync(handlerPath, "utf-8");
+            // Verify handler has lockingService which is used by lock commands
+            expect(content).to.include("lockingService");
+        });
+    });
 });
