@@ -126,4 +126,289 @@ describe("FirebaseRunner", () => {
             expect(db.ref).to.be.a("function");
         });
     });
+
+    describe("getHandler", () => {
+        it("should return FirebaseHandler instance", () => {
+            const mockHandler = {
+                db: {
+                    database: {} as database.Database,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const handler = runner.getHandler();
+
+            expect(handler).to.eq(mockHandler);
+        });
+    });
+
+    describe("listNodes", () => {
+        it("should return empty array when no data exists", async () => {
+            const mockSnapshot = {
+                exists: sinon.stub().returns(false),
+                val: sinon.stub().returns(null),
+            };
+
+            const mockRef = {
+                once: sinon.stub().resolves(mockSnapshot),
+            };
+
+            const mockDatabase = {
+                ref: sinon.stub().returns(mockRef),
+            } as unknown as database.Database;
+
+            const mockHandler = {
+                db: {
+                    database: mockDatabase,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/test/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const nodes = await runner.listNodes();
+
+            expect(nodes).to.deep.equal([]);
+        });
+
+        it("should return array of node names when data exists", async () => {
+            const mockSnapshot = {
+                exists: sinon.stub().returns(true),
+                val: sinon.stub().returns({
+                    users: { user1: 'data' },
+                    posts: { post1: 'data' },
+                    schema_version: {},
+                }),
+            };
+
+            const mockRef = {
+                once: sinon.stub().resolves(mockSnapshot),
+            };
+
+            const mockDatabase = {
+                ref: sinon.stub().returns(mockRef),
+            } as unknown as database.Database;
+
+            const mockHandler = {
+                db: {
+                    database: mockDatabase,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/test/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const nodes = await runner.listNodes();
+
+            expect(nodes).to.have.lengthOf(3);
+            expect(nodes).to.include('users');
+            expect(nodes).to.include('posts');
+            expect(nodes).to.include('schema_version');
+        });
+
+        it("should return empty array when data is not an object", async () => {
+            const mockSnapshot = {
+                exists: sinon.stub().returns(true),
+                val: sinon.stub().returns("string data"),
+            };
+
+            const mockRef = {
+                once: sinon.stub().resolves(mockSnapshot),
+            };
+
+            const mockDatabase = {
+                ref: sinon.stub().returns(mockRef),
+            } as unknown as database.Database;
+
+            const mockHandler = {
+                db: {
+                    database: mockDatabase,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/test/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const nodes = await runner.listNodes();
+
+            expect(nodes).to.deep.equal([]);
+        });
+
+        it("should use root path when shift is not defined", async () => {
+            const mockSnapshot = {
+                exists: sinon.stub().returns(false),
+                val: sinon.stub().returns(null),
+            };
+
+            const mockRef = {
+                once: sinon.stub().resolves(mockSnapshot),
+            };
+
+            const refStub = sinon.stub().returns(mockRef);
+
+            const mockDatabase = {
+                ref: refStub,
+            } as unknown as database.Database;
+
+            const mockHandler = {
+                db: {
+                    database: mockDatabase,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: undefined,
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            await runner.listNodes();
+
+            sinon.assert.calledWith(refStub, '/');
+        });
+    });
+
+    describe("backupNodes", () => {
+        it("should backup existing nodes", async () => {
+            const mockUsersSnapshot = {
+                exists: sinon.stub().returns(true),
+                val: sinon.stub().returns({ user1: { name: 'Alice' } }),
+            };
+
+            const mockPostsSnapshot = {
+                exists: sinon.stub().returns(true),
+                val: sinon.stub().returns({ post1: { title: 'First Post' } }),
+            };
+
+            const mockRef = sinon.stub();
+            mockRef.onCall(0).returns({ once: sinon.stub().resolves(mockUsersSnapshot) });
+            mockRef.onCall(1).returns({ once: sinon.stub().resolves(mockPostsSnapshot) });
+
+            const mockDatabase = {
+                ref: mockRef,
+            } as unknown as database.Database;
+
+            const mockHandler = {
+                db: {
+                    database: mockDatabase,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/test/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const backup = await runner.backupNodes(['users', 'posts']);
+
+            expect(backup).to.have.property('users');
+            expect(backup).to.have.property('posts');
+            expect(backup.users).to.deep.equal({ user1: { name: 'Alice' } });
+            expect(backup.posts).to.deep.equal({ post1: { title: 'First Post' } });
+        });
+
+        it("should return null for non-existent nodes", async () => {
+            const mockSnapshot = {
+                exists: sinon.stub().returns(false),
+                val: sinon.stub().returns(null),
+            };
+
+            const mockRef = {
+                once: sinon.stub().resolves(mockSnapshot),
+            };
+
+            const mockDatabase = {
+                ref: sinon.stub().returns(mockRef),
+            } as unknown as database.Database;
+
+            const mockHandler = {
+                db: {
+                    database: mockDatabase,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/test/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const backup = await runner.backupNodes(['nonexistent']);
+
+            expect(backup).to.have.property('nonexistent');
+            expect(backup.nonexistent).to.be.null;
+        });
+
+        it("should handle empty node list", async () => {
+            const mockHandler = {
+                db: {
+                    database: {} as database.Database,
+                    checkConnection: sinon.stub().resolves(true),
+                },
+                cfg: {
+                    databaseUrl: "http://localhost:9000",
+                    shift: "/test",
+                    tableName: "schema_version",
+                    buildPath: sinon.stub().callsFake((path: string) => `/test/${path}`),
+                },
+                backup: {},
+                schemaVersion: {},
+                getName: sinon.stub().returns("Test Handler"),
+            } as unknown as FirebaseHandler;
+
+            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const backup = await runner.backupNodes([]);
+
+            expect(backup).to.deep.equal({});
+        });
+    });
 });
