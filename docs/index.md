@@ -38,19 +38,76 @@ npm install @migration-script-runner/firebase
 
 ---
 
+## Why MSR Firebase?
+
+**Bring your own database.** MSR Firebase provides a lightweight, flexible framework for managing Firebase Realtime Database migrations without locking you into a specific ORM or pattern.
+
+### Perfect for
+
+- 🔥 **Firebase Realtime Database** - Native support for Firebase-specific features
+- 🎯 **Production applications** - Returns structured results instead of calling `process.exit()`
+- 🛡️ **Type-safe migrations** - Full TypeScript support with type definitions
+- 📦 **Library or CLI** - Use as a library in your app or run from command line
+- ⚡ **Flexible workflows** - Multiple rollback strategies, validation, and hooks
+
+### Key Advantages
+
+1. **Database-Agnostic Core** - Built on proven MSR Core architecture
+2. **Firebase Native** - Optimized for Firebase Realtime Database operations
+3. **Production Ready** - Used in real-world applications
+4. **Well Tested** - Comprehensive test coverage with Firebase emulator support
+5. **Developer Friendly** - Clear API, detailed documentation, helpful error messages
+
+---
+
+## Quick Example
+
+```typescript
+import { FirebaseRunner } from '@migration-script-runner/firebase';
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase
+admin.initializeApp({
+  credential: admin.credential.cert('serviceAccountKey.json'),
+  databaseURL: 'https://your-project.firebaseio.com'
+});
+
+// Create runner and migrate
+const runner = new FirebaseRunner({
+  db: admin.database(),
+  migrationsPath: './migrations'
+});
+
+await runner.migrate();
+```
+
+---
+
 ## Documentation
 
-{: .note }
-> Documentation is currently being built. Check back soon for comprehensive guides and API reference.
+### Getting Started
+- [Getting Started](getting-started) - Quick start guide
+- [Installation](installation) - Detailed setup instructions
 
-### Planned Documentation
+### Guides
+- [Writing Migrations](guides/writing-migrations) - Best practices for migrations
+- [CLI Usage](guides/cli-usage) - Command-line interface guide
+- [Configuration](guides/configuration) - Configuration options
+- [Backup & Restore](guides/backup-restore) - Backup strategies
+- [Testing](guides/testing) - Testing with Firebase emulator
 
-- Installation Guide
-- Getting Started Tutorial
-- Writing Migrations
-- CLI Usage
-- API Reference
-- Examples and Best Practices
+### API Reference
+- [FirebaseRunner](api/FirebaseRunner) - Main migration runner class
+- [FirebaseHandler](api/FirebaseHandler) - Database handler
+- [Services](api/services) - Firebase services
+- [Interfaces](api/interfaces) - Core interfaces
+- [Types](api/types) - TypeScript types
+
+### Examples
+- [Basic Usage](examples/basic-usage) - Simple examples
+- [CLI Examples](examples/with-cli) - CLI usage patterns
+- [Custom Commands](examples/custom-commands) - Custom scripts
+- [Firebase Emulator](examples/firebase-emulator) - Testing with emulator
 
 ---
 
