@@ -99,6 +99,64 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
                     process.exit(7);
                 }
             });
+
+        program
+            .command('firebase:nodes')
+            .description('List all root nodes in Firebase database')
+            .action(async () => {
+                try {
+                    const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
+                    const runner = await runnerPromise;
+                    const nodes = await runner.listNodes();
+
+                    if (nodes.length === 0) {
+                        console.log('📭 No nodes found in database');
+                        process.exit(0);
+                    }
+
+                    console.log('\n📂 Root Nodes:\n');
+                    nodes.forEach((node, index) => {
+                        console.log(`  ${index + 1}. ${node}`);
+                    });
+                    console.log(`\n  Total: ${nodes.length} node${nodes.length === 1 ? '' : 's'}\n`);
+
+                    process.exit(0);
+                } catch (error) {
+                    console.error('❌ Error listing nodes:', error instanceof Error ? error.message : error);
+                    process.exit(7);
+                }
+            });
+
+        program
+            .command('firebase:backup-nodes')
+            .description('Backup specific Firebase nodes')
+            .argument('<nodes...>', 'Node paths to backup (e.g., users posts)')
+            .action(async (nodes: string[]) => {
+                try {
+                    const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
+                    const runner = await runnerPromise;
+                    const backup = await runner.backupNodes(nodes);
+
+                    console.log('\n💾 Node Backup:\n');
+                    for (const [node, data] of Object.entries(backup)) {
+                        if (data === null) {
+                            console.log(`  ⚠️  ${node}: (not found)`);
+                        } else {
+                            const size = JSON.stringify(data).length;
+                            console.log(`  ✅ ${node}: ${size} bytes`);
+                        }
+                    }
+
+                    console.log('\n📄 Backup Data:\n');
+                    console.log(JSON.stringify(backup, null, 2));
+                    console.log('');
+
+                    process.exit(0);
+                } catch (error) {
+                    console.error('❌ Error backing up nodes:', error instanceof Error ? error.message : error);
+                    process.exit(7);
+                }
+            });
     },
 });
 
