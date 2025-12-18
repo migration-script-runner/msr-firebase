@@ -1,31 +1,44 @@
 # Firebase Migration Script Runner
 
-[![Build Status](https://app.travis-ci.com/vlavrynovych/msr-firebase.svg?branch=master)](https://app.travis-ci.com/vlavrynovych/msr-firebase)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/vlavrynovych/msr-firebase/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/vlavrynovych/msr-firebase/tree/master)
-[![Coverage Status](https://coveralls.io/repos/github/vlavrynovych/msr-firebase/badge.svg?branch=master)](https://coveralls.io/github/vlavrynovych/msr-firebase?branch=master)
+[![Test](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml/badge.svg)](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml)
+[![Coverage Status](https://coveralls.io/repos/github/migration-script-runner/msr-firebase/badge.svg?branch=master)](https://coveralls.io/github/migration-script-runner/msr-firebase?branch=master)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vlavrynovych_msr-firebase&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vlavrynovych_msr-firebase)
-[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=vlavrynovych_msr-firebase&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=vlavrynovych_msr-firebase)
-[![GitHub issues](https://img.shields.io/github/issues/vlavrynovych/msr-firebase.svg)](https://github.com/vlavrynovych/msr-firebase/issues)
-[![License](https://img.shields.io/badge/license-MIT%20%2B%20CC%20%2B%20Attribution-blue.svg)](https://raw.githubusercontent.com/migration-script-runner/msr-firebase/master/LICENSE)
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][npm-downloads-image]][npm-url]
+[![GitHub issues](https://img.shields.io/github/issues/migration-script-runner/msr-firebase.svg)](https://github.com/migration-script-runner/msr-firebase/issues)
+[![License](https://img.shields.io/badge/license-MIT%20%2B%20CC%20%2B%20Attribution-blue.svg)](https://raw.githubusercontent.com/migration-script-runner/msr-firebase/master/LICENSE)
 ![Static Badge](https://img.shields.io/badge/in%20Ukraine-dodgerblue?label=Proudly%20made&labelColor=%23FFFF00)
 
 [//]: # ([![NPM]&#40;https://nodei.co/npm/msr-firebase.png?downloads=true&#41;]&#40;https://nodei.co/npm/msr-firebase/&#41;)
 [//]: # ([![SonarCloud]&#40;https://sonarcloud.io/images/project_badges/sonarcloud-white.svg&#41;]&#40;https://sonarcloud.io/summary/new_code?id=vlavrynovych_msr-firebase&#41;)
 
-[npm-image]: https://img.shields.io/npm/v/msr-firebase.svg?style=flat
-[npm-url]: https://npmjs.org/package/msr-firebase
-[npm-downloads-image]: https://img.shields.io/npm/dm/msr-firebase.svg?style=flat
+[npm-image]: https://img.shields.io/npm/v/@migration-script-runner/firebase.svg?style=flat
+[npm-url]: https://npmjs.org/package/@migration-script-runner/firebase
+[npm-downloads-image]: https://img.shields.io/npm/dm/@migration-script-runner/firebase.svg?style=flat
 
 Firebase Realtime Database adapter for [Migration Script Runner (MSR Core)](https://github.com/migration-script-runner/msr-core). Provides version-controlled database migrations with built-in backup, rollback, and distributed locking for production deployments.
 
+## What's New in v0.2.0
+
+🎉 Major upgrade with production-ready features:
+
+- 🔒 **Migration Locking** - Prevent concurrent migrations in Kubernetes, Docker, and multi-instance deployments
+- ⬆️ **MSR Core v0.8.0** - Latest core with bug fixes and improvements
+- 🔧 **Type-Safe API** - Full TypeScript support with generic type parameters
+- 🖥️ **Lock Management CLI** - Commands for monitoring and managing migration locks
+- 📚 **Comprehensive Documentation** - 300+ line locking guide with deployment examples
+- 🧪 **Production Tested** - Battle-tested in distributed environments
+
+**Upgrading from v0.1.x?** See [Migration Guide](#migration-from-v01x) below.
+
 ## Table of Contents
+- [What's New in v0.2.0](#whats-new-in-v020)
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Key Features](#key-features)
 - [Documentation](#documentation)
+- [Migration from v0.1.x](#migration-from-v01x)
 
 ## Features
 
@@ -198,6 +211,50 @@ Steps:
 `https://console.firebase.google.com/project/{your_project_id}/settings/serviceaccounts/adminsdk` link,
     where {your_project_id} should be replaced
 2. Click **Generate new private key** button and download your private key as a JSON file
+
+---
+
+## Migration from v0.1.x
+
+### Breaking Changes
+
+**None!** v0.2.0 is 100% backwards compatible with v0.1.x.
+
+### What's Changed
+
+1. **Package Name**: Still `@migration-script-runner/firebase` (no change from v0.1.x)
+2. **MSR Core**: Updated from v0.7.x to v0.8.0
+3. **New Features**: Migration locking, lock CLI commands, enhanced documentation
+
+### Migration Steps
+
+1. **Update dependencies**:
+   ```bash
+   npm install @migration-script-runner/firebase@latest
+   ```
+
+2. **Optional: Enable locking** (recommended for production):
+   ```javascript
+   // msr.config.js
+   module.exports = {
+     folder: './migrations',
+     tableName: 'schema_version',
+     locking: {
+       enabled: process.env.NODE_ENV === 'production',
+       timeout: 600000
+     }
+   };
+   ```
+
+3. **That's it!** Your existing migrations will continue to work without any changes.
+
+### New Features You Can Use
+
+- **Migration Locking**: Enable in config to prevent concurrent migrations
+- **Lock CLI Commands**: Use `msr-firebase lock:status` and `msr-firebase lock:release --force`
+- **Type-Safe Handler**: FirebaseRunner now has full type safety
+
+See the [documentation](https://migration-script-runner.github.io/msr-firebase/) for details on new features.
 
 ---
 
