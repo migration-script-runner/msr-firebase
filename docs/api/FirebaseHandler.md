@@ -21,116 +21,208 @@ Database handler implementation for Firebase Realtime Database.
 
 ## Overview
 
-`FirebaseHandler` implements the `IDatabaseHandler` interface from MSR Core, providing Firebase-specific implementations for migration tracking, backup, and restore operations.
+`FirebaseHandler` implements the `IDatabaseMigrationHandler` interface from MSR Core, providing Firebase-specific implementations for migration tracking, backup, restore, and optional migration locking operations.
 
 ## Class Signature
 
 ```typescript
-class FirebaseHandler implements IDatabaseHandler<admin.database.Database>
+class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB>
 ```
 
-## Constructor
+## Properties
+
+### db
+
+Firebase database instance for executing migrations.
 
 ```typescript
-constructor(
-  firebaseDataService: FirebaseDataService,
-  entityService: EntityService
-)
+db: IFirebaseDB
 ```
 
-### Parameters
+### backup
 
-- **firebaseDataService**: Service for Firebase data operations
-- **entityService**: Service for entity management
+Service for backup and restore operations.
+
+```typescript
+backup: IBackupService
+```
+
+### schemaVersion
+
+Service for tracking migration schema versions.
+
+```typescript
+schemaVersion: ISchemaVersion<IFirebaseDB>
+```
+
+### lockingService
+
+Optional locking service for preventing concurrent migrations in distributed environments.
+
+```typescript
+lockingService?: ILockingService<IFirebaseDB>
+```
+
+**Availability**: Only present when locking is enabled in configuration.
+
+**Example:**
+```typescript
+const handler = await FirebaseHandler.getInstance(config);
+
+if (handler.lockingService) {
+  const status = await handler.lockingService.getLockStatus();
+  console.log('Lock status:', status);
+}
+```
+
+### cfg
+
+Configuration used to initialize the handler.
+
+```typescript
+cfg: AppConfig
+```
+
+## Factory Method
+
+### getInstance()
+
+Creates a new FirebaseHandler instance (preferred method).
+
+```typescript
+static async getInstance(cfg: AppConfig): Promise<FirebaseHandler>
+```
+
+**Parameters**:
+- **cfg**: Application configuration including database URL, locking settings, and migration paths
+
+**Returns**: Promise resolving to configured FirebaseHandler
+
+**Example:**
+```typescript
+import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+
+const config = new AppConfig();
+config.databaseUrl = 'https://your-project.firebaseio.com';
+config.locking = {
+  enabled: true,
+  timeout: 600000
+};
+
+const handler = await FirebaseHandler.getInstance(config);
+```
 
 ## Methods
 
-### connect()
+### getName()
 
-Establishes connection to Firebase Realtime Database.
+Returns the handler name.
 
 ```typescript
-async connect(): Promise<void>
+getName(): string
 ```
 
-### disconnect()
+**Returns**: `"Firebase Realtime Database Handler"`
 
-Closes the Firebase connection.
+### getVersion()
+
+Returns the package version.
 
 ```typescript
-async disconnect(): Promise<void>
+getVersion(): string
 ```
 
-### getAppliedMigrations()
+**Returns**: Version string (e.g., `"0.1.6"`)
 
-Retrieves list of applied migrations from Firebase.
+## Usage Examples
+
+### Basic Usage
 
 ```typescript
-async getAppliedMigrations(): Promise<ISchemaVersion[]>
+import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+
+// Create configuration
+const config = new AppConfig();
+config.databaseUrl = 'https://your-project.firebaseio.com';
+config.tableName = 'schema_version';
+config.shift = 'production';
+
+// Create handler
+const handler = await FirebaseHandler.getInstance(config);
+
+// Access services
+console.log('Handler:', handler.getName());
+console.log('Version:', handler.getVersion());
+
+// Use backup service
+await handler.backup.backup();
+
+// Check schema version
+const records = await handler.schemaVersion.migrationRecords();
+console.log('Applied migrations:', records);
 ```
 
-**Returns**: Array of applied migration records
-
-### saveMigration()
-
-Saves a migration record to Firebase.
+### With Migration Locking
 
 ```typescript
-async saveMigration(migration: ISchemaVersion): Promise<void>
+import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+
+const config = new AppConfig();
+config.databaseUrl = 'https://your-project.firebaseio.com';
+
+// Enable locking for production
+config.locking = {
+  enabled: true,
+  timeout: 600000  // 10 minutes
+};
+
+const handler = await FirebaseHandler.getInstance(config);
+
+// Check if locking is enabled
+if (handler.lockingService) {
+  // Acquire lock
+  const executorId = `${hostname()}-${process.pid}-${uuidv4()}`;
+  const acquired = await handler.lockingService.acquireLock(executorId);
+
+  if (acquired) {
+    console.log('Lock acquired, safe to run migrations');
+
+    // Verify we still own the lock
+    const verified = await handler.lockingService.verifyLockOwnership(executorId);
+    if (verified) {
+      // Run migrations...
+    }
+
+    // Release lock when done
+    await handler.lockingService.releaseLock(executorId);
+  } else {
+    console.log('Lock already held by another process');
+  }
+} else {
+  console.log('Locking not enabled');
+}
 ```
 
-**Parameters**:
-- **migration**: Migration record to save
-
-### deleteMigration()
-
-Removes a migration record from Firebase.
+### Environment-Specific Configuration
 
 ```typescript
-async deleteMigration(timestamp: number): Promise<void>
-```
+import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 
-**Parameters**:
-- **timestamp**: Migration timestamp to delete
+const isProduction = process.env.NODE_ENV === 'production';
 
-### backup()
+const config = new AppConfig();
+config.databaseUrl = process.env.DATABASE_URL;
+config.locking = {
+  enabled: isProduction,  // Only in production
+  timeout: 600000
+};
 
-Creates a backup of the entire Firebase database.
-
-```typescript
-async backup(): Promise<string>
-```
-
-**Returns**: Backup identifier
-
-### restore()
-
-Restores Firebase database from a backup.
-
-```typescript
-async restore(backupId: string): Promise<void>
-```
-
-**Parameters**:
-- **backupId**: Identifier of the backup to restore
-
-## Usage Example
-
-```typescript
-import { FirebaseHandler } from '@migration-script-runner/firebase';
-import { FirebaseDataServiceImpl, EntityServiceImpl } from '@migration-script-runner/firebase';
-
-const dataService = new FirebaseDataServiceImpl(admin.database());
-const entityService = new EntityServiceImpl(dataService);
-const handler = new FirebaseHandler(dataService, entityService);
-
-// Get applied migrations
-const migrations = await handler.getAppliedMigrations();
-console.log('Applied migrations:', migrations);
+const handler = await FirebaseHandler.getInstance(config);
 ```
 
 ## See Also
 
 - [FirebaseRunner](FirebaseRunner) - Main migration runner class
-- [Services](services) - Firebase data and entity services
-- [Interfaces](interfaces) - Core interfaces
+- [Migration Locking](../guides/migration-locking) - Distributed locking guide
+- [Configuration](../guides/configuration) - Configuration options
+- [Interfaces](interfaces) - Core interfaces including ILockingService

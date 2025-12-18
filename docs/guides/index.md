@@ -29,6 +29,10 @@ Configure MSR Firebase for your specific needs.
 
 Learn about backup strategies and restore operations.
 
+## Migration Locking
+
+Prevent concurrent migrations in distributed environments like Kubernetes and Docker.
+
 ## Testing
 
 How to test your migrations with Firebase emulator.

@@ -169,6 +169,102 @@ interface MigrationResult {
 - **status**: Overall operation status
 - **error** _(optional)_: Error if operation failed
 
+---
+
+## ILockingService
+
+Service interface for migration locking (from MSR Core).
+
+```typescript
+interface ILockingService<DB> {
+  acquireLock(executorId: string): Promise<boolean>;
+  verifyLockOwnership(executorId: string): Promise<boolean>;
+  releaseLock(executorId: string): Promise<void>;
+  getLockStatus(): Promise<ILockStatus | null>;
+  forceReleaseLock(): Promise<void>;
+  checkAndReleaseExpiredLock(): Promise<void>;
+}
+```
+
+### Methods
+
+- **acquireLock**: Attempt to acquire migration lock
+- **verifyLockOwnership**: Verify lock is still owned by this executor
+- **releaseLock**: Release lock owned by this executor
+- **getLockStatus**: Get current lock status
+- **forceReleaseLock**: Force-release lock (dangerous)
+- **checkAndReleaseExpiredLock**: Clean up expired locks
+
+### Usage in Firebase
+
+```typescript
+import { FirebaseHandler } from '@migration-script-runner/firebase';
+
+const handler = await FirebaseHandler.getInstance(config);
+
+if (handler.lockingService) {
+  const executorId = 'server-1-12345-uuid';
+
+  // Acquire lock
+  const acquired = await handler.lockingService.acquireLock(executorId);
+  if (acquired) {
+    // Verify ownership
+    const verified = await handler.lockingService.verifyLockOwnership(executorId);
+    if (verified) {
+      // Run migrations...
+    }
+
+    // Release when done
+    await handler.lockingService.releaseLock(executorId);
+  }
+}
+```
+
+**See**: [Migration Locking Guide](../guides/migration-locking) for detailed usage.
+
+---
+
+## ILockStatus
+
+Lock status interface (from MSR Core).
+
+```typescript
+interface ILockStatus {
+  isLocked: boolean;
+  lockedBy: string | null;
+  lockedAt: Date | null;
+  expiresAt: Date | null;
+  processId?: string;
+}
+```
+
+### Properties
+
+- **isLocked**: Whether a lock is currently held
+- **lockedBy**: Executor ID holding the lock (null if unlocked)
+- **lockedAt**: Timestamp when lock was acquired (null if unlocked)
+- **expiresAt**: Timestamp when lock expires (null if unlocked)
+- **processId** _(optional)_: Process ID of the executor
+
+### Example
+
+```typescript
+const status = await handler.lockingService?.getLockStatus();
+
+if (status && status.isLocked) {
+  console.log('Lock held by:', status.lockedBy);
+  console.log('Acquired at:', status.lockedAt);
+  console.log('Expires at:', status.expiresAt);
+
+  // Check if lock is expired
+  const now = new Date();
+  const isExpired = status.expiresAt && status.expiresAt < now;
+  console.log('Lock expired:', isExpired);
+} else {
+  console.log('No lock currently held');
+}
+```
+
 ## See Also
 
 - [Services](services) - Service implementations

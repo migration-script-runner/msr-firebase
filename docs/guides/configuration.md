@@ -137,6 +137,48 @@ config: {
 }
 ```
 
+### locking
+
+Configure migration locking to prevent concurrent migrations in distributed environments.
+
+```typescript
+locking?: {
+  enabled: boolean;
+  timeout?: number;
+}
+```
+
+**Default:**
+```typescript
+{
+  enabled: false,
+  timeout: 600000  // 10 minutes
+}
+```
+
+**Properties:**
+- `enabled` - Enable/disable migration locking
+- `timeout` - Lock timeout in milliseconds (default: 10 minutes)
+
+**Example:**
+```typescript
+config: {
+  locking: {
+    enabled: true,
+    timeout: 600000  // 10 minutes
+  }
+}
+```
+
+**When to enable:**
+- Kubernetes deployments with multiple pods
+- Docker Swarm with multiple replicas
+- Auto-scaling environments
+- CI/CD pipelines with parallel deployments
+- Multi-region deployments
+
+**See:** [Migration Locking Guide](migration-locking) for detailed information.
+
 ## Environment Variables
 
 ### Firebase Configuration
@@ -246,7 +288,11 @@ export const config = {
   rollbackStrategy: 'both' as const,
   validateChecksums: true,
   backupPath: '/var/backups/firebase',
-  transactionEnabled: true
+  transactionEnabled: true,
+  locking: {
+    enabled: true,        // Enable locking in production
+    timeout: 600000      // 10 minutes
+  }
 };
 ```
 

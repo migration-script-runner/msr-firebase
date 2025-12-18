@@ -168,6 +168,70 @@ msr-firebase restore backup-1234567890.json
 {: .warning }
 > Restore will overwrite existing data. Use with caution!
 
+### lock:status
+
+Display current migration lock status.
+
+```bash
+msr-firebase lock:status
+```
+
+**Example output (locked):**
+```
+🔒 Lock Status: LOCKED
+
+   Executor ID:  web-server-1-12345-a1b2c3d4
+   Acquired At:  2024-01-15T10:30:00.000Z
+   Expires At:   2024-01-15T10:40:00.000Z
+   Process ID:   12345
+```
+
+**Example output (unlocked):**
+```
+🔓 Lock Status: UNLOCKED
+
+   No active migration lock
+```
+
+**Use cases:**
+- Check if migrations are currently running
+- Verify lock expiration time
+- Identify which process holds the lock
+
+### lock:release
+
+Force-release a stuck migration lock.
+
+```bash
+msr-firebase lock:release --force
+```
+
+**Example output:**
+```
+⚠️  Warning: Force-releasing migration lock
+
+   Locked by:    web-server-1-12345-a1b2c3d4
+   Acquired at:  2024-01-15T10:30:00.000Z
+
+✅ Lock released successfully
+```
+
+{: .warning }
+> **DANGER**: Only use `--force` when certain no migration is running. Releasing an active lock can cause data corruption.
+
+**When to use:**
+- Process holding lock has crashed
+- Lock has been held beyond reasonable time
+- After verifying no migrations are running
+
+**Safety checklist before force-releasing:**
+1. ✅ Check `lock:status` shows lock is stuck
+2. ✅ Verify process holding lock has terminated (check logs, process list)
+3. ✅ Confirm no migrations are running
+4. ✅ Consider waiting for lock to expire naturally
+
+**See:** [Migration Locking Guide](migration-locking) for detailed information.
+
 ## Global Options
 
 Available for all commands:

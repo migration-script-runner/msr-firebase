@@ -18,16 +18,176 @@
 [npm-url]: https://npmjs.org/package/msr-firebase
 [npm-downloads-image]: https://img.shields.io/npm/dm/msr-firebase.svg?style=flat
 
+Firebase Realtime Database adapter for [Migration Script Runner (MSR Core)](https://github.com/migration-script-runner/msr-core). Provides version-controlled database migrations with built-in backup, rollback, and distributed locking for production deployments.
+
 ## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
-- [Examples](#examples)
+- [Quick Start](#quick-start)
+- [Key Features](#key-features)
 - [Documentation](#documentation)
 
 ## Features
+
+- 🔄 **Version-Controlled Migrations**: Track and apply database changes systematically
+- 🔒 **Distributed Locking**: Prevent concurrent migrations in Kubernetes, Docker, and multi-instance deployments
+- 💾 **Automatic Backups**: Built-in backup and restore functionality
+- ↩️ **Rollback Support**: Safely revert migrations with `down()` functions or backups
+- ✅ **Checksum Validation**: Detect modified migration files
+- 🎯 **Firebase-Specific**: Optimized for Firebase Realtime Database with atomic transactions
+- 🛠️ **CLI & Programmatic**: Use via command-line or integrate into your application
+- 🧪 **Emulator Support**: Test migrations locally with Firebase Emulator
+- 📊 **Migration Status**: Track applied, pending, and failed migrations
+- 🔐 **Production-Ready**: Battle-tested locking for distributed environments
+
 ## Installation
-## Examples
+
+```bash
+npm install @migration-script-runner/firebase
+```
+
+Or with yarn:
+```bash
+yarn add @migration-script-runner/firebase
+```
+
+## Quick Start
+
+### 1. Create a migration
+
+```bash
+npx msr-firebase create add-users-table
+```
+
+### 2. Write your migration
+
+```typescript
+// migrations/1234567890-add-users-table.ts
+import { IMigrationScript } from '@migration-script-runner/core';
+import * as admin from 'firebase-admin';
+
+export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+  await db.ref('users').set({
+    user1: { name: 'Alice', email: 'alice@example.com' }
+  });
+};
+
+export const down: IMigrationScript<admin.database.Database>['down'] = async (db) => {
+  await db.ref('users').remove();
+};
+```
+
+### 3. Configure Firebase
+
+```javascript
+// msr.config.js
+module.exports = {
+  folder: './migrations',
+  tableName: 'schema_version',
+  locking: {
+    enabled: process.env.NODE_ENV === 'production',
+    timeout: 600000  // 10 minutes
+  }
+};
+```
+
+### 4. Run migrations
+
+```bash
+# Set environment variables
+export FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+
+# Apply all pending migrations
+npx msr-firebase migrate
+```
+
+## Key Features
+
+### 🔒 Migration Locking for Distributed Environments
+
+Perfect for Kubernetes, Docker Swarm, and auto-scaling deployments:
+
+```javascript
+// msr.config.js
+module.exports = {
+  locking: {
+    enabled: true,
+    timeout: 600000  // 10 minutes
+  }
+};
+```
+
+**Benefits:**
+- Prevents race conditions in multi-pod deployments
+- Automatic lock expiration and cleanup
+- Force-release stuck locks with CLI commands
+- Works seamlessly across distributed instances
+
+**CLI Commands:**
+```bash
+# Check lock status
+msr-firebase lock:status
+
+# Force-release stuck lock
+msr-firebase lock:release --force
+```
+
+See [Migration Locking Guide](https://migration-script-runner.github.io/msr-firebase/guides/migration-locking) for details.
+
+### 💾 Backup & Restore
+
+Automatic backups before migrations:
+
+```bash
+# Create backup
+msr-firebase backup
+
+# List backups
+msr-firebase list-backups
+
+# Restore from backup
+msr-firebase restore backup-1234567890.json
+```
+
+### ↩️ Safe Rollbacks
+
+Multiple rollback strategies:
+
+```bash
+# Roll back last migration
+msr-firebase down
+
+# Roll back multiple migrations
+msr-firebase down --steps 3
+```
+
+### 🧪 Firebase Emulator Support
+
+Test migrations locally before deploying:
+
+```bash
+# Start emulator
+firebase emulators:start --only database
+
+# Run migrations against emulator
+export FIREBASE_DATABASE_URL=http://localhost:9000
+msr-firebase migrate
+```
+
 ## Documentation
+
+Full documentation available at [https://migration-script-runner.github.io/msr-firebase/](https://migration-script-runner.github.io/msr-firebase/)
+
+### Quick Links
+
+- [Getting Started](https://migration-script-runner.github.io/msr-firebase/getting-started)
+- [Writing Migrations](https://migration-script-runner.github.io/msr-firebase/guides/writing-migrations)
+- [Migration Locking](https://migration-script-runner.github.io/msr-firebase/guides/migration-locking)
+- [Configuration](https://migration-script-runner.github.io/msr-firebase/guides/configuration)
+- [CLI Usage](https://migration-script-runner.github.io/msr-firebase/guides/cli-usage)
+- [API Reference](https://migration-script-runner.github.io/msr-firebase/api/)
+- [Examples](https://migration-script-runner.github.io/msr-firebase/examples/)
 
 ## How to obtain Service Account Key
 
