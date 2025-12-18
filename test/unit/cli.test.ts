@@ -1,0 +1,94 @@
+import { expect } from "chai";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+describe("CLI", () => {
+    describe("cli.ts file", () => {
+        it("should exist and be readable", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.be.a("string");
+            expect(content.length).to.be.greaterThan(0);
+        });
+
+        it("should have shebang for executable", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.match(/^#!\/usr\/bin\/env node/);
+        });
+
+        it("should import createCLI from core", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("import { createCLI }");
+            expect(content).to.include("@migration-script-runner/core");
+        });
+
+        it("should import FirebaseRunner", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("FirebaseRunner");
+        });
+
+        it("should call program.parse", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("program.parse(process.argv)");
+        });
+    });
+
+    describe("package.json configuration", () => {
+        it("should have bin entry for msr-firebase", () => {
+            const packagePath = join(__dirname, "../../package.json");
+            const packageJson = JSON.parse(readFileSync(packagePath, "utf-8"));
+
+            expect(packageJson.bin).to.be.an("object");
+            expect(packageJson.bin["msr-firebase"]).to.equal("./dist/src/cli.js");
+        });
+
+        it("should have correct main entry point", () => {
+            const packagePath = join(__dirname, "../../package.json");
+            const packageJson = JSON.parse(readFileSync(packagePath, "utf-8"));
+
+            expect(packageJson.main).to.equal("dist/index.js");
+        });
+
+        it("should have version field", () => {
+            const packagePath = join(__dirname, "../../package.json");
+            const packageJson = JSON.parse(readFileSync(packagePath, "utf-8"));
+
+            expect(packageJson.version).to.be.a("string");
+            expect(packageJson.version).to.match(/^\d+\.\d+\.\d+$/);
+        });
+    });
+
+    describe("CLI commands", () => {
+        it("should define firebase:info command", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include(".command('firebase:info')");
+            expect(content).to.include("Show Firebase connection information");
+        });
+
+        it("should define firebase:test-connection command", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include(".command('firebase:test-connection')");
+            expect(content).to.include("Test Firebase database connection");
+        });
+
+        it("should define firebase:nodes command", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include(".command('firebase:nodes')");
+            expect(content).to.include("List all root nodes");
+        });
+
+        it("should define firebase:backup-nodes command", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include(".command('firebase:backup-nodes')");
+            expect(content).to.include("Backup specific Firebase nodes");
+        });
+    });
+});
