@@ -16,9 +16,18 @@ import { IFirebaseDB } from './interface';
  * await runner.migrate();
  * ```
  */
-export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB> {
+export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler> {
     constructor({ handler, config }: { handler: FirebaseHandler; config: Config }) {
         super({ handler, config });
+    }
+
+    /**
+     * Gets the Firebase handler instance.
+     *
+     * @returns FirebaseHandler instance
+     */
+    getHandler(): FirebaseHandler {
+        return this.handler;
     }
 
     /**
@@ -27,11 +36,10 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB> {
      * @returns Connection details including database URL and shift path
      */
     getConnectionInfo(): { databaseUrl?: string; shift?: string; tableName: string } {
-        const handler = this.getHandler() as FirebaseHandler;
         return {
-            databaseUrl: handler.cfg.databaseUrl,
-            shift: handler.cfg.shift,
-            tableName: handler.cfg.tableName,
+            databaseUrl: this.handler.cfg.databaseUrl,
+            shift: this.handler.cfg.shift,
+            tableName: this.handler.cfg.tableName,
         };
     }
 
@@ -41,8 +49,7 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB> {
      * @returns Firebase database reference
      */
     getDatabase() {
-        const handler = this.getHandler();
-        return handler.db.database;
+        return this.handler.db.database;
     }
 
     /**
@@ -57,9 +64,8 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB> {
      * ```
      */
     async listNodes(): Promise<string[]> {
-        const handler = this.getHandler();
-        const root = handler.cfg.shift || '/';
-        const snapshot = await handler.db.database.ref(root).once('value');
+        const root = this.handler.cfg.shift || '/';
+        const snapshot = await this.handler.db.database.ref(root).once('value');
 
         if (!snapshot.exists()) {
             return [];
@@ -86,12 +92,11 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB> {
      * ```
      */
     async backupNodes(nodes: string[]): Promise<Record<string, unknown>> {
-        const handler = this.getHandler();
         const backup: Record<string, unknown> = {};
 
         for (const node of nodes) {
-            const path = handler.cfg.buildPath(node);
-            const snapshot = await handler.db.database.ref(path).once('value');
+            const path = this.handler.cfg.buildPath(node);
+            const snapshot = await this.handler.db.database.ref(path).once('value');
 
             if (snapshot.exists()) {
                 backup[node] = snapshot.val();
@@ -101,14 +106,5 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB> {
         }
 
         return backup;
-    }
-
-    /**
-     * Gets the Firebase handler instance.
-     *
-     * @returns FirebaseHandler instance
-     */
-    private getHandler(): FirebaseHandler {
-        return this['handler'] as FirebaseHandler;
     }
 }

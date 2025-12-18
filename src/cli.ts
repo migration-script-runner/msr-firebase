@@ -82,7 +82,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
                 try {
                     const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
                     const runner = await runnerPromise;
-                    const firebaseDb = runner['getHandler']().db;
+                    const firebaseDb = runner.getHandler().db;
                     const isConnected = await firebaseDb.checkConnection();
 
                     if (isConnected) {
