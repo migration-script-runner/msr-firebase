@@ -4,6 +4,9 @@
   "description": "Migration Script Runner for Firebase Realtime Database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "msr-firebase": "./dist/src/cli.js"
+  },
   "files": [
     "/dist"
   ],
