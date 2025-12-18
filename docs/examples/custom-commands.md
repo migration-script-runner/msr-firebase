@@ -21,91 +21,67 @@ Examples of creating custom migration commands and scripts.
 
 ## Custom Migration Script
 
-Create a custom script with specific behavior:
+Create a custom script with logging:
 
 ```typescript
-// scripts/migrate-with-notification.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+// scripts/migrate-with-logging.ts
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-// Custom notification function
-async function sendNotification(message: string) {
-  // Send to Slack, email, etc.
-  console.log('📧 Notification:', message);
-}
-
-async function migrateWithNotification() {
-  admin.initializeApp({
-    credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY!),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
-
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations'
-  });
+async function migrateWithLogging() {
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   try {
-    await sendNotification('Starting database migrations...');
+    console.log('🚀 Starting database migrations...');
+    console.log(`   Database: ${config.databaseUrl}`);
+    console.log(`   Migrations: ${config.folder}`);
+
+    const handler = await FirebaseHandler.getInstance(config);
+    const runner = new FirebaseRunner({ handler, config });
 
     const result = await runner.migrate();
 
-    const message = `✓ Successfully applied ${result.appliedMigrations.length} migrations:\n` +
-      result.appliedMigrations.map(m => `  - ${m.name}`).join('\n');
-
-    await sendNotification(message);
+    console.log(`\n✓ Successfully applied ${result.executed.length} migrations`);
+    result.executed.forEach(m => {
+      console.log(`  ✓ ${m.name} (${m.checksum})`);
+    });
 
     return 0;
   } catch (error) {
-    await sendNotification(`✗ Migration failed: ${error}`);
+    console.error('\n✗ Migration failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
-migrateWithNotification()
+migrateWithLogging()
   .then(code => process.exit(code));
 ```
 
-## Migration with Validation
+## Safe Migration with Backup
 
-Custom script with pre-flight checks:
+Create backups before migrating:
 
 ```typescript
 // scripts/safe-migrate.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import * as path from 'path';
 
 async function safeMigrate() {
-  admin.initializeApp({
-    credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY!),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations',
-    config: {
-      rollbackStrategy: 'backup',
-      validateChecksums: true
-    }
-  });
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   try {
-    // Step 1: Validate
-    console.log('1. Validating migrations...');
-    const validation = await runner.validate();
-
-    if (!validation.valid) {
-      console.error('✗ Validation failed:');
-      validation.errors.forEach(e => console.error(`  - ${e.message}`));
-      return 1;
-    }
-    console.log('✓ Validation passed');
-
-    // Step 2: List pending
-    console.log('\n2. Checking pending migrations...');
+    // Step 1: Check pending migrations
+    console.log('1. Checking pending migrations...');
     const statuses = await runner.list();
     const pending = statuses.filter(s => s.status === 'pending');
 
@@ -117,23 +93,22 @@ async function safeMigrate() {
     console.log(`Found ${pending.length} pending migrations:`);
     pending.forEach(m => console.log(`  - ${m.name}`));
 
-    // Step 3: Backup
-    console.log('\n3. Creating backup...');
-    const backup = await runner.backup();
-    console.log(`✓ Backup created: ${backup.backupId}`);
+    // Step 2: Create backup
+    console.log('\n2. Creating backup...');
+    const backupPath = await runner.backup();
+    console.log(`✓ Backup created: ${backupPath}`);
 
-    // Step 4: Migrate
-    console.log('\n4. Applying migrations...');
+    // Step 3: Apply migrations
+    console.log('\n3. Applying migrations...');
     const result = await runner.migrate();
 
-    console.log(`✓ Successfully applied ${result.appliedMigrations.length} migrations`);
+    console.log(`✓ Successfully applied ${result.executed.length} migrations`);
 
     return 0;
   } catch (error) {
     console.error('✗ Migration failed:', error);
+    console.error('   You can restore from backup if needed.');
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
@@ -141,61 +116,102 @@ safeMigrate()
   .then(code => process.exit(code));
 ```
 
-## Selective Migration
+## List Firebase Nodes
 
-Migrate only specific migrations:
+Custom command to list all root nodes:
 
 ```typescript
-// scripts/migrate-specific.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+// scripts/list-nodes.ts
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-async function migrateSpecific(timestamps: number[]) {
-  admin.initializeApp({
-    credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY!),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
+async function listFirebaseNodes() {
+  const config = new AppConfig();
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  config.shift = process.env.FIREBASE_SHIFT || '/';
 
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations'
-  });
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   try {
-    const statuses = await runner.list();
+    const nodes = await runner.listNodes();
 
-    // Filter to only specified migrations
-    const toMigrate = statuses.filter(s =>
-      timestamps.includes(s.timestamp) && s.status === 'pending'
-    );
-
-    if (toMigrate.length === 0) {
-      console.log('No matching pending migrations found');
+    if (nodes.length === 0) {
+      console.log('No nodes found in database');
       return 0;
     }
 
-    console.log('Migrations to apply:');
-    toMigrate.forEach(m => console.log(`  - ${m.name}`));
-
-    // Migrate to each timestamp
-    for (const migration of toMigrate) {
-      console.log(`\nApplying: ${migration.name}...`);
-      await runner.migrate({ to: migration.timestamp });
-      console.log('✓ Done');
-    }
+    console.log(`\nFirebase nodes at ${config.shift}:`);
+    console.log('─'.repeat(40));
+    nodes.forEach(node => {
+      console.log(`  📁 ${node}`);
+    });
+    console.log(`\nTotal: ${nodes.length} nodes`);
 
     return 0;
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('Failed to list nodes:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
-// Usage: ts-node scripts/migrate-specific.ts 1234567890 1234567891
-const timestamps = process.argv.slice(2).map(Number);
-migrateSpecific(timestamps)
+listFirebaseNodes()
+  .then(code => process.exit(code));
+```
+
+## Backup Specific Nodes
+
+Backup only certain Firebase nodes:
+
+```typescript
+// scripts/backup-nodes.ts
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import * as fs from 'fs';
+import * as path from 'path';
+
+async function backupSpecificNodes(nodeNames: string[]) {
+  const config = new AppConfig();
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  config.shift = process.env.FIREBASE_SHIFT;
+
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
+
+  try {
+    console.log(`Backing up nodes: ${nodeNames.join(', ')}`);
+
+    const backup = await runner.backupNodes(nodeNames);
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `backup-nodes-${timestamp}.json`;
+    const backupPath = path.join('./backups', filename);
+
+    // Ensure backups directory exists
+    if (!fs.existsSync('./backups')) {
+      fs.mkdirSync('./backups', { recursive: true });
+    }
+
+    fs.writeFileSync(backupPath, JSON.stringify(backup, null, 2));
+
+    console.log(`✓ Backup saved: ${backupPath}`);
+    console.log(`  Nodes backed up: ${Object.keys(backup).length}`);
+
+    return 0;
+  } catch (error) {
+    console.error('Backup failed:', error);
+    return 1;
+  }
+}
+
+// Usage: ts-node scripts/backup-nodes.ts users posts comments
+const nodes = process.argv.slice(2);
+if (nodes.length === 0) {
+  console.error('Usage: ts-node scripts/backup-nodes.ts <node1> <node2> ...');
+  process.exit(1);
+}
+
+backupSpecificNodes(nodes)
   .then(code => process.exit(code));
 ```
 
@@ -205,8 +221,7 @@ Prompt user for confirmation:
 
 ```typescript
 // scripts/interactive-migrate.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import * as readline from 'readline';
 
 function askQuestion(question: string): Promise<string> {
@@ -224,15 +239,14 @@ function askQuestion(question: string): Promise<string> {
 }
 
 async function interactiveMigrate() {
-  admin.initializeApp({
-    credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY!),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations'
-  });
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   try {
     // Show pending migrations
@@ -261,14 +275,12 @@ async function interactiveMigrate() {
     console.log('\nApplying migrations...');
     const result = await runner.migrate();
 
-    console.log(`✓ Successfully applied ${result.appliedMigrations.length} migrations`);
+    console.log(`✓ Successfully applied ${result.executed.length} migrations`);
 
     return 0;
   } catch (error) {
     console.error('Migration failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
@@ -282,73 +294,43 @@ Track migration performance:
 
 ```typescript
 // scripts/migrate-with-metrics.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
-
-interface MigrationMetrics {
-  name: string;
-  duration: number;
-  success: boolean;
-}
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function migrateWithMetrics() {
-  admin.initializeApp({
-    credential: admin.credential.cert(process.env.SERVICE_ACCOUNT_KEY!),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations'
-  });
-
-  const metrics: MigrationMetrics[] = [];
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   try {
-    const statuses = await runner.list();
-    const pending = statuses.filter(s => s.status === 'pending');
+    console.log('Starting migrations...');
+    const startTime = Date.now();
 
-    for (const migration of pending) {
-      const startTime = Date.now();
+    const result = await runner.migrate();
 
-      try {
-        await runner.migrate({ to: migration.timestamp });
-
-        metrics.push({
-          name: migration.name,
-          duration: Date.now() - startTime,
-          success: true
-        });
-      } catch (error) {
-        metrics.push({
-          name: migration.name,
-          duration: Date.now() - startTime,
-          success: false
-        });
-        throw error;
-      }
-    }
+    const duration = Date.now() - startTime;
+    const avgTime = result.executed.length > 0 ? duration / result.executed.length : 0;
 
     // Print metrics
     console.log('\n📊 Migration Metrics:');
     console.log('─'.repeat(60));
-
-    metrics.forEach(m => {
-      const status = m.success ? '✓' : '✗';
-      const duration = (m.duration / 1000).toFixed(2);
-      console.log(`${status} ${m.name}: ${duration}s`);
-    });
-
-    const totalTime = metrics.reduce((sum, m) => sum + m.duration, 0);
+    console.log(`Total migrations: ${result.executed.length}`);
+    console.log(`Total time: ${(duration / 1000).toFixed(2)}s`);
+    console.log(`Average time: ${(avgTime / 1000).toFixed(2)}s per migration`);
     console.log('─'.repeat(60));
-    console.log(`Total: ${(totalTime / 1000).toFixed(2)}s`);
+
+    result.executed.forEach(m => {
+      console.log(`✓ ${m.name}`);
+    });
 
     return 0;
   } catch (error) {
     console.error('Migration failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
@@ -356,68 +338,55 @@ migrateWithMetrics()
   .then(code => process.exit(code));
 ```
 
-## Parallel Testing
+## Migration with Locking
 
-Test migrations in parallel against emulator:
+Production-safe migration with distributed locking:
 
 ```typescript
-// scripts/parallel-test.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+// scripts/migrate-production.ts
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-async function testMigration(
-  projectId: string,
-  migrationsPath: string
-): Promise<boolean> {
-  // Initialize separate app for this test
-  const app = admin.initializeApp(
-    {
-      projectId,
-      databaseURL: `http://localhost:9000?ns=${projectId}`
-    },
-    projectId // Unique app name
-  );
+async function migrateProduction() {
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const runner = new FirebaseRunner({
-    db: app.database(),
-    migrationsPath
-  });
+  // Enable locking for production
+  config.locking = {
+    enabled: true,
+    timeout: 600000,     // 10 minutes
+    retryAttempts: 5,
+    retryDelay: 10000    // 10 seconds
+  };
 
   try {
-    await runner.migrate();
-    return true;
+    console.log('🔒 Production migration with locking enabled');
+    console.log(`   Timeout: ${config.locking.timeout}ms`);
+    console.log(`   Retry attempts: ${config.locking.retryAttempts}`);
+
+    const handler = await FirebaseHandler.getInstance(config);
+    const runner = new FirebaseRunner({ handler, config });
+
+    const result = await runner.migrate();
+
+    console.log(`\n✓ Successfully applied ${result.executed.length} migrations`);
+    return 0;
   } catch (error) {
-    console.error(`Test failed for ${projectId}:`, error);
-    return false;
-  } finally {
-    await app.delete();
+    if (error.message && error.message.includes('lock')) {
+      console.error('\n✗ Could not acquire migration lock');
+      console.error('   Another migration may be running');
+      console.error('   Check status: npx msr-firebase lock:status');
+      console.error('   Force release: npx msr-firebase lock:release --force');
+    } else {
+      console.error('\n✗ Migration failed:', error);
+    }
+    return 1;
   }
 }
 
-async function parallelTest() {
-  process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-
-  const testCases = [
-    { projectId: 'test-1', path: './migrations' },
-    { projectId: 'test-2', path: './migrations' },
-    { projectId: 'test-3', path: './migrations' }
-  ];
-
-  console.log(`Running ${testCases.length} parallel tests...`);
-
-  const results = await Promise.all(
-    testCases.map(tc => testMigration(tc.projectId, tc.path))
-  );
-
-  const passed = results.filter(r => r).length;
-  const failed = results.length - passed;
-
-  console.log(`\nResults: ${passed} passed, ${failed} failed`);
-
-  return failed === 0 ? 0 : 1;
-}
-
-parallelTest()
+migrateProduction()
   .then(code => process.exit(code));
 ```
 
@@ -426,12 +395,13 @@ parallelTest()
 ```json
 {
   "scripts": {
-    "migrate": "ts-node scripts/migrate-with-notification.ts",
+    "migrate": "ts-node scripts/migrate-with-logging.ts",
     "migrate:safe": "ts-node scripts/safe-migrate.ts",
-    "migrate:specific": "ts-node scripts/migrate-specific.ts",
     "migrate:interactive": "ts-node scripts/interactive-migrate.ts",
     "migrate:metrics": "ts-node scripts/migrate-with-metrics.ts",
-    "test:parallel": "ts-node scripts/parallel-test.ts"
+    "migrate:prod": "ts-node scripts/migrate-production.ts",
+    "nodes:list": "ts-node scripts/list-nodes.ts",
+    "nodes:backup": "ts-node scripts/backup-nodes.ts"
   }
 }
 ```
@@ -439,20 +409,23 @@ parallelTest()
 ## Usage
 
 ```bash
-# Safe migration with validation
+# Safe migration with backup
 npm run migrate:safe
 
 # Interactive migration
 npm run migrate:interactive
 
-# Migrate specific migrations
-npm run migrate:specific 1234567890 1234567891
-
 # Migration with performance metrics
 npm run migrate:metrics
 
-# Parallel testing
-npm run test:parallel
+# Production migration with locking
+npm run migrate:prod
+
+# List Firebase nodes
+npm run nodes:list
+
+# Backup specific nodes
+npm run nodes:backup users posts comments
 ```
 
 ## See Also
@@ -460,3 +433,4 @@ npm run test:parallel
 - [Basic Usage](basic-usage) - Simple examples
 - [CLI Examples](with-cli) - CLI usage
 - [Writing Migrations](../guides/writing-migrations) - Migration patterns
+- [Migration Locking](../guides/migration-locking) - Production deployments

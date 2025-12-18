@@ -75,46 +75,45 @@ firebase emulators:start --only database
 
 ### Configure for Emulator
 
-```typescript
-// config/emulator.ts
-import * as admin from 'firebase-admin';
+Create environment configuration:
 
-export function initializeEmulator() {
-  // Set emulator host
-  process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-
-  admin.initializeApp({
-    projectId: 'demo-project',
-    databaseURL: 'http://localhost:9000?ns=demo-project'
-  });
-
-  return admin.database();
-}
+```bash
+# .env.emulator
+FIREBASE_DATABASE_URL=http://localhost:9000?ns=demo-project
+GOOGLE_APPLICATION_CREDENTIALS=
+FIREBASE_DATABASE_EMULATOR_HOST=localhost:9000
+NODE_ENV=development
 ```
 
 ### Run Migrations Against Emulator
 
 ```typescript
 // scripts/migrate-emulator.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import { initializeEmulator } from '../config/emulator';
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function migrateEmulator() {
-  const db = initializeEmulator();
+  // Set emulator host
+  process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  const runner = new FirebaseRunner({
-    db,
-    migrationsPath: './migrations'
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = 'http://localhost:9000?ns=demo-project';
+  // No credentials needed for emulator
+  config.applicationCredentials = undefined;
 
   try {
     console.log('Running migrations against emulator...');
 
+    const handler = await FirebaseHandler.getInstance(config);
+    const runner = new FirebaseRunner({ handler, config });
+
     const result = await runner.migrate();
 
-    console.log(`✓ Applied ${result.appliedMigrations.length} migrations`);
+    console.log(`✓ Applied ${result.executed.length} migrations`);
 
     // Verify data
+    const db = handler.db.database;
     const snapshot = await db.ref().once('value');
     console.log('\nDatabase contents:');
     console.log(JSON.stringify(snapshot.val(), null, 2));
@@ -123,8 +122,6 @@ async function migrateEmulator() {
   } catch (error) {
     console.error('Migration failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
@@ -138,23 +135,23 @@ migrateEmulator()
 
 ```typescript
 // test/setup.ts
-import * as admin from 'firebase-admin';
+import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 
-export function setupTestDatabase() {
+export async function setupTestEnvironment() {
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  admin.initializeApp({
-    projectId: 'test-project',
-    databaseURL: 'http://localhost:9000?ns=test-project'
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = `http://localhost:9000?ns=test-${Date.now()}`;
 
-  return admin.database();
+  const handler = await FirebaseHandler.getInstance(config);
+  return { handler, config };
 }
 
-export async function cleanupTestDatabase() {
-  const db = admin.database();
+export async function cleanupTestDatabase(handler: FirebaseHandler) {
+  const db = handler.db.database;
   await db.ref().set(null);
-  await admin.app().delete();
 }
 ```
 
@@ -164,39 +161,39 @@ export async function cleanupTestDatabase() {
 // test/migrations.test.ts
 import { expect } from 'chai';
 import { FirebaseRunner } from '@migration-script-runner/firebase';
-import { setupTestDatabase, cleanupTestDatabase } from './setup';
+import { setupTestEnvironment, cleanupTestDatabase } from './setup';
 
 describe('Migrations', () => {
-  let db: admin.database.Database;
-  let runner: FirebaseRunner;
+  let handler;
+  let config;
+  let runner;
 
-  before(() => {
-    db = setupTestDatabase();
-    runner = new FirebaseRunner({
-      db,
-      migrationsPath: './migrations'
-    });
+  before(async () => {
+    const env = await setupTestEnvironment();
+    handler = env.handler;
+    config = env.config;
+    runner = new FirebaseRunner({ handler, config });
   });
 
   afterEach(async () => {
-    await db.ref().set(null);
+    await handler.db.database.ref().set(null);
   });
 
   after(async () => {
-    await cleanupTestDatabase();
+    await cleanupTestDatabase(handler);
   });
 
   it('should apply all migrations', async () => {
     const result = await runner.migrate();
 
-    expect(result.status).to.equal('success');
-    expect(result.appliedMigrations.length).to.be.greaterThan(0);
+    expect(result.success).to.be.true;
+    expect(result.executed.length).to.be.greaterThan(0);
   });
 
   it('should create users', async () => {
     await runner.migrate();
 
-    const snapshot = await db.ref('users').once('value');
+    const snapshot = await handler.db.database.ref('users').once('value');
     expect(snapshot.exists()).to.be.true;
   });
 
@@ -204,7 +201,7 @@ describe('Migrations', () => {
     await runner.migrate();
     await runner.down();
 
-    const snapshot = await db.ref('users').once('value');
+    const snapshot = await handler.db.database.ref('users').once('value');
     expect(snapshot.exists()).to.be.false;
   });
 });
@@ -219,10 +216,9 @@ Add to `package.json`:
 ```json
 {
   "scripts": {
-    "test": "firebase emulators:exec --only database 'npm run test:mocha'",
+    "test:emulator": "firebase emulators:exec --only database 'npm run test:mocha'",
     "test:mocha": "mocha --require ts-node/register 'test/**/*.test.ts'",
-    "test:watch": "firebase emulators:exec --only database 'npm run test:mocha:watch'",
-    "test:mocha:watch": "mocha --require ts-node/register --watch 'test/**/*.test.ts'"
+    "emulator:start": "firebase emulators:start --only database"
   }
 }
 ```
@@ -231,7 +227,7 @@ Add to `package.json`:
 
 ```bash
 # Starts emulator, runs tests, stops emulator
-npm test
+npm run test:emulator
 ```
 
 ## Emulator with Seeded Data
@@ -264,18 +260,17 @@ npm test
 
 ```typescript
 // scripts/seed-emulator.ts
-import * as admin from 'firebase-admin';
+import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 import { readFileSync } from 'fs';
 
 async function seedEmulator() {
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  admin.initializeApp({
-    projectId: 'demo-project',
-    databaseURL: 'http://localhost:9000?ns=demo-project'
-  });
+  const config = new AppConfig();
+  config.databaseUrl = 'http://localhost:9000?ns=demo-project';
 
-  const db = admin.database();
+  const handler = await FirebaseHandler.getInstance(config);
+  const db = handler.db.database;
 
   // Load seed data
   const seedData = JSON.parse(
@@ -285,8 +280,6 @@ async function seedEmulator() {
   await db.ref().set(seedData);
 
   console.log('✓ Seeded emulator with test data');
-
-  await admin.app().delete();
 }
 
 seedEmulator();
@@ -311,20 +304,21 @@ ts-node scripts/migrate-emulator.ts
 
 ```typescript
 // scripts/test-full-cycle.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import { readFileSync } from 'fs';
 
 async function testFullCycle() {
   // Setup
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  admin.initializeApp({
-    projectId: 'test-project',
-    databaseURL: 'http://localhost:9000?ns=test-project'
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = 'http://localhost:9000?ns=test-project';
 
-  const db = admin.database();
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
+  const db = handler.db.database;
 
   try {
     // 1. Seed initial data
@@ -337,12 +331,8 @@ async function testFullCycle() {
 
     // 2. Run migrations
     console.log('\n2. Running migrations...');
-    const runner = new FirebaseRunner({
-      db,
-      migrationsPath: './migrations'
-    });
     const result = await runner.migrate();
-    console.log(`✓ Applied ${result.appliedMigrations.length} migrations`);
+    console.log(`✓ Applied ${result.executed.length} migrations`);
 
     // 3. Verify data
     console.log('\n3. Verifying data...');
@@ -369,8 +359,6 @@ async function testFullCycle() {
   } catch (error) {
     console.error('\n✗ Test failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
@@ -392,21 +380,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Firebase Tools
-        run: npm install -g firebase-tools
+      - name: Build project
+        run: npm run build
 
       - name: Run tests with emulator
-        run: npm test
+        run: npm run test:emulator
 ```
 
 ## Docker with Emulator
@@ -414,7 +408,10 @@ jobs:
 ### Dockerfile
 
 ```dockerfile
-FROM node:18
+FROM node:20
+
+# Install Java 21 for Firebase Emulator
+RUN apt-get update && apt-get install -y openjdk-21-jre-headless
 
 # Install Firebase Tools
 RUN npm install -g firebase-tools
@@ -428,13 +425,16 @@ RUN npm ci
 # Copy code
 COPY . .
 
+# Build
+RUN npm run build
+
 # Expose emulator ports
 EXPOSE 9000 4000
 
 # Start emulator and run tests
 CMD firebase emulators:start --only database & \
     sleep 5 && \
-    npm test
+    npm run test:emulator
 ```
 
 ### Build and Run
@@ -462,7 +462,7 @@ firebase emulators:start --only database
 # Export all data
 firebase emulators:export ./emulator-data
 
-# Import data
+# Import data on next start
 firebase emulators:start --import ./emulator-data
 ```
 
@@ -482,7 +482,7 @@ if (isDevelopment) {
 
 ```typescript
 afterEach(async () => {
-  await db.ref().set(null);
+  await handler.db.database.ref().set(null);
 });
 ```
 
@@ -490,20 +490,31 @@ afterEach(async () => {
 
 ```typescript
 const testId = `test-${Date.now()}`;
-admin.initializeApp({
-  projectId: testId,
-  databaseURL: `http://localhost:9000?ns=${testId}`
-});
+const config = new AppConfig();
+config.databaseUrl = `http://localhost:9000?ns=${testId}`;
 ```
 
-### 4. Test Against Production-Like Data
+### 4. Environment-Specific Configuration
 
-```bash
-# Export production data (anonymized)
-firebase database:get / > prod-data.json
+```typescript
+// config/database.ts
+import { AppConfig } from '@migration-script-runner/firebase';
 
-# Import to emulator
-ts-node scripts/import-to-emulator.ts prod-data.json
+export function getConfig(): AppConfig {
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+
+  if (process.env.NODE_ENV === 'development') {
+    process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
+    config.databaseUrl = 'http://localhost:9000?ns=dev-project';
+  } else {
+    config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+    config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  }
+
+  return config;
+}
 ```
 
 ## Troubleshooting
@@ -527,8 +538,14 @@ lsof -i :9000
 # Kill process
 kill -9 <PID>
 
-# Or use different port
-firebase emulators:start --only database --config firebase.json
+# Or use different port in firebase.json
+{
+  "emulators": {
+    "database": {
+      "port": 9001
+    }
+  }
+}
 ```
 
 ### Slow Tests
@@ -537,10 +554,24 @@ firebase emulators:start --only database --config firebase.json
 // Reduce timeout for faster failure
 this.timeout(5000);
 
-// Use beforeAll instead of beforeEach
+// Use before() instead of beforeEach() for setup
 before(async () => {
   // Setup once
 });
+```
+
+### Java Not Found
+
+```bash
+# Install Java 21 (required for Firebase Emulator)
+# macOS
+brew install openjdk@21
+
+# Ubuntu
+sudo apt-get install openjdk-21-jre-headless
+
+# Verify
+java -version
 ```
 
 ## See Also
@@ -548,3 +579,4 @@ before(async () => {
 - [Testing Guide](../guides/testing) - Testing strategies
 - [Basic Usage](basic-usage) - Simple examples
 - [Custom Commands](custom-commands) - Custom scripts
+- [Getting Started](../getting-started) - Quick start guide

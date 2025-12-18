@@ -24,31 +24,32 @@ Simple examples to get started with MSR Firebase.
 The simplest possible setup:
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-// Initialize Firebase
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
+async function main() {
+  // Configure
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = 'https://your-project.firebaseio.com';
+  config.applicationCredentials = './serviceAccountKey.json';
 
-// Create runner
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations'
-});
+  // Initialize handler and runner
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
-// Run migrations
-runner.migrate()
-  .then(result => {
-    console.log('Success!', result.appliedMigrations);
+  // Run migrations
+  try {
+    const result = await runner.migrate();
+    console.log('Success!', result.executed.length, 'migrations applied');
     process.exit(0);
-  })
-  .catch(error => {
+  } catch (error) {
     console.error('Failed:', error);
     process.exit(1);
-  });
+  }
+}
+
+main();
 ```
 
 ## Complete Example
@@ -56,42 +57,30 @@ runner.migrate()
 Full example with error handling and configuration:
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
-import { config } from 'dotenv';
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { config as dotenvConfig } from 'dotenv';
 
 // Load environment variables
-config();
-
-// Initialize Firebase
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-  }),
-  databaseURL: process.env.FIREBASE_DATABASE_URL
-});
+dotenvConfig();
 
 async function runMigrations() {
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations',
-    config: {
-      rollbackStrategy: 'backup',
-      validateChecksums: true,
-      backupPath: './backups'
-    }
-  });
+  // Configure MSR Firebase
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   try {
-    console.log('Running migrations...');
+    console.log('Initializing Firebase handler...');
+    const handler = await FirebaseHandler.getInstance(config);
+    const runner = new FirebaseRunner({ handler, config });
 
-    // Apply migrations
+    console.log('Running migrations...');
     const result = await runner.migrate();
 
-    console.log(`✓ Applied ${result.appliedMigrations.length} migrations`);
-    result.appliedMigrations.forEach(m => {
+    console.log(`✓ Applied ${result.executed.length} migrations`);
+    result.executed.forEach(m => {
       console.log(`  - ${m.name}`);
     });
 
@@ -99,13 +88,21 @@ async function runMigrations() {
   } catch (error) {
     console.error('Migration failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
 runMigrations()
   .then(code => process.exit(code));
+```
+
+## Environment Variables
+
+Create a `.env` file:
+
+```bash
+FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+NODE_ENV=development
 ```
 
 ## Simple Migration File
@@ -145,19 +142,17 @@ export const down: IMigrationScript<admin.database.Database>['down'] = async (db
 Check migration status:
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
-
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function listMigrations() {
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations'
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   const statuses = await runner.list();
 
@@ -165,9 +160,9 @@ async function listMigrations() {
   console.log('─'.repeat(60));
 
   statuses.forEach(status => {
-    const icon = status.status === 'applied' ? '✓' : '○';
-    const date = status.appliedAt
-      ? status.appliedAt.toISOString()
+    const icon = status.status === 'executed' ? '✓' : '○';
+    const date = status.executedAt
+      ? new Date(status.executedAt).toISOString()
       : 'Not applied';
 
     console.log(`${icon} ${status.name}`);
@@ -175,8 +170,6 @@ async function listMigrations() {
     console.log(`  Applied: ${date}`);
     console.log();
   });
-
-  await admin.app().delete();
 }
 
 listMigrations();
@@ -187,83 +180,33 @@ listMigrations();
 Roll back the last migration:
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
-
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function rollback() {
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations'
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   try {
     console.log('Rolling back last migration...');
 
     const result = await runner.down();
 
-    console.log(`✓ Rolled back ${result.appliedMigrations.length} migrations`);
+    console.log(`✓ Rolled back ${result.executed.length} migrations`);
 
     return 0;
   } catch (error) {
     console.error('Rollback failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
 rollback()
-  .then(code => process.exit(code));
-```
-
-## Validation Example
-
-Validate migrations before running:
-
-```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
-
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
-
-async function validateMigrations() {
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations',
-    config: {
-      validateChecksums: true
-    }
-  });
-
-  const validation = await runner.validate();
-
-  if (validation.valid) {
-    console.log('✓ All migrations are valid');
-  } else {
-    console.error('✗ Validation failed:');
-    validation.errors.forEach(error => {
-      console.error(`  - ${error.type}: ${error.message}`);
-    });
-  }
-
-  validation.warnings.forEach(warning => {
-    console.warn(`  ⚠ ${warning.type}: ${warning.message}`);
-  });
-
-  await admin.app().delete();
-
-  return validation.valid ? 0 : 1;
-}
-
-validateMigrations()
   .then(code => process.exit(code));
 ```
 
@@ -272,48 +215,82 @@ validateMigrations()
 Create and restore backups:
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
-
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function backupAndRestore() {
-  const runner = new FirebaseRunner({
-    db: admin.database(),
-    migrationsPath: './migrations',
-    config: {
-      backupPath: './backups'
-    }
-  });
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
 
   try {
     // Create backup
     console.log('Creating backup...');
-    const backup = await runner.backup();
-    console.log('✓ Backup created:', backup.backupId);
-    console.log('  Location:', backup.path);
-    console.log('  Size:', (backup.size / 1024).toFixed(2), 'KB');
+    const backupPath = await runner.backup();
+    console.log('✓ Backup created:', backupPath);
 
     // Run migrations
     console.log('\nRunning migrations...');
     await runner.migrate();
 
     // Optional: Restore from backup
-    // await runner.restore(backup.backupId);
+    // await runner.restore(backupPath);
 
     return 0;
   } catch (error) {
     console.error('Operation failed:', error);
     return 1;
-  } finally {
-    await admin.app().delete();
   }
 }
 
 backupAndRestore()
+  .then(code => process.exit(code));
+```
+
+## Configuration with Locking
+
+Enable migration locking for production:
+
+```typescript
+import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
+async function runWithLocking() {
+  const config = new AppConfig();
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  // Enable locking for production
+  config.locking = {
+    enabled: process.env.NODE_ENV === 'production',
+    timeout: 600000,  // 10 minutes
+    retryAttempts: 3,
+    retryDelay: 5000   // 5 seconds
+  };
+
+  const handler = await FirebaseHandler.getInstance(config);
+  const runner = new FirebaseRunner({ handler, config });
+
+  try {
+    const result = await runner.migrate();
+    console.log(`✓ Applied ${result.executed.length} migrations`);
+    return 0;
+  } catch (error) {
+    if (error.message.includes('lock')) {
+      console.error('Another migration is running. Please wait or use: npx msr-firebase lock:release --force');
+    } else {
+      console.error('Migration failed:', error);
+    }
+    return 1;
+  }
+}
+
+runWithLocking()
   .then(code => process.exit(code));
 ```
 
@@ -357,8 +334,17 @@ Useful npm scripts:
     "migrate": "ts-node -r dotenv/config src/migrate.ts",
     "migrate:down": "ts-node -r dotenv/config src/rollback.ts",
     "migrate:list": "ts-node -r dotenv/config src/list.ts",
-    "migrate:validate": "ts-node -r dotenv/config src/validate.ts",
     "migrate:backup": "ts-node -r dotenv/config src/backup.ts"
+  },
+  "dependencies": {
+    "@migration-script-runner/firebase": "^0.2.0",
+    "firebase-admin": "^11.11.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }
 ```
