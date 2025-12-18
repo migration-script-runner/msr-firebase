@@ -30,6 +30,9 @@
     "emulator:start": "firebase emulators:start --only database",
     "lint": "eslint ./src/",
     "lint:report": "eslint ./src/ --format junit --output-file ./reports/eslint.xml",
+    "docs:install": "cd docs && bundle install",
+    "docs:serve": "cd docs && bundle exec jekyll serve",
+    "docs:build": "cd docs && bundle exec jekyll build",
     "prepare": "husky"
   },
   "keywords": [

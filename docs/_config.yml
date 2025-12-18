@@ -1,0 +1,106 @@
+# Jekyll configuration for GitHub Pages
+# Just the Docs theme documentation: https://just-the-docs.github.io/just-the-docs/
+
+# Site settings
+title: MSR Firebase
+description: Firebase adapter for Migration Script Runner - Database migrations for Firebase Realtime Database
+baseurl: "/msr-firebase"
+url: "https://migration-script-runner.github.io"
+
+# Theme
+remote_theme: just-the-docs/just-the-docs
+
+# Color scheme
+color_scheme: nil
+
+# Logo - displays next to title
+# Custom _includes/title.html overrides default rendering to show both logo and title
+logo: "https://avatars.githubusercontent.com/u/150583924?s=200&v=4"
+
+# Custom CSS
+custom_css:
+  - assets/css/custom.css
+
+# Aux links for the upper right navigation
+aux_links:
+  "MSR Firebase on GitHub":
+    - "//github.com/migration-script-runner/msr-firebase"
+  "MSR Firebase on npm":
+    - "//npmjs.org/package/@migration-script-runner/firebase"
+  "MSR Core Docs":
+    - "//migration-script-runner.github.io/msr-core"
+
+# Makes Aux links open in a new tab
+aux_links_new_tab: true
+
+# Back to top link
+back_to_top: true
+back_to_top_text: "Back to top"
+
+# Footer content
+footer_content: "Copyright &copy; 2023-2025 Volodymyr Lavrynovych. Part of <a href='https://migration-script-runner.github.io/msr-core'>Migration Script Runner</a> ecosystem. Distributed under the <a href='https://github.com/migration-script-runner/msr-firebase/blob/master/LICENSE'>MIT License</a>."
+
+# Footer last edited timestamp
+last_edit_timestamp: true
+last_edit_time_format: "%b %e %Y at %I:%M %p"
+
+# Search
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false
+
+# Mermaid diagrams
+mermaid:
+  version: "9.1.3"
+
+# Code copy button
+enable_copy_code_button: true
+
+# Navigation structure
+nav_sort: order
+
+# Callouts (for tips, warnings, etc.)
+callouts_level: loud
+callouts:
+  warning:
+    title: Warning
+    color: red
+  important:
+    title: Important
+    color: purple
+  note:
+    title: Note
+    color: blue
+  tip:
+    title: Tip
+    color: green
+
+# Heading anchors
+heading_anchors: true
+
+# kramdown settings
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+# Plugins
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-remote-theme
+  - jekyll-include-cache
+
+# Exclude from processing
+exclude:
+  - node_modules/
+  - "*.json"
+  - "*.yml"
+  - Gemfile
+  - Gemfile.lock
