@@ -22,15 +22,6 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
     }
 
     /**
-     * Gets the Firebase handler instance.
-     *
-     * @returns FirebaseHandler instance
-     */
-    getHandler(): FirebaseHandler {
-        return this.handler;
-    }
-
-    /**
      * Gets Firebase connection information.
      *
      * @returns Connection details including database URL and shift path

@@ -23,7 +23,7 @@ Firebase Realtime Database adapter for [Migration Script Runner (MSR Core)](http
 🎉 Major upgrade with production-ready features:
 
 - 🔒 **Migration Locking** - Prevent concurrent migrations in Kubernetes, Docker, and multi-instance deployments
-- ⬆️ **MSR Core v0.8.0** - Latest core with bug fixes and improvements
+- ⬆️ **MSR Core v0.8.1** - Latest core with bug fixes, handler access API, and improved locking lifecycle
 - 🔧 **Type-Safe API** - Full TypeScript support with generic type parameters
 - 🖥️ **Lock Management CLI** - Commands for monitoring and managing migration locks
 - 📚 **Comprehensive Documentation** - 300+ line locking guide with deployment examples
@@ -223,7 +223,7 @@ Steps:
 ### What's Changed
 
 1. **Package Name**: Still `@migration-script-runner/firebase` (no change from v0.1.x)
-2. **MSR Core**: Updated from v0.7.x to v0.8.0
+2. **MSR Core**: Updated from v0.7.x to v0.8.1
 3. **New Features**: Migration locking, lock CLI commands, enhanced documentation
 
 ### Migration Steps
