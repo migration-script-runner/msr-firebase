@@ -198,9 +198,16 @@ interface ILockingService<DB> {
 ### Usage in Firebase
 
 ```typescript
-import { FirebaseHandler } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const handler = await FirebaseHandler.getInstance(config);
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 
 if (handler.lockingService) {
   const executorId = 'server-1-12345-uuid';

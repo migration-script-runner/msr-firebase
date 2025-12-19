@@ -119,35 +119,36 @@ async restore(backupId: string): Promise<RestoreResult>
 ### Basic Migration
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = 'https://your-project.firebaseio.com';
+appConfig.applicationCredentials = './serviceAccountKey.json';
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations'
-});
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Run migrations
 const result = await runner.migrate();
-console.log('Migrations applied:', result.appliedMigrations);
+console.log('Migrations applied:', result.executed);
 ```
 
-### With Configuration
+### With Optional Services
 
 ```typescript
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
-  config: {
-    rollbackStrategy: 'backup',
-    validateChecksums: true,
-    transactionEnabled: true
-  }
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { ConsoleLogger } from '@migration-script-runner/core';
+
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({
+  config: appConfig,
+  logger: new ConsoleLogger({ level: 'debug' })
 });
 
 // List all migrations

@@ -25,22 +25,21 @@ Create a custom script with logging:
 
 ```typescript
 // scripts/migrate-with-logging.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function migrateWithLogging() {
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   try {
     console.log('🚀 Starting database migrations...');
-    console.log(`   Database: ${config.databaseUrl}`);
-    console.log(`   Migrations: ${config.folder}`);
+    console.log(`   Database: ${appConfig.databaseUrl}`);
+    console.log(`   Migrations: ${appConfig.folder}`);
 
-    const handler = await FirebaseHandler.getInstance(config);
-    const runner = new FirebaseRunner({ handler, config });
+    const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
     const result = await runner.migrate();
 
@@ -66,18 +65,17 @@ Create backups before migrating:
 
 ```typescript
 // scripts/safe-migrate.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import * as path from 'path';
 
 async function safeMigrate() {
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   try {
     // Step 1: Check pending migrations
@@ -122,16 +120,17 @@ Custom command to list all root nodes:
 
 ```typescript
 // scripts/list-nodes.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function listFirebaseNodes() {
-  const config = new AppConfig();
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  config.shift = process.env.FIREBASE_SHIFT || '/';
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  appConfig.shift = process.env.FIREBASE_SHIFT || '/';
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   try {
     const nodes = await runner.listNodes();
@@ -141,7 +140,7 @@ async function listFirebaseNodes() {
       return 0;
     }
 
-    console.log(`\nFirebase nodes at ${config.shift}:`);
+    console.log(`\nFirebase nodes at ${appConfig.shift}:`);
     console.log('─'.repeat(40));
     nodes.forEach(node => {
       console.log(`  📁 ${node}`);
@@ -165,18 +164,19 @@ Backup only certain Firebase nodes:
 
 ```typescript
 // scripts/backup-nodes.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import * as fs from 'fs';
 import * as path from 'path';
 
 async function backupSpecificNodes(nodeNames: string[]) {
-  const config = new AppConfig();
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  config.shift = process.env.FIREBASE_SHIFT;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  appConfig.shift = process.env.FIREBASE_SHIFT;
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   try {
     console.log(`Backing up nodes: ${nodeNames.join(', ')}`);
@@ -221,7 +221,7 @@ Prompt user for confirmation:
 
 ```typescript
 // scripts/interactive-migrate.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import * as readline from 'readline';
 
 function askQuestion(question: string): Promise<string> {
@@ -239,14 +239,13 @@ function askQuestion(question: string): Promise<string> {
 }
 
 async function interactiveMigrate() {
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   try {
     // Show pending migrations

@@ -140,17 +140,16 @@ export const down: IMigrationScript<admin.database.Database>['down'] = async (db
 Check migration status:
 
 ```typescript
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function listMigrations() {
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   const statuses = await runner.list();
 
@@ -178,17 +177,16 @@ listMigrations();
 Roll back the last migration:
 
 ```typescript
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function rollback() {
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   try {
     console.log('Rolling back last migration...');
@@ -213,17 +211,16 @@ rollback()
 Create and restore backups:
 
 ```typescript
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function backupAndRestore() {
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   try {
     // Create backup

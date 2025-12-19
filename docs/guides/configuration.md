@@ -26,23 +26,21 @@ MSR Firebase can be configured through:
 2. Environment variables
 3. Configuration files
 
-## Constructor Configuration
+## Basic Configuration
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
-  config: {
-    rollbackStrategy: 'backup',
-    validateChecksums: true,
-    transactionEnabled: true,
-    backupPath: './backups',
-    dryRun: false
-  }
-});
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+// Optional: Configure database path prefix
+appConfig.shift = '/production';
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 ```
 
 ## Configuration Properties
@@ -234,14 +232,14 @@ Load configuration:
 
 ```typescript
 import { readFileSync } from 'fs';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const config = JSON.parse(readFileSync('.msrrc.json', 'utf-8'));
+const configData = JSON.parse(readFileSync('.msrrc.json', 'utf-8'));
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: config.migrationsPath,
-  config: config
-});
+const appConfig = new AppConfig();
+Object.assign(appConfig, configData);
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 ```
 
 ## Environment-Specific Configuration
@@ -299,14 +297,15 @@ export const config = {
 ## Loading Configuration by Environment
 
 ```typescript
-const env = process.env.NODE_ENV || 'development';
-const config = require(`./config/${env}`).config;
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: config.migrationsPath,
-  config: config
-});
+const env = process.env.NODE_ENV || 'development';
+const configData = require(`./config/${env}`).config;
+
+const appConfig = new AppConfig();
+Object.assign(appConfig, configData);
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 ```
 
 ## Logging Configuration
@@ -314,15 +313,21 @@ const runner = new FirebaseRunner({
 Configure logging level:
 
 ```typescript
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import { ConsoleLogger } from '@migration-script-runner/core';
+
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
 const logger = new ConsoleLogger({
   level: 'debug' // 'error' | 'warn' | 'info' | 'debug'
 });
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
+const runner = await FirebaseRunner.getInstance({
+  config: appConfig,
   logger: logger
 });
 ```
@@ -332,6 +337,7 @@ const runner = new FirebaseRunner({
 Implement a custom logger:
 
 ```typescript
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import { ILogger } from '@migration-script-runner/core';
 
 class CustomLogger implements ILogger {
@@ -348,9 +354,14 @@ class CustomLogger implements ILogger {
   }
 }
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({
+  config: appConfig,
   logger: new CustomLogger()
 });
 ```

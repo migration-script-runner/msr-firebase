@@ -2,7 +2,6 @@
 
 import { createCLI } from '@migration-script-runner/core';
 import { FirebaseRunner } from './FirebaseRunner';
-import { FirebaseHandler } from './service/FirebaseHandler';
 import { AppConfig } from './model/AppConfig';
 import { IFirebaseDB } from './interface';
 import { version } from '../package.json';
@@ -39,16 +38,14 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
 
     // Factory function to create adapter with merged config
     createExecutor: (config) => {
-        // Initialize Firebase handler and adapter
+        // Initialize Firebase runner with merged configuration
         // Note: createCLI expects synchronous factory, but Firebase requires async connection
-        // The CLI framework will handle the promise resolution automatically
+        // Type cast is needed as workaround until MSR Core supports Promise<Executor>
+        // @see https://github.com/migration-script-runner/msr-core/issues/145
         const appConfig = new AppConfig();
         Object.assign(appConfig, config);
 
-        return (async () => {
-            const handler = await FirebaseHandler.getInstance(appConfig);
-            return new FirebaseRunner({ handler, config });
-        })() as unknown as FirebaseRunner;
+        return FirebaseRunner.getInstance({ config: appConfig }) as unknown as FirebaseRunner;
     },
 
     // Add Firebase-specific custom commands

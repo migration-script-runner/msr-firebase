@@ -92,22 +92,23 @@ export function initializeTestDatabase() {
 ### Run Migrations Against Emulator
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import { initializeTestDatabase } from './test-config';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function testMigrations() {
-  const db = initializeTestDatabase();
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = 'http://localhost:9000';  // Emulator
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  const runner = new FirebaseRunner({
-    db,
-    migrationsPath: './migrations'
-  });
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   // Run migrations
   const result = await runner.migrate();
-  console.log('Migrations applied:', result.appliedMigrations.length);
+  console.log('Migrations applied:', result.executed.length);
 
   // Verify data
+  const db = runner.getDatabase();
   const snapshot = await db.ref('users').once('value');
   console.log('Users created:', snapshot.numChildren());
 }
@@ -201,25 +202,27 @@ npm test
 ```typescript
 // test/integration/migration-flow.test.ts
 import { expect } from 'chai';
-import { FirebaseRunner } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import * as admin from 'firebase-admin';
 
 describe('Migration Flow', () => {
   let runner: FirebaseRunner;
   let db: admin.database.Database;
 
-  before(() => {
+  before(async () => {
     process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
     admin.initializeApp({
       projectId: 'test-project',
       databaseURL: 'http://localhost:9000?ns=test-project'
     });
-    db = admin.database();
 
-    runner = new FirebaseRunner({
-      db,
-      migrationsPath: './migrations'
-    });
+    const appConfig = new AppConfig();
+    appConfig.folder = './migrations';
+    appConfig.tableName = 'schema_version';
+    appConfig.databaseUrl = 'http://localhost:9000?ns=test-project';
+
+    runner = await FirebaseRunner.getInstance({ config: appConfig });
+    db = runner.getDatabase();
   });
 
   afterEach(async () => {
@@ -443,11 +446,16 @@ it('should handle 10000 records', async function() {
 ### Enable Verbose Logging
 
 ```typescript
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import { ConsoleLogger } from '@migration-script-runner/core';
 
-const runner = new FirebaseRunner({
-  db,
-  migrationsPath: './migrations',
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = 'http://localhost:9000';
+
+const runner = await FirebaseRunner.getInstance({
+  config: appConfig,
   logger: new ConsoleLogger({ level: 'debug' })
 });
 ```

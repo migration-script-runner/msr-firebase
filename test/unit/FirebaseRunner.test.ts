@@ -1,9 +1,16 @@
 import { expect } from "chai";
 import sinon from "sinon";
-import { MigrationScriptExecutor, Config } from "@migration-script-runner/core";
+import { MigrationScriptExecutor, Config, IMigrationExecutorDependencies } from "@migration-script-runner/core";
 import { FirebaseRunner } from "../../src/FirebaseRunner";
 import { FirebaseHandler } from "../../src/service/FirebaseHandler";
+import { IFirebaseDB } from "../../src/interface";
 import { database } from "firebase-admin";
+
+// Test helper to create FirebaseRunner with mocked dependencies
+// Note: Constructor is private in production, but we bypass it here for unit testing
+function createTestRunner(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler>): FirebaseRunner {
+    return Reflect.construct(FirebaseRunner, [dependencies]);
+}
 
 describe("FirebaseRunner", () => {
     const getDefaultConfig = (): Config => {
@@ -39,7 +46,7 @@ describe("FirebaseRunner", () => {
 
             const config = getDefaultConfig();
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config });
+            const runner = createTestRunner({ handler: mockHandler, config });
 
             expect(runner).to.be.instanceOf(FirebaseRunner);
             expect(runner).to.be.instanceOf(MigrationScriptExecutor);
@@ -63,7 +70,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const info = runner.getConnectionInfo();
 
             expect(info).to.deep.equal({
@@ -89,7 +96,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const info = runner.getConnectionInfo();
 
             expect(info.databaseUrl).to.be.undefined;
@@ -119,7 +126,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const db = runner.getDatabase();
 
             expect(db).to.eq(mockDatabase);
@@ -144,7 +151,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const handler = runner.getHandler();
 
             expect(handler).to.eq(mockHandler);
@@ -182,7 +189,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const nodes = await runner.listNodes();
 
             expect(nodes).to.deep.equal([]);
@@ -222,7 +229,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const nodes = await runner.listNodes();
 
             expect(nodes).to.have.lengthOf(3);
@@ -261,7 +268,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const nodes = await runner.listNodes();
 
             expect(nodes).to.deep.equal([]);
@@ -299,7 +306,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             await runner.listNodes();
 
             sinon.assert.calledWith(refStub, '/');
@@ -342,7 +349,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const backup = await runner.backupNodes(['users', 'posts']);
 
             expect(backup).to.have.property('users');
@@ -381,7 +388,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const backup = await runner.backupNodes(['nonexistent']);
 
             expect(backup).to.have.property('nonexistent');
@@ -405,7 +412,7 @@ describe("FirebaseRunner", () => {
                 getName: sinon.stub().returns("Test Handler"),
             } as unknown as FirebaseHandler;
 
-            const runner = new FirebaseRunner({ handler: mockHandler, config: getDefaultConfig() });
+            const runner = createTestRunner({ handler: mockHandler, config: getDefaultConfig() });
             const backup = await runner.backupNodes([]);
 
             expect(backup).to.deep.equal({});

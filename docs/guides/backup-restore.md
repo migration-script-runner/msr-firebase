@@ -28,15 +28,15 @@ MSR Firebase provides built-in backup and restore functionality to protect your 
 ### Using the API
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
-  config: {
-    backupPath: './backups'
-  }
-});
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Create backup
 const result = await runner.backup();
@@ -86,14 +86,15 @@ Backups are stored as JSON files:
 Configure automatic backups before migrations:
 
 ```typescript
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
-  config: {
-    rollbackStrategy: 'backup', // Auto-backup before migrations
-    backupPath: './backups'
-  }
-});
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Backup will be created automatically
 await runner.migrate();
@@ -104,10 +105,15 @@ await runner.migrate();
 ### Using the API
 
 ```typescript
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations'
-});
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Restore from backup
 await runner.restore('backup-1234567890.json');
@@ -136,16 +142,18 @@ Restoring backup...
 
 ## Rollback with Backups
 
-When using `rollbackStrategy: 'backup'`, MSR automatically creates and restores backups:
+MSR automatically creates and restores backups during migrations:
 
 ```typescript
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations',
-  config: {
-    rollbackStrategy: 'backup'
-  }
-});
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Backup is created automatically before migrating
 await runner.migrate();

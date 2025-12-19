@@ -67,7 +67,8 @@ lockingService?: ILockingService<IFirebaseDB>
 
 **Example:**
 ```typescript
-const handler = await FirebaseHandler.getInstance(config);
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 
 if (handler.lockingService) {
   const status = await handler.lockingService.getLockStatus();
@@ -102,14 +103,15 @@ static async getInstance(cfg: AppConfig): Promise<FirebaseHandler>
 ```typescript
 import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 
-const config = new AppConfig();
-config.databaseUrl = 'https://your-project.firebaseio.com';
+const appConfig = new AppConfig();
+appConfig.databaseUrl = 'https://your-project.firebaseio.com';
 config.locking = {
   enabled: true,
   timeout: 600000
 };
 
-const handler = await FirebaseHandler.getInstance(config);
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 ```
 
 ## Methods
@@ -142,13 +144,14 @@ getVersion(): string
 import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 
 // Create configuration
-const config = new AppConfig();
-config.databaseUrl = 'https://your-project.firebaseio.com';
+const appConfig = new AppConfig();
+appConfig.databaseUrl = 'https://your-project.firebaseio.com';
 config.tableName = 'schema_version';
-config.shift = 'production';
+appConfig.shift = 'production';
 
 // Create handler
-const handler = await FirebaseHandler.getInstance(config);
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 
 // Access services
 console.log('Handler:', handler.getName());
@@ -167,8 +170,8 @@ console.log('Applied migrations:', records);
 ```typescript
 import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 
-const config = new AppConfig();
-config.databaseUrl = 'https://your-project.firebaseio.com';
+const appConfig = new AppConfig();
+appConfig.databaseUrl = 'https://your-project.firebaseio.com';
 
 // Enable locking for production
 config.locking = {
@@ -176,7 +179,8 @@ config.locking = {
   timeout: 600000  // 10 minutes
 };
 
-const handler = await FirebaseHandler.getInstance(config);
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 
 // Check if locking is enabled
 if (handler.lockingService) {
@@ -210,14 +214,15 @@ import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const config = new AppConfig();
-config.databaseUrl = process.env.DATABASE_URL;
+const appConfig = new AppConfig();
+appConfig.databaseUrl = process.env.DATABASE_URL;
 config.locking = {
   enabled: isProduction,  // Only in production
   timeout: 600000
 };
 
-const handler = await FirebaseHandler.getInstance(config);
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 ```
 
 ## See Also

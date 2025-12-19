@@ -78,14 +78,15 @@ npx msr-firebase migrate
 Or programmatically:
 
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations'
-});
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
 await runner.migrate();
 ```
 

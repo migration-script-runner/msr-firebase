@@ -1,24 +1,92 @@
-import { MigrationScriptExecutor, Config } from '@migration-script-runner/core';
+import { MigrationScriptExecutor, IMigrationExecutorDependencies } from '@migration-script-runner/core';
 import { FirebaseHandler } from './service/FirebaseHandler';
-import { IFirebaseDB } from './interface';
+import { IFirebaseDB, IFirebaseRunnerOptions } from './interface';
 
 /**
  * Firebase Realtime Database Migration Script Runner.
  *
- * Extends MigrationScriptExecutor to provide CLI integration for Firebase Realtime Database.
- * Supports all standard migration operations plus Firebase-specific commands.
+ * Extends MigrationScriptExecutor to provide Firebase-specific migration operations
+ * with built-in support for Firebase Realtime Database features.
+ *
+ * **Usage:**
+ * Use the static `getInstance()` factory method to create instances:
  *
  * @example
  * ```typescript
- * const handler = await FirebaseHandler.getInstance(config);
- * const runner = new FirebaseRunner({handler, config});
+ * import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
  *
+ * const appConfig = new AppConfig();
+ * appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+ * appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+ * appConfig.folder = './migrations';
+ * appConfig.tableName = 'schema_version';
+ *
+ * const runner = await FirebaseRunner.getInstance({ config: appConfig });
  * await runner.migrate();
  * ```
  */
 export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler> {
-    constructor({ handler, config }: { handler: FirebaseHandler; config: Config }) {
-        super({ handler, config });
+    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler>) {
+        super(dependencies);
+    }
+
+    /**
+     * Creates a new FirebaseRunner instance with automatic handler initialization.
+     *
+     * This is the recommended way to create a FirebaseRunner. It handles all Firebase
+     * connection setup internally, providing a cleaner API for users.
+     *
+     * **Benefits:**
+     * - Single-step initialization
+     * - Handler creation is automatic and internal
+     * - Cleaner, more intuitive API
+     * - Properly typed configuration with Firebase-specific properties
+     *
+     * @param options - Firebase runner options including config and optional services
+     * @returns Promise resolving to initialized FirebaseRunner instance
+     *
+     * @example
+     * ```typescript
+     * // Minimal usage
+     * const runner = await FirebaseRunner.getInstance({
+     *     config: appConfig
+     * });
+     * ```
+     *
+     * @example
+     * ```typescript
+     * // With custom logger and hooks
+     * const runner = await FirebaseRunner.getInstance({
+     *     config: appConfig,
+     *     logger: new FileLogger('./migrations.log'),
+     *     hooks: new SlackNotificationHooks(webhookUrl)
+     * });
+     * ```
+     *
+     * @example
+     * ```typescript
+     * // With locking enabled for production
+     * const appConfig = new AppConfig();
+     * appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+     * appConfig.locking = {
+     *     enabled: process.env.NODE_ENV === 'production',
+     *     timeout: 600000
+     * };
+     *
+     * const runner = await FirebaseRunner.getInstance({
+     *     config: appConfig,
+     *     metricsCollectors: [new ConsoleMetricsCollector()]
+     * });
+     * ```
+     */
+    static async getInstance(options: IFirebaseRunnerOptions): Promise<FirebaseRunner> {
+        // Initialize Firebase handler internally
+        const handler = await FirebaseHandler.getInstance(options.config);
+
+        return new FirebaseRunner({
+            handler,
+            ...options
+        });
     }
 
     /**

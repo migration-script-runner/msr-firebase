@@ -255,7 +255,17 @@ Choose a timeout based on your migration complexity:
 Add lock status checks to your health checks:
 
 ```javascript
-const handler = await FirebaseHandler.getInstance(config);
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
+
 if (handler.lockingService) {
   const lockStatus = await handler.lockingService.getLockStatus();
   console.log('Lock status:', lockStatus);
@@ -372,8 +382,18 @@ const lockAcquired = await lockingService.acquireLock(executorId);
 Build a monitoring dashboard:
 
 ```javascript
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
 async function monitorLock() {
-  const handler = await FirebaseHandler.getInstance(config);
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
+  const handler = runner.getHandler();
+
   if (!handler.lockingService) {
     console.log('Locking not enabled');
     return;
@@ -397,9 +417,16 @@ setInterval(monitorLock, 60000);  // Check every minute
 ### Programmatic Lock Management
 
 ```javascript
-import { FirebaseHandler } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
-const handler = await FirebaseHandler.getInstance(config);
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const handler = runner.getHandler();
 
 // Check if locking is enabled
 if (handler.lockingService) {

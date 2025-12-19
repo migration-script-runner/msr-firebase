@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { Config } from "@migration-script-runner/core";
 import { FirebaseRunner, FirebaseHandler, AppConfig } from "../../src";
 
 describe("Smoke Test: Complete Migration Workflow", () => {
@@ -17,14 +16,11 @@ describe("Smoke Test: Complete Migration Workflow", () => {
         appConfig.databaseUrl = process.env.DATABASE_URL || "http://localhost:9000?ns=test-integration";
         appConfig.shift = shift;
         appConfig.tableName = "schema_version";
+        appConfig.folder = `${process.cwd()}/test/integration/migrations`;
 
-        const config = new Config();
-        config.folder = `${process.cwd()}/test/integration/migrations`;
-        config.tableName = "schema_version";
-
-        // Initialize handler and runner
-        handler = await FirebaseHandler.getInstance(appConfig);
-        runner = new FirebaseRunner({ handler, config });
+        // Initialize runner (handler is created internally)
+        runner = await FirebaseRunner.getInstance({ config: appConfig });
+        handler = runner.getHandler();
     });
 
     after(async function() {
