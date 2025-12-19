@@ -16,7 +16,7 @@
 [npm-url]: https://npmjs.org/package/@migration-script-runner/firebase
 [npm-downloads-image]: https://img.shields.io/npm/dm/@migration-script-runner/firebase.svg?style=flat
 
-Firebase Realtime Database adapter for [Migration Script Runner (MSR Core)](https://github.com/migration-script-runner/msr-core). Provides version-controlled database migrations with built-in backup, rollback, and distributed locking for production deployments.
+Firebase Realtime Database implementation for [Migration Script Runner (MSR Core)](https://github.com/migration-script-runner/msr-core). Provides version-controlled database migrations with built-in backup, rollback, and distributed locking for production deployments.
 
 ## What's New in v0.2.0
 
@@ -29,7 +29,7 @@ Firebase Realtime Database adapter for [Migration Script Runner (MSR Core)](http
 - 📚 **Comprehensive Documentation** - 300+ line locking guide with deployment examples
 - 🧪 **Production Tested** - Battle-tested in distributed environments
 
-**Upgrading from v0.1.x?** See [Migration Guide](#migration-from-v01x) below.
+**Upgrading from v0.1.x?** See the [Migration Guide](https://migration-script-runner.github.io/msr-firebase/version-migration/v0.1-to-v0.2).
 
 ## Table of Contents
 - [What's New in v0.2.0](#whats-new-in-v020)
@@ -38,7 +38,6 @@ Firebase Realtime Database adapter for [Migration Script Runner (MSR Core)](http
 - [Quick Start](#quick-start)
 - [Key Features](#key-features)
 - [Documentation](#documentation)
-- [Migration from v0.1.x](#migration-from-v01x)
 
 ## Features
 
@@ -216,45 +215,9 @@ Steps:
 
 ## Migration from v0.1.x
 
-### Breaking Changes
+**Breaking Change:** Package name changed from `msr-firebase` to `@migration-script-runner/firebase`.
 
-**None!** v0.2.0 is 100% backwards compatible with v0.1.x.
-
-### What's Changed
-
-1. **Package Name**: Still `@migration-script-runner/firebase` (no change from v0.1.x)
-2. **MSR Core**: Updated from v0.7.x to v0.8.1
-3. **New Features**: Migration locking, lock CLI commands, enhanced documentation
-
-### Migration Steps
-
-1. **Update dependencies**:
-   ```bash
-   npm install @migration-script-runner/firebase@latest
-   ```
-
-2. **Optional: Enable locking** (recommended for production):
-   ```javascript
-   // msr.config.js
-   module.exports = {
-     folder: './migrations',
-     tableName: 'schema_version',
-     locking: {
-       enabled: process.env.NODE_ENV === 'production',
-       timeout: 600000
-     }
-   };
-   ```
-
-3. **That's it!** Your existing migrations will continue to work without any changes.
-
-### New Features You Can Use
-
-- **Migration Locking**: Enable in config to prevent concurrent migrations
-- **Lock CLI Commands**: Use `msr-firebase lock:status` and `msr-firebase lock:release --force`
-- **Type-Safe Handler**: FirebaseRunner now has full type safety
-
-See the [documentation](https://migration-script-runner.github.io/msr-firebase/) for details on new features.
+For complete upgrade instructions, troubleshooting, and migration scenarios, see the [**Migration Guide**](https://migration-script-runner.github.io/msr-firebase/version-migration/v0.1-to-v0.2).
 
 ---
 

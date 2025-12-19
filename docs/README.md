@@ -1,6 +1,6 @@
-# MSR Firebase Documentation
+# MSR: Firebase Documentation
 
-This directory contains the Jekyll-based documentation site for MSR Firebase, hosted on GitHub Pages.
+This directory contains the Jekyll-based documentation site for MSR: Firebase, hosted on GitHub Pages.
 
 ## Local Development
 

@@ -2,8 +2,8 @@
 # Just the Docs theme documentation: https://just-the-docs.github.io/just-the-docs/
 
 # Site settings
-title: MSR Firebase
-description: Firebase adapter for Migration Script Runner - Database migrations for Firebase Realtime Database
+title: "MSR: Firebase"
+description: "Firebase implementation for Migration Script Runner - Database migrations for Firebase Realtime Database"
 baseurl: "/msr-firebase"
 url: "https://migration-script-runner.github.io"
 
@@ -23,9 +23,9 @@ custom_css:
 
 # Aux links for the upper right navigation
 aux_links:
-  "MSR Firebase on GitHub":
+  "MSR: Firebase on GitHub":
     - "//github.com/migration-script-runner/msr-firebase"
-  "MSR Firebase on npm":
+  "MSR: Firebase on npm":
     - "//npmjs.org/package/@migration-script-runner/firebase"
   "MSR Core Docs":
     - "//migration-script-runner.github.io/msr-core"

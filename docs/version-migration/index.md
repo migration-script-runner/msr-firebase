@@ -21,7 +21,7 @@ We create migration guides for:
 - **Major version changes** (e.g., v1 to v2) - Always includes migration guide
 - **Breaking changes** in minor versions (e.g., v0.1 to v0.2) - Includes migration guide
 - **Package renames** or structural changes - Includes migration guide
-- **MSR Core major upgrades** - Includes migration guide if breaking changes affect Firebase adapter
+- **MSR Core major upgrades** - Includes migration guide if breaking changes affect Firebase implementation
 
 ### What's In a Migration Guide
 

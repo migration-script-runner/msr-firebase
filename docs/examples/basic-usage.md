@@ -24,19 +24,18 @@ Simple examples to get started with MSR Firebase.
 The simplest possible setup:
 
 ```typescript
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 
 async function main() {
   // Configure
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = 'https://your-project.firebaseio.com';
-  config.applicationCredentials = './serviceAccountKey.json';
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = 'https://your-project.firebaseio.com';
+  appConfig.applicationCredentials = './serviceAccountKey.json';
 
-  // Initialize handler and runner
-  const handler = await FirebaseHandler.getInstance(config);
-  const runner = new FirebaseRunner({ handler, config });
+  // Initialize runner (handler is created automatically)
+  const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
   // Run migrations
   try {
@@ -57,7 +56,7 @@ main();
 Full example with error handling and configuration:
 
 ```typescript
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
 import { config as dotenvConfig } from 'dotenv';
 
 // Load environment variables
@@ -65,16 +64,15 @@ dotenvConfig();
 
 async function runMigrations() {
   // Configure MSR Firebase
-  const config = new AppConfig();
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const appConfig = new AppConfig();
+  appConfig.folder = './migrations';
+  appConfig.tableName = 'schema_version';
+  appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
   try {
-    console.log('Initializing Firebase handler...');
-    const handler = await FirebaseHandler.getInstance(config);
-    const runner = new FirebaseRunner({ handler, config });
+    console.log('Initializing Firebase runner...');
+    const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
     console.log('Running migrations...');
     const result = await runner.migrate();

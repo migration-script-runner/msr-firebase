@@ -2,18 +2,19 @@
 layout: default
 title: Home
 nav_order: 1
-description: "Firebase adapter for Migration Script Runner - Database migrations for Firebase Realtime Database"
+description: "Firebase implementation for Migration Script Runner - Database migrations for Firebase Realtime Database"
 permalink: /
 ---
 
-# MSR Firebase
+# MSR: Firebase
 {: .fs-9 }
 
-Firebase adapter for Migration Script Runner - Database migrations for Firebase Realtime Database.
+Firebase implementation v{{ site.package_version }} for Migration Script Runner v{{ site.msr_core_version }} - Database migrations for Firebase Realtime Database.
 {: .fs-6 .fw-300 }
 
 [Get started now](#getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/migration-script-runner/msr-firebase){: .btn .fs-5 .mb-4 .mb-md-0 }
+[View on GitHub](https://github.com/migration-script-runner/msr-firebase){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[MSR Core Docs](https://migration-script-runner.github.io/msr-core){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
@@ -62,23 +63,139 @@ npm install @migration-script-runner/firebase
 
 ## Quick Example
 
+### 1. Setup Environment
+
+Create `.env` file with minimal configuration:
+
+```bash
+# .env
+FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+```
+
+### 2. Write a Migration
+
+Create migrations as TypeScript classes with full type safety:
+
+> **Real Example:** This pattern is used in our [integration tests](https://github.com/migration-script-runner/msr-firebase/blob/master/test/integration/migrations/V202501010001_create_users.ts) and verified in production.
+
 ```typescript
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+// migrations/V202501010001_create_users.ts
+import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
+import { IFirebaseDB, FirebaseHandler } from '@migration-script-runner/firebase';
 
-// Initialize Firebase
-admin.initializeApp({
-  credential: admin.credential.cert('serviceAccountKey.json'),
-  databaseURL: 'https://your-project.firebaseio.com'
-});
+export default class CreateUsers implements IRunnableScript<IFirebaseDB> {
+  async up(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    // Access database with full type safety
+    const usersRef = db.database.ref(handler.cfg.buildPath('users'));
 
-// Create runner and migrate
-const runner = new FirebaseRunner({
-  db: admin.database(),
-  migrationsPath: './migrations'
-});
+    await usersRef.set({
+      user1: { name: 'Alice', email: 'alice@example.com', role: 'admin' },
+      user2: { name: 'Bob', email: 'bob@example.com', role: 'user' }
+    });
 
-await runner.migrate();
+    return 'Created users table with 2 initial users';
+  }
+
+  async down(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    await db.database.ref(handler.cfg.buildPath('users')).remove();
+    return 'Removed users table';
+  }
+}
+```
+
+**Advanced: Using EntityService for type-safe entity operations**
+
+> See [smoke tests](https://github.com/migration-script-runner/msr-firebase/blob/master/test/integration/smoke.test.ts) for a complete workflow example running these migrations.
+
+```typescript
+// migrations/V202501010002_add_posts.ts
+import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
+import { IFirebaseDB, FirebaseHandler, EntityService } from '@migration-script-runner/firebase';
+
+interface Post {
+  key?: string;
+  title: string;
+  author: string;
+  createdAt: number;
+}
+
+export default class AddPosts implements IRunnableScript<IFirebaseDB> {
+  async up(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    const postService = new EntityService<Post>(
+      db.database,
+      handler.cfg.buildPath('posts')
+    );
+
+    // Create posts with type safety
+    await postService.create({
+      title: 'First Post',
+      author: 'user1',
+      createdAt: Date.now()
+    });
+
+    return 'Created posts collection';
+  }
+
+  async down(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    await db.database.ref(handler.cfg.buildPath('posts')).remove();
+    return 'Removed posts collection';
+  }
+}
+```
+
+### 3. Run Migrations
+
+**As a Library:**
+
+```typescript
+import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+
+// Configure
+const appConfig = new AppConfig();
+appConfig.folder = './migrations';
+appConfig.tableName = 'schema_version';
+appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+// Initialize runner (handler creation is automatic)
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+
+// Run migrations
+const result = await runner.migrate();
+console.log(`Applied ${result.executed.length} migrations`);
+
+// Rollback if needed
+await runner.down();
+```
+
+**With CLI:**
+
+```bash
+# Run all pending migrations
+npx msr-firebase migrate
+
+# Rollback last migration
+npx msr-firebase down
+
+# Check status
+npx msr-firebase list
 ```
 
 ---
