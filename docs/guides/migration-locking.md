@@ -255,9 +255,9 @@ Choose a timeout based on your migration complexity:
 Add lock status checks to your health checks:
 
 ```javascript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -382,10 +382,10 @@ const lockAcquired = await lockingService.acquireLock(executorId);
 Build a monitoring dashboard:
 
 ```javascript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function monitorLock() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -417,9 +417,9 @@ setInterval(monitorLock, 60000);  // Check every minute
 ### Programmatic Lock Management
 
 ```javascript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;

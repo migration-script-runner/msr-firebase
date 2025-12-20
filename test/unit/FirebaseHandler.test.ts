@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { database } from "firebase-admin";
-import { FirebaseHandler, AppConfig, DBConnector, FirebaseDB } from "../../src";
+import { FirebaseHandler, FirebaseConfig, DBConnector, FirebaseDB } from "../../src";
 import { LockingConfig } from "@migration-script-runner/core";
 
 describe("FirebaseHandler", () => {
     let mockDatabase: database.Database;
     let connectStub: sinon.SinonStub;
-    let config: AppConfig;
+    let config: FirebaseConfig;
 
     beforeEach(() => {
         // Mock Firebase database
@@ -26,7 +26,7 @@ describe("FirebaseHandler", () => {
         connectStub = sinon.stub(DBConnector, "connect").resolves(mockDatabase);
 
         // Create config
-        config = new AppConfig();
+        config = new FirebaseConfig();
         config.shift = "test";
     });
 

@@ -81,7 +81,7 @@ if (handler.lockingService) {
 Configuration used to initialize the handler.
 
 ```typescript
-cfg: AppConfig
+cfg: FirebaseConfig
 ```
 
 ## Factory Method
@@ -91,7 +91,7 @@ cfg: AppConfig
 Creates a new FirebaseHandler instance (preferred method).
 
 ```typescript
-static async getInstance(cfg: AppConfig): Promise<FirebaseHandler>
+static async getInstance(cfg: FirebaseConfig): Promise<FirebaseHandler>
 ```
 
 **Parameters**:
@@ -101,9 +101,9 @@ static async getInstance(cfg: AppConfig): Promise<FirebaseHandler>
 
 **Example:**
 ```typescript
-import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.databaseUrl = 'https://your-project.firebaseio.com';
 config.locking = {
   enabled: true,
@@ -141,10 +141,10 @@ getVersion(): string
 ### Basic Usage
 
 ```typescript
-import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseConfig } from '@migration-script-runner/firebase';
 
 // Create configuration
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.databaseUrl = 'https://your-project.firebaseio.com';
 config.tableName = 'schema_version';
 appConfig.shift = 'production';
@@ -168,9 +168,9 @@ console.log('Applied migrations:', records);
 ### With Migration Locking
 
 ```typescript
-import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.databaseUrl = 'https://your-project.firebaseio.com';
 
 // Enable locking for production
@@ -210,11 +210,11 @@ if (handler.lockingService) {
 ### Environment-Specific Configuration
 
 ```typescript
-import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseConfig } from '@migration-script-runner/firebase';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.databaseUrl = process.env.DATABASE_URL;
 config.locking = {
   enabled: isProduction,  // Only in production

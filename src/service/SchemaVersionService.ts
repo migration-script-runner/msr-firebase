@@ -1,6 +1,6 @@
 import { ISchemaVersion } from '@migration-script-runner/core';
 import { MigrationScriptService } from './MigrationScriptService';
-import { AppConfig } from '../model';
+import { FirebaseConfig } from '../model';
 import { IFirebaseDB } from '../interface';
 
 /**
@@ -17,7 +17,7 @@ export class SchemaVersionService implements ISchemaVersion<IFirebaseDB> {
 
     constructor(
         migrations: MigrationScriptService,
-        private cfg: AppConfig
+        private cfg: FirebaseConfig
     ) {
         this.migrationRecords = migrations;
     }

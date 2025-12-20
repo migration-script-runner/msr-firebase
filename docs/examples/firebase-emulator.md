@@ -89,13 +89,13 @@ NODE_ENV=development
 
 ```typescript
 // scripts/migrate-emulator.ts
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function migrateEmulator() {
   // Set emulator host
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = 'http://localhost:9000?ns=demo-project';
@@ -134,12 +134,12 @@ migrateEmulator()
 
 ```typescript
 // test/setup.ts
-import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseConfig } from '@migration-script-runner/firebase';
 
 export async function setupTestEnvironment() {
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   config.folder = './migrations';
   config.tableName = 'schema_version';
   config.databaseUrl = `http://localhost:9000?ns=test-${Date.now()}`;
@@ -259,13 +259,13 @@ npm run test:emulator
 
 ```typescript
 // scripts/seed-emulator.ts
-import { FirebaseHandler, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseConfig } from '@migration-script-runner/firebase';
 import { readFileSync } from 'fs';
 
 async function seedEmulator() {
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   config.databaseUrl = 'http://localhost:9000?ns=demo-project';
 
   const handler = await FirebaseHandler.getInstance(config);
@@ -303,14 +303,14 @@ ts-node scripts/migrate-emulator.ts
 
 ```typescript
 // scripts/test-full-cycle.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { readFileSync } from 'fs';
 
 async function testFullCycle() {
   // Setup
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   config.folder = './migrations';
   config.tableName = 'schema_version';
   config.databaseUrl = 'http://localhost:9000?ns=test-project';
@@ -488,7 +488,7 @@ afterEach(async () => {
 
 ```typescript
 const testId = `test-${Date.now()}`;
-const config = new AppConfig();
+const config = new FirebaseConfig();
 config.databaseUrl = `http://localhost:9000?ns=${testId}`;
 ```
 
@@ -496,10 +496,10 @@ config.databaseUrl = `http://localhost:9000?ns=${testId}`;
 
 ```typescript
 // config/database.ts
-import { AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseConfig } from '@migration-script-runner/firebase';
 
-export function getConfig(): AppConfig {
-  const appConfig = new AppConfig();
+export function getConfig(): FirebaseConfig {
+  const appConfig = new FirebaseConfig();
   config.folder = './migrations';
   config.tableName = 'schema_version';
 

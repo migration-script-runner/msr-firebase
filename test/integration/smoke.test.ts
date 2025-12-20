@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { FirebaseRunner, FirebaseHandler, AppConfig } from "../../src";
+import { FirebaseRunner, FirebaseHandler, FirebaseConfig } from "../../src";
 
 describe("Smoke Test: Complete Migration Workflow", () => {
     let runner: FirebaseRunner;
@@ -10,7 +10,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
         this.timeout(30000);
 
         // Setup configuration
-        const appConfig = new AppConfig();
+        const appConfig = new FirebaseConfig();
         appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS ||
             `${process.cwd()}/test/resources/fake-service-account.json`;
         appConfig.databaseUrl = process.env.DATABASE_URL || "http://localhost:9000?ns=test-integration";

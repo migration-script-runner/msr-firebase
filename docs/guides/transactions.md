@@ -44,7 +44,7 @@ MSR Firebase automatically sets `transaction.mode = TransactionMode.NONE` becaus
 - Use MSR's [backup/restore feature](backup-restore) for rollback protection
 
 ```typescript
-// AppConfig automatically configures this
+// FirebaseConfig automatically configures this
 this.transaction.mode = TransactionMode.NONE;
 ```
 

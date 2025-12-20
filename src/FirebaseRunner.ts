@@ -1,7 +1,7 @@
 import { MigrationScriptExecutor, IMigrationExecutorDependencies, IExecutorOptions } from '@migration-script-runner/core';
 import { FirebaseHandler } from './service/FirebaseHandler';
 import { IFirebaseDB } from './interface';
-import { AppConfig } from './model/AppConfig';
+import { FirebaseConfig } from './model/FirebaseConfig';
 
 /**
  * Firebase Realtime Database Migration Script Runner.
@@ -14,9 +14,9 @@ import { AppConfig } from './model/AppConfig';
  *
  * @example
  * ```typescript
- * import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+ * import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
  *
- * const appConfig = new AppConfig();
+ * const appConfig = new FirebaseConfig();
  * appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
  * appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
  * appConfig.folder = './migrations';
@@ -26,8 +26,8 @@ import { AppConfig } from './model/AppConfig';
  * await runner.migrate();
  * ```
  */
-export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler, AppConfig> {
-    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler, AppConfig>) {
+export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler, FirebaseConfig> {
+    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler, FirebaseConfig>) {
         super(dependencies);
     }
 
@@ -67,7 +67,7 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
      * @example
      * ```typescript
      * // With locking enabled for production
-     * const appConfig = new AppConfig();
+     * const appConfig = new FirebaseConfig();
      * appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
      * appConfig.locking = {
      *     enabled: process.env.NODE_ENV === 'production',
@@ -80,12 +80,12 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
      * });
      * ```
      */
-    static async getInstance(options: IExecutorOptions<IFirebaseDB, AppConfig>): Promise<FirebaseRunner> {
+    static async getInstance(options: IExecutorOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
         return MigrationScriptExecutor.createInstance(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             FirebaseRunner as any, // Required: createInstance expects public constructor, but we use private for factory pattern
             options,
-            (config: AppConfig) => FirebaseHandler.getInstance(config)
+            (config: FirebaseConfig) => FirebaseHandler.getInstance(config)
         );
     }
 

@@ -2,7 +2,7 @@ import { IDatabaseMigrationHandler, IBackupService, ISchemaVersion, ILockingServ
 import { version } from '../../package.json';
 
 import {
-    AppConfig,
+    FirebaseConfig,
     BackupService,
     SchemaVersionService,
     MigrationScriptService,
@@ -25,7 +25,7 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
     lockingService?: ILockingService<IFirebaseDB>;
 
     private constructor(
-        public cfg: AppConfig,
+        public cfg: FirebaseConfig,
         firebaseDatabase: FirebaseDB
     ) {
         this.db = firebaseDatabase;
@@ -52,7 +52,7 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
      * @param cfg - Application configuration
      * @returns Promise resolving to configured FirebaseHandler
      */
-    public static async getInstance(cfg: AppConfig): Promise<FirebaseHandler> {
+    public static async getInstance(cfg: FirebaseConfig): Promise<FirebaseHandler> {
         const database = await DBConnector.connect(cfg);
         const firebaseDb = new FirebaseDB(database);
         const handler = new FirebaseHandler(cfg, firebaseDb);

@@ -1,11 +1,11 @@
 import {expect} from "chai";
-import {AppConfig} from "../../src";
+import {FirebaseConfig} from "../../src";
 
-describe("AppConfig", () => {
+describe("FirebaseConfig", () => {
 
     describe("buildPath", () => {
         it("should build path with shift prefix", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
             config.shift = "/test-123";
 
             const path = config.buildPath("users");
@@ -14,7 +14,7 @@ describe("AppConfig", () => {
         });
 
         it("should handle empty path segment", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
             config.shift = "/test-123";
 
             const path = config.buildPath("");
@@ -23,7 +23,7 @@ describe("AppConfig", () => {
         });
 
         it("should handle nested paths", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
             config.shift = "/test-123";
 
             const path = config.buildPath("users/profile");
@@ -32,7 +32,7 @@ describe("AppConfig", () => {
         });
 
         it("should work with undefined shift", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
             config.shift = undefined;
 
             const path = config.buildPath("users");
@@ -43,7 +43,7 @@ describe("AppConfig", () => {
 
     describe("getRoot", () => {
         it("should return shift with trailing slash", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
             config.shift = "/test-123";
 
             const root = config.getRoot();
@@ -52,7 +52,7 @@ describe("AppConfig", () => {
         });
 
         it("should handle undefined shift", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
             config.shift = undefined;
 
             const root = config.getRoot();
@@ -68,7 +68,7 @@ describe("AppConfig", () => {
             // Set env var
             process.env.GOOGLE_APPLICATION_CREDENTIALS = "/path/to/credentials.json";
 
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
 
             expect(config.applicationCredentials).eq("/path/to/credentials.json");
 
@@ -86,7 +86,7 @@ describe("AppConfig", () => {
             // Set env var
             process.env.DATABASE_URL = "http://localhost:9000";
 
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
 
             expect(config.databaseUrl).eq("http://localhost:9000");
 
@@ -99,7 +99,7 @@ describe("AppConfig", () => {
         });
 
         it("should use default tableName", () => {
-            const config = new AppConfig();
+            const config = new FirebaseConfig();
 
             expect(config.tableName).eq("schema_version");
         });

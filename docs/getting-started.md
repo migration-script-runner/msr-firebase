@@ -78,9 +78,9 @@ npx msr-firebase migrate
 Or programmatically:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;

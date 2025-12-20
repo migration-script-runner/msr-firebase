@@ -1,6 +1,6 @@
 import { Config, TransactionMode } from '@migration-script-runner/core';
 
-export class AppConfig extends Config {
+export class FirebaseConfig extends Config {
     applicationCredentials: string | undefined = process.env.GOOGLE_APPLICATION_CREDENTIALS;
     databaseUrl: string | undefined = process.env.DATABASE_URL;
 

@@ -25,10 +25,10 @@ Create a custom script with logging:
 
 ```typescript
 // scripts/migrate-with-logging.ts
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function migrateWithLogging() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -65,11 +65,11 @@ Create backups before migrating:
 
 ```typescript
 // scripts/safe-migrate.ts
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import * as path from 'path';
 
 async function safeMigrate() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -120,10 +120,10 @@ Custom command to list all root nodes:
 
 ```typescript
 // scripts/list-nodes.ts
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function listFirebaseNodes() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -164,12 +164,12 @@ Backup only certain Firebase nodes:
 
 ```typescript
 // scripts/backup-nodes.ts
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import * as fs from 'fs';
 import * as path from 'path';
 
 async function backupSpecificNodes(nodeNames: string[]) {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -221,7 +221,7 @@ Prompt user for confirmation:
 
 ```typescript
 // scripts/interactive-migrate.ts
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import * as readline from 'readline';
 
 function askQuestion(question: string): Promise<string> {
@@ -239,7 +239,7 @@ function askQuestion(question: string): Promise<string> {
 }
 
 async function interactiveMigrate() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -293,10 +293,10 @@ Track migration performance:
 
 ```typescript
 // scripts/migrate-with-metrics.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function migrateWithMetrics() {
-  const config = new AppConfig();
+  const config = new FirebaseConfig();
   config.folder = './migrations';
   config.tableName = 'schema_version';
   config.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -343,10 +343,10 @@ Production-safe migration with distributed locking:
 
 ```typescript
 // scripts/migrate-production.ts
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function migrateProduction() {
-  const config = new AppConfig();
+  const config = new FirebaseConfig();
   config.folder = './migrations';
   config.tableName = 'schema_version';
   config.databaseUrl = process.env.FIREBASE_DATABASE_URL;

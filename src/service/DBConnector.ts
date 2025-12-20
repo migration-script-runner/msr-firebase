@@ -1,10 +1,10 @@
 import * as admin from "firebase-admin";
 import _ from "lodash";
-import {AppConfig} from "../model";
+import {FirebaseConfig} from "../model";
 
 export class DBConnector {
 
-    public static async connect(cfg:AppConfig): Promise<admin.database.Database> {
+    public static async connect(cfg:FirebaseConfig): Promise<admin.database.Database> {
         console.log(`Init DB connection: databaseUrl = ${cfg.databaseUrl}; applicationCredentials = ${cfg.applicationCredentials}`)
 
         const filePath = cfg.applicationCredentials

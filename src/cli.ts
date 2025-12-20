@@ -2,7 +2,7 @@
 
 import { createCLI } from '@migration-script-runner/core';
 import { FirebaseRunner } from './FirebaseRunner';
-import { AppConfig } from './model/AppConfig';
+import { FirebaseConfig } from './model/FirebaseConfig';
 import { IFirebaseDB } from './interface';
 import { version } from '../package.json';
 
@@ -39,7 +39,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
     // Factory function to create adapter with merged config
     createExecutor: async (config) => {
         // Initialize Firebase runner with merged configuration
-        const appConfig = new AppConfig();
+        const appConfig = new FirebaseConfig();
         Object.assign(appConfig, config);
 
         return FirebaseRunner.getInstance({ config: appConfig });

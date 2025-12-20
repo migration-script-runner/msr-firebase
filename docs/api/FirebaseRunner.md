@@ -119,9 +119,9 @@ async restore(backupId: string): Promise<RestoreResult>
 ### Basic Migration
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = 'https://your-project.firebaseio.com';
@@ -137,10 +137,10 @@ console.log('Migrations applied:', result.executed);
 ### With Optional Services
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { ConsoleLogger } from '@migration-script-runner/core';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;

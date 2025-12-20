@@ -1,6 +1,6 @@
-import {AppConfig} from "../src";
+import {FirebaseConfig} from "../src";
 
-export class IntegrationTestConfig extends AppConfig {
+export class IntegrationTestConfig extends FirebaseConfig {
 
     constructor() {
         super()

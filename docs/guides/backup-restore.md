@@ -28,9 +28,9 @@ MSR Firebase provides built-in backup and restore functionality to protect your 
 ### Using the API
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -86,9 +86,9 @@ Backups are stored as JSON files:
 Configure automatic backups before migrations:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -105,9 +105,9 @@ await runner.migrate();
 ### Using the API
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -145,9 +145,9 @@ Restoring backup...
 MSR automatically creates and restores backups during migrations:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;

@@ -92,10 +92,10 @@ export function initializeTestDatabase() {
 ### Run Migrations Against Emulator
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function testMigrations() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = 'http://localhost:9000';  // Emulator
@@ -202,7 +202,7 @@ npm test
 ```typescript
 // test/integration/migration-flow.test.ts
 import { expect } from 'chai';
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import * as admin from 'firebase-admin';
 
 describe('Migration Flow', () => {
@@ -216,7 +216,7 @@ describe('Migration Flow', () => {
       databaseURL: 'http://localhost:9000?ns=test-project'
     });
 
-    const appConfig = new AppConfig();
+    const appConfig = new FirebaseConfig();
     appConfig.folder = './migrations';
     appConfig.tableName = 'schema_version';
     appConfig.databaseUrl = 'http://localhost:9000?ns=test-project';
@@ -446,10 +446,10 @@ it('should handle 10000 records', async function() {
 ### Enable Verbose Logging
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { ConsoleLogger } from '@migration-script-runner/core';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = 'http://localhost:9000';

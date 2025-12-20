@@ -24,11 +24,11 @@ Simple examples to get started with MSR Firebase.
 The simplest possible setup:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function main() {
   // Configure
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = 'https://your-project.firebaseio.com';
@@ -56,7 +56,7 @@ main();
 Full example with error handling and configuration:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { config as dotenvConfig } from 'dotenv';
 
 // Load environment variables
@@ -64,7 +64,7 @@ dotenvConfig();
 
 async function runMigrations() {
   // Configure MSR Firebase
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -140,10 +140,10 @@ export const down: IMigrationScript<admin.database.Database>['down'] = async (db
 Check migration status:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function listMigrations() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -177,10 +177,10 @@ listMigrations();
 Roll back the last migration:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function rollback() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -211,10 +211,10 @@ rollback()
 Create and restore backups:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function backupAndRestore() {
-  const appConfig = new AppConfig();
+  const appConfig = new FirebaseConfig();
   appConfig.folder = './migrations';
   appConfig.tableName = 'schema_version';
   appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -251,10 +251,10 @@ backupAndRestore()
 Enable migration locking for production:
 
 ```typescript
-import { FirebaseHandler, FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseHandler, FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function runWithLocking() {
-  const config = new AppConfig();
+  const config = new FirebaseConfig();
   config.folder = './migrations';
   config.tableName = 'schema_version';
   config.databaseUrl = process.env.FIREBASE_DATABASE_URL;

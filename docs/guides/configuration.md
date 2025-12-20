@@ -29,9 +29,9 @@ MSR Firebase can be configured through:
 ## Basic Configuration
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -93,7 +93,7 @@ Transaction configuration for migrations.
 
 ```typescript
 transaction: {
-  mode: TransactionMode.NONE  // Automatically set by AppConfig
+  mode: TransactionMode.NONE  // Automatically set by FirebaseConfig
 }
 ```
 
@@ -239,11 +239,11 @@ Load configuration:
 
 ```typescript
 import { readFileSync } from 'fs';
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 const configData = JSON.parse(readFileSync('.msrrc.json', 'utf-8'));
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 Object.assign(appConfig, configData);
 
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
@@ -304,12 +304,12 @@ export const config = {
 ## Loading Configuration by Environment
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 const env = process.env.NODE_ENV || 'development';
 const configData = require(`./config/${env}`).config;
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 Object.assign(appConfig, configData);
 
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
@@ -320,10 +320,10 @@ const runner = await FirebaseRunner.getInstance({ config: appConfig });
 Configure logging level:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { ConsoleLogger } from '@migration-script-runner/core';
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
@@ -344,7 +344,7 @@ const runner = await FirebaseRunner.getInstance({
 Implement a custom logger:
 
 ```typescript
-import { FirebaseRunner, AppConfig } from '@migration-script-runner/firebase';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { ILogger } from '@migration-script-runner/core';
 
 class CustomLogger implements ILogger {
@@ -361,7 +361,7 @@ class CustomLogger implements ILogger {
   }
 }
 
-const appConfig = new AppConfig();
+const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
 appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;

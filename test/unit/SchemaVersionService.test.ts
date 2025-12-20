@@ -2,13 +2,13 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { SchemaVersionService } from "../../src/service/SchemaVersionService";
 import { MigrationScriptService } from "../../src/service/MigrationScriptService";
-import { AppConfig } from "../../src/model";
+import { FirebaseConfig } from "../../src/model";
 import { database } from "firebase-admin";
 
 describe("SchemaVersionService", () => {
     let service: SchemaVersionService;
     let mockMigrationService: MigrationScriptService;
-    let config: AppConfig;
+    let config: FirebaseConfig;
     let mockRef: any;
     let mockSnapshot: any;
 
@@ -32,7 +32,7 @@ describe("SchemaVersionService", () => {
             getSnapshot: sinon.stub().resolves(mockSnapshot),
         } as unknown as MigrationScriptService;
 
-        config = new AppConfig();
+        config = new FirebaseConfig();
         config.shift = "/test";
         config.tableName = "schema_version";
 
