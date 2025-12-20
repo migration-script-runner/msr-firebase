@@ -50,5 +50,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.organization=migration-script-runner
+            -Dsonar.organization=vlavrynovych
             -Dsonar.projectKey=migration-script-runner_msr-firebase
