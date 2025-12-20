@@ -38,6 +38,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Create backups directory
+        run: mkdir -p backups
+
       - name: Run tests with coverage
         run: npm run test:coverage
 
