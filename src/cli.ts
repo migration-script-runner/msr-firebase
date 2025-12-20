@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createCLI } from '@migration-script-runner/core';
+import { createCLI, BackupMode } from '@migration-script-runner/core';
 import { FirebaseRunner } from './FirebaseRunner';
 import { FirebaseConfig } from './model/FirebaseConfig';
 import { IFirebaseDB } from './interface';
@@ -40,7 +40,8 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
     addCustomOptions: (program) => {
         program
             .option('--database-url <url>', 'Firebase Realtime Database URL')
-            .option('--credentials <path>', 'Path to service account key file');
+            .option('--credentials <path>', 'Path to service account key file')
+            .option('--backup-mode <mode>', 'Backup mode: full, create_only, restore_only, manual (default: full)');
     },
 
     // Map custom CLI flags to config properties
@@ -51,6 +52,12 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
         }
         if (flags.credentials && typeof flags.credentials === 'string') {
             config.applicationCredentials = flags.credentials;
+        }
+        if (flags.backupMode && typeof flags.backupMode === 'string') {
+            const mode = flags.backupMode.toLowerCase();
+            if (mode === 'full' || mode === 'create_only' || mode === 'restore_only' || mode === 'manual') {
+                config.backupMode = mode as BackupMode;
+            }
         }
     },
 

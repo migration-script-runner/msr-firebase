@@ -20,7 +20,7 @@ describe("CLI", () => {
         it("should import createCLI from core", () => {
             const cliPath = join(__dirname, "../../src/cli.ts");
             const content = readFileSync(cliPath, "utf-8");
-            expect(content).to.include("import { createCLI }");
+            expect(content).to.include("createCLI");
             expect(content).to.include("@migration-script-runner/core");
         });
 
@@ -138,6 +138,13 @@ describe("CLI", () => {
             expect(content).to.include("Path to service account key file");
         });
 
+        it("should register --backup-mode flag", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("--backup-mode <mode>");
+            expect(content).to.include("full, create_only, restore_only, manual");
+        });
+
         it("should define extendFlags callback", () => {
             const cliPath = join(__dirname, "../../src/cli.ts");
             const content = readFileSync(cliPath, "utf-8");
@@ -158,12 +165,30 @@ describe("CLI", () => {
             expect(content).to.include("config.applicationCredentials = flags.credentials");
         });
 
+        it("should map flags.backupMode to config.backupMode", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("flags.backupMode");
+            expect(content).to.include("config.backupMode");
+        });
+
+        it("should validate backup mode values", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            // Should validate against allowed backup modes
+            expect(content).to.include("'full'");
+            expect(content).to.include("'create_only'");
+            expect(content).to.include("'restore_only'");
+            expect(content).to.include("'manual'");
+        });
+
         it("should handle optional flags gracefully", () => {
             const cliPath = join(__dirname, "../../src/cli.ts");
             const content = readFileSync(cliPath, "utf-8");
             // Should check if flags exist and are strings before mapping
             expect(content).to.include("if (flags.databaseUrl && typeof flags.databaseUrl === 'string')");
             expect(content).to.include("if (flags.credentials && typeof flags.credentials === 'string')");
+            expect(content).to.include("if (flags.backupMode && typeof flags.backupMode === 'string')");
         });
     });
 });
