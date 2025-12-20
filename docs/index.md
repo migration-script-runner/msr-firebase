@@ -9,21 +9,35 @@ permalink: /
 # MSR: Firebase
 {: .fs-9 }
 
-Firebase implementation v{{ site.package_version }} for Migration Script Runner v{{ site.msr_core_version }} - Database migrations for Firebase Realtime Database.
+Database migrations for Firebase Realtime Database with full TypeScript support.
 {: .fs-6 .fw-300 }
 
 [Get started now](#getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View all features](features){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/migration-script-runner/msr-firebase){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
+<div style="background: linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 100%); padding: 32px; border-radius: 12px; border-left: 6px solid #5c6bc0; margin: 40px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+  <div style="display: flex; gap: 24px; align-items: start;">
+    <img src="https://github.com/migration-script-runner.png" alt="MSR" style="width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;">
+    <div style="flex: 1;">
+      <h3 style="color: #3f51b5; font-size: 24px; font-weight: 600; margin: 0 0 8px 0;">Part of the MSR Ecosystem</h3>
+      <p style="color: #7e57c2; font-size: 14px; font-weight: 500; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Powered by MSR Core v0.8.1</p>
+      <p style="color: #5f6368; line-height: 1.7; margin: 0 0 20px 0; font-size: 15px;">
+        MSR Firebase is part of the <strong>Migration Script Runner family</strong> - a suite of database-specific migration tools built on a proven, battle-tested core. Inherits enterprise features like <strong>migration locking</strong> for distributed deployments, <strong>checksum validation</strong>, <strong>multiple rollback strategies</strong>, and comprehensive logging. Firebase-specific features and optimizations added on top.
+      </p>
+      <a href="https://migration-script-runner.github.io/msr-core" style="display: inline-block; background: #5c6bc0; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px; transition: background 0.2s;">
+        Learn about MSR Core →
+      </a>
+    </div>
+  </div>
+</div>
+
 {: .warning }
 **⚠️ Unstable Version:** Version v0.2.0 is currently unstable and **not recommended for production use**. The project is under active development and may receive significant updates. Please use with caution and test thoroughly before deploying to production environments.
 
----
 
-## Getting Started
+---
 
 MSR Firebase provides a complete migration solution for Firebase Realtime Database, built on top of [Migration Script Runner Core](https://migration-script-runner.github.io/msr-core).
 
@@ -32,18 +46,6 @@ MSR Firebase provides a complete migration solution for Firebase Realtime Databa
 ```bash
 npm install @migration-script-runner/firebase
 ```
-
-### Features
-
-- **Full MSR Core Integration** - All standard migration operations (migrate, list, down, validate, backup)
-- **Firebase-Specific Commands** - Custom CLI commands for Firebase operations
-- **TypeScript Support** - First-class TypeScript support with full type definitions
-- **Single-Node Transactions** - Atomic operations via Firebase's `ref.transaction()`
-- **Backup & Restore** - Built-in backup and restore functionality
-- **CLI Ready** - Complete command-line interface with `msr-firebase` command
-
-{: .warning }
-**Important:** Firebase Realtime Database does NOT support database-wide transactions. Unlike SQL databases or MongoDB, Firebase only supports atomic operations on a **single node**. This is a Firebase platform limitation, not an MSR Firebase limitation. See the [Transaction Guide](writing-migrations/transactions) for safe migration patterns and workarounds.
 
 ---
 
@@ -121,6 +123,9 @@ npm install @migration-script-runner/firebase
 
 **[→ View all features](features)** - Complete feature list with detailed descriptions
 {: .fs-5 }
+
+{: .warning }
+**Important:** Firebase Realtime Database does NOT support database-wide transactions. Unlike SQL databases or MongoDB, Firebase only supports atomic operations on a **single node**. This is a Firebase platform limitation, not an MSR Firebase limitation. See the [Transaction Guide](writing-migrations/transactions) for safe migration patterns and workarounds.
 
 ---
 
