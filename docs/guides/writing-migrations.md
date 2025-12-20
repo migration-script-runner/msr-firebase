@@ -287,9 +287,3 @@ Always test migrations before production:
 3. Verify rollback works correctly
 
 See [Testing Guide](testing) for detailed instructions.
-
-## See Also
-
-- [Firebase-Specific Features](firebase-specific) - Firebase-specific patterns
-- [CLI Usage](cli-usage) - Running migrations with CLI
-- [Testing](testing) - Testing your migrations

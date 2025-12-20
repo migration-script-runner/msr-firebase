@@ -224,10 +224,3 @@ config.locking = {
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 const handler = runner.getHandler();
 ```
-
-## See Also
-
-- [FirebaseRunner](FirebaseRunner) - Main migration runner class
-- [Migration Locking](../guides/migration-locking) - Distributed locking guide
-- [Configuration](../guides/configuration) - Configuration options
-- [Interfaces](interfaces) - Core interfaces including ILockingService

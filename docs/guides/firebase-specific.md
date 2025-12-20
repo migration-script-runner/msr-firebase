@@ -286,9 +286,3 @@ Design data structures to minimize deep queries:
   }
 }
 ```
-
-## See Also
-
-- [Writing Migrations](writing-migrations) - General migration patterns
-- [Testing](testing) - Testing with Firebase emulator
-- [Firebase Documentation](https://firebase.google.com/docs/database)

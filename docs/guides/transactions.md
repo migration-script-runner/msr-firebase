@@ -342,12 +342,3 @@ export default class MigrateLargeDataset implements IRunnableScript<IFirebaseDB>
 | Single-node atomic ops | ✅ | ✅ | ✅ | ✅ |
 | Automatic rollback | ❌ | ✅ | ✅ | ✅ |
 | MSR Transaction Mode | `NONE` | `PER_MIGRATION` | `PER_MIGRATION` | `PER_MIGRATION` |
-
----
-
-## Related Documentation
-
-- [Firebase Transactions (Official)](https://firebase.google.com/docs/database/web/read-and-write#save_data_as_transactions)
-- [MSR Firebase Backup & Restore](backup-restore)
-- [Writing Safe Migrations](writing-migrations)
-- [Configuration Guide](configuration)

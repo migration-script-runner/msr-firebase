@@ -571,10 +571,3 @@ sudo apt-get install openjdk-21-jre-headless
 # Verify
 java -version
 ```
-
-## See Also
-
-- [Testing Guide](../guides/testing) - Testing strategies
-- [Basic Usage](basic-usage) - Simple examples
-- [Custom Commands](custom-commands) - Custom scripts
-- [Getting Started](../getting-started) - Quick start guide

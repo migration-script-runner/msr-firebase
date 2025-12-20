@@ -202,9 +202,3 @@ validation.warnings.forEach(warning => {
   console.warn(`${warning.type}: ${warning.message}`);
 });
 ```
-
-## See Also
-
-- [Interfaces](interfaces) - Core interfaces
-- [Services](services) - Service implementations
-- [MSR Core Types](https://migration-script-runner.github.io/msr-core/api/types/)

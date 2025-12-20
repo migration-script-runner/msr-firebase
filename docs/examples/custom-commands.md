@@ -426,10 +426,3 @@ npm run nodes:list
 # Backup specific nodes
 npm run nodes:backup users posts comments
 ```
-
-## See Also
-
-- [Basic Usage](basic-usage) - Simple examples
-- [CLI Examples](with-cli) - CLI usage
-- [Writing Migrations](../guides/writing-migrations) - Migration patterns
-- [Migration Locking](../guides/migration-locking) - Production deployments

@@ -398,9 +398,3 @@ try {
   throw error;
 }
 ```
-
-## See Also
-
-- [Configuration](configuration) - Backup configuration options
-- [CLI Usage](cli-usage) - CLI backup commands
-- [Writing Migrations](writing-migrations) - Migration best practices

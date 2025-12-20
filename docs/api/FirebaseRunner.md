@@ -171,9 +171,3 @@ await runner.down({ to: 1234567890 });
 ## Configuration Options
 
 See [Configuration Guide](../guides/configuration) for detailed configuration options.
-
-## See Also
-
-- [FirebaseHandler](FirebaseHandler) - Database handler implementation
-- [Getting Started](../getting-started) - Quick start guide
-- [CLI Usage](../guides/cli-usage) - Using the CLI instead of API

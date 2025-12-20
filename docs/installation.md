@@ -24,7 +24,7 @@ Detailed installation and setup instructions for MSR Firebase.
 
 - **Node.js**: 16.x or higher
 - **npm**: 7.x or higher (or yarn 1.22+)
-- **TypeScript**: 4.5+ (if using TypeScript)
+- **TypeScript**: 4.5+ (optional, for TypeScript projects)
 
 ### Firebase Requirements
 
@@ -46,82 +46,179 @@ npm install @migration-script-runner/firebase
 yarn add @migration-script-runner/firebase
 ```
 
-### Peer Dependencies
+### Dependencies
 
-MSR Firebase requires Firebase Admin SDK as a peer dependency:
+MSR Firebase bundles all required dependencies, including Firebase Admin SDK. No additional packages are required.
 
-```bash
-npm install firebase-admin
-```
+## Quick Setup
 
-## Project Setup
+### Option 1: Using CLI Flags (Recommended)
 
-### 1. Initialize Firebase Admin SDK
-
-Create a configuration file for Firebase initialization:
-
-```typescript
-// firebase-config.ts
-import * as admin from 'firebase-admin';
-
-export function initializeFirebase() {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-    }),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
-
-  return admin.database();
-}
-```
-
-### 2. Create Migrations Directory
-
-Create a directory for your migration files:
+The fastest way to get started:
 
 ```bash
+# Install
+npm install @migration-script-runner/firebase
+
+# Create migrations directory
 mkdir migrations
+
+# Run with credentials
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
 ```
 
-### 3. Configure Environment Variables
+### Option 2: Using Environment Variables
 
-Create a `.env` file with your Firebase credentials:
+Create a `.env` file:
 
 ```bash
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=your-client-email@project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+DATABASE_URL=https://your-project.firebaseio.com
+GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+```
+
+Then run:
+
+```bash
+npx msr-firebase migrate
 ```
 
 {: .warning }
 > Never commit your `.env` file or service account keys to version control. Add them to `.gitignore`.
 
+## Service Account Key Setup
+
+### 1. Download Service Account Key
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project
+3. Go to **Project Settings** → **Service Accounts**
+4. Click **Generate New Private Key**
+5. Save the JSON file as `serviceAccountKey.json`
+
+### 2. Secure Your Credentials
+
+```bash
+# Add to .gitignore
+echo "serviceAccountKey.json" >> .gitignore
+echo ".env" >> .gitignore
+```
+
+## Project Setup
+
+### 1. Create Migrations Directory
+
+```bash
+mkdir migrations
+```
+
+### 2. Create First Migration
+
+```typescript
+// migrations/V202501010001_create_users.ts
+import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
+import { IFirebaseDB, FirebaseHandler } from '@migration-script-runner/firebase';
+
+export default class CreateUsers implements IRunnableScript<IFirebaseDB> {
+  async up(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    const usersRef = db.database.ref(handler.cfg.buildPath('users'));
+    await usersRef.set({
+      user1: { name: 'Alice', role: 'admin' }
+    });
+    return 'Created users node';
+  }
+
+  async down(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    await db.database.ref(handler.cfg.buildPath('users')).remove();
+    return 'Removed users node';
+  }
+}
+```
+
+### 3. Run Migrations
+
+```bash
+# With CLI flags
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
+
+# Or with environment variables
+npx msr-firebase migrate
+```
+
+## Programmatic Usage
+
+For integrating MSR Firebase into your application:
+
+```typescript
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
+
+async function runMigrations() {
+  // Configure
+  const config = new FirebaseConfig();
+  config.databaseUrl = process.env.DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  config.folder = './migrations';
+  config.tableName = 'schema_version';
+
+  // Initialize runner (handler creation is automatic)
+  const runner = await FirebaseRunner.getInstance({ config });
+
+  // Run migrations
+  const result = await runner.migrate();
+  console.log(`Applied ${result.executed.length} migrations`);
+}
+
+runMigrations();
+```
+
 ## Verify Installation
 
-Create a test script to verify the installation:
+### Test CLI
+
+```bash
+# Check version
+npx msr-firebase --version
+
+# Show help
+npx msr-firebase --help
+
+# Test connection
+npx msr-firebase firebase:test-connection \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
+```
+
+### Test Programmatic API
 
 ```typescript
 // test-setup.ts
-import { FirebaseRunner } from '@migration-script-runner/firebase';
-import { initializeFirebase } from './firebase-config';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 async function testSetup() {
-  const db = initializeFirebase();
+  const config = new FirebaseConfig();
+  config.databaseUrl = process.env.DATABASE_URL;
+  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  config.folder = './migrations';
 
-  const runner = new FirebaseRunner({
-    db,
-    migrationsPath: './migrations'
-  });
+  const runner = await FirebaseRunner.getInstance({ config });
 
-  const status = await runner.list();
-  console.log('MSR Firebase is ready!', status);
+  const migrations = await runner.list();
+  console.log('✓ MSR Firebase is ready!');
+  console.log(`Found ${migrations.length} migrations`);
 }
 
-testSetup();
+testSetup().catch(console.error);
 ```
 
 Run the test:
@@ -138,7 +235,7 @@ To use the `msr-firebase` CLI globally:
 npm install -g @migration-script-runner/firebase
 ```
 
-Verify CLI installation:
+Verify global installation:
 
 ```bash
 msr-firebase --version
@@ -146,7 +243,7 @@ msr-firebase --version
 
 ## TypeScript Configuration
 
-Add to your `tsconfig.json`:
+Recommended `tsconfig.json` for migration scripts:
 
 ```json
 {
@@ -157,10 +254,13 @@ Add to your `tsconfig.json`:
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "declaration": true
   },
   "include": ["migrations/**/*", "src/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }
 ```
 
@@ -168,29 +268,92 @@ Add to your `tsconfig.json`:
 
 ### Cannot find module '@migration-script-runner/firebase'
 
-Ensure the package is installed in your project:
+Ensure the package is installed:
 ```bash
 npm list @migration-script-runner/firebase
 ```
 
-### Firebase Admin SDK initialization errors
+If not found:
+```bash
+npm install @migration-script-runner/firebase
+```
 
-Verify your environment variables are set correctly and the service account has proper permissions.
+### Firebase authentication failed
+
+**Error:** `Error: Failed to parse private key`
+
+**Solution:** Check your service account key file:
+- Path is correct
+- File is valid JSON
+- Has proper permissions (readable)
+
+**Error:** `PERMISSION_DENIED`
+
+**Solution:** Verify your service account has Database Admin role:
+1. Go to Firebase Console → IAM & Admin
+2. Find your service account
+3. Ensure it has "Firebase Realtime Database Admin" role
+
+### Environment variables not loading
+
+Install `dotenv` to load `.env` files:
+```bash
+npm install dotenv
+```
+
+Use in your code:
+```typescript
+import 'dotenv/config';
+import { FirebaseRunner } from '@migration-script-runner/firebase';
+// ... rest of your code
+```
 
 ### TypeScript compilation errors
 
-Ensure you have `@types/node` installed:
+Ensure type definitions are installed:
 ```bash
-npm install -D @types/node
+npm install -D @types/node typescript
 ```
 
-## Next Steps
+### CLI command not found
 
-- [Getting Started](getting-started) - Quick start guide
-- [Writing Migrations](guides/writing-migrations) - Create your first migration
-- [Configuration](guides/configuration) - Advanced configuration options
+If global install doesn't work, use npx:
+```bash
+npx msr-firebase migrate
+```
 
-## See Also
+Or add to `package.json` scripts:
+```json
+{
+  "scripts": {
+    "migrate": "msr-firebase migrate",
+    "migrate:down": "msr-firebase down"
+  }
+}
+```
 
-- [Firebase Admin SDK Setup](https://firebase.google.com/docs/admin/setup)
-- [MSR Core Installation](https://migration-script-runner.github.io/msr-core/getting-started)
+## Configuration Files
+
+### Using Config Files
+
+Create `msr.config.js`:
+
+```javascript
+module.exports = {
+  databaseUrl: process.env.DATABASE_URL,
+  applicationCredentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  folder: './migrations',
+  tableName: 'schema_version',
+  shift: 'production', // Optional: namespace for multi-environment databases
+  locking: {
+    enabled: true,
+    timeout: 600000 // 10 minutes
+  }
+};
+```
+
+Use with CLI:
+```bash
+npx msr-firebase migrate --config-file ./msr.config.js
+```
+

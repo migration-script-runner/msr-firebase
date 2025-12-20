@@ -441,9 +441,3 @@ Run container:
 docker build -t my-migrations .
 docker run --env-file .env my-migrations
 ```
-
-## See Also
-
-- [Basic Usage](basic-usage) - API examples
-- [Custom Commands](custom-commands) - Extending CLI
-- [CLI Guide](../guides/cli-usage) - Complete CLI reference

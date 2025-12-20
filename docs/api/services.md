@@ -189,9 +189,3 @@ await entityService.create({
 // Delete migration record
 await entityService.delete('1234567890');
 ```
-
-## See Also
-
-- [FirebaseHandler](FirebaseHandler) - Uses these services
-- [Interfaces](interfaces) - Service interfaces
-- [Types](types) - Type definitions

@@ -469,9 +469,3 @@ afterEach(async () => {
   console.log('Database state:', JSON.stringify(snapshot.val(), null, 2));
 });
 ```
-
-## See Also
-
-- [Writing Migrations](writing-migrations) - Migration best practices
-- [Firebase-Specific Features](firebase-specific) - Firebase patterns
-- [Examples](../examples/) - Code examples

@@ -518,9 +518,3 @@ Error: Permission denied to access database
 ```
 
 **Solution:** Verify your service account has Database Admin role in Firebase.
-
-## See Also
-
-- [Configuration](configuration) - Detailed configuration options
-- [Writing Migrations](writing-migrations) - Creating migration files
-- [Testing](testing) - Testing before deployment

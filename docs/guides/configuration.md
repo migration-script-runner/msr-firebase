@@ -428,9 +428,3 @@ function validateConfig(config: any) {
 
 validateConfig(config);
 ```
-
-## See Also
-
-- [CLI Usage](cli-usage) - CLI configuration
-- [Getting Started](../getting-started) - Basic setup
-- [Backup & Restore](backup-restore) - Backup configuration

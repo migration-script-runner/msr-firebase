@@ -271,9 +271,3 @@ if (status && status.isLocked) {
   console.log('No lock currently held');
 }
 ```
-
-## See Also
-
-- [Services](services) - Service implementations
-- [Types](types) - Type definitions
-- [MSR Core Interfaces](https://migration-script-runner.github.io/msr-core/api/interfaces/)

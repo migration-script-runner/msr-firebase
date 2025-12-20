@@ -343,9 +343,3 @@ Useful npm scripts:
   }
 }
 ```
-
-## See Also
-
-- [CLI Usage](with-cli) - Using the CLI interface
-- [Firebase Emulator](firebase-emulator) - Testing with emulator
-- [Getting Started](../getting-started) - Quick start guide

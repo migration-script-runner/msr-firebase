@@ -102,15 +102,3 @@ appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 await runner.migrate();
 ```
-
-## Next Steps
-
-- [Installation Guide](installation) - Detailed installation instructions
-- [Writing Migrations](guides/writing-migrations) - Learn migration best practices
-- [CLI Usage](guides/cli-usage) - Complete CLI command reference
-- [API Reference](api/) - Full API documentation
-
-## See Also
-
-- [MSR Core Documentation](https://migration-script-runner.github.io/msr-core)
-- [Firebase Admin SDK Documentation](https://firebase.google.com/docs/admin/setup)
