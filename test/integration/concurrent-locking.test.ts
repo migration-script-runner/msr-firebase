@@ -463,6 +463,107 @@ describe("Concurrent Migration Locking Integration", () => {
 
             console.log("Sequential deployment results:", results);
         });
+
+        it("should handle 20 concurrent instances with only one acquiring lock (stress test)", async function() {
+            this.timeout(60000);
+
+            // EXTREME STRESS TEST: Simulate massive concurrent deployment scenario
+            // 20 instances all trying to migrate at exactly the same time
+            const instanceCount = 20;
+            const testShift = `/stress-test-${Date.now()}`;
+
+            // Create separate config for this test to avoid interference
+            const stressConfig = new FirebaseConfig();
+            stressConfig.applicationCredentials = config.applicationCredentials;
+            stressConfig.databaseUrl = config.databaseUrl;
+            stressConfig.shift = testShift;
+            stressConfig.tableName = config.tableName;
+            stressConfig.folder = config.folder;
+            stressConfig.locking = new LockingConfig({
+                enabled: true,
+                timeout: 10000, // 10 seconds
+                tableName: 'migration_locks',
+                retryAttempts: 0, // Fail fast - no retries
+                retryDelay: 1000
+            });
+
+            console.log(`\n🚀 Creating ${instanceCount} concurrent MSR Firebase instances...`);
+
+            // Create all runner instances
+            const runners: FirebaseRunner[] = [];
+            for (let i = 0; i < instanceCount; i++) {
+                const runner = await FirebaseRunner.getInstance({ config: stressConfig });
+                runners.push(runner);
+                // Tiny delay to avoid Firebase app name collisions
+                if (i < instanceCount - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 5));
+                }
+            }
+
+            console.log(`✅ All ${instanceCount} instances created. Starting simultaneous migration attempts...`);
+
+            // ALL 20 INSTANCES TRY TO MIGRATE AT THE EXACT SAME TIME
+            const migrationPromises = runners.map((runner, index) =>
+                runner.migrate()
+                    .then(result => ({
+                        index,
+                        status: 'success',
+                        executed: result.executed.length,
+                        success: result.success
+                    }))
+                    .catch(error => ({
+                        index,
+                        status: 'failed',
+                        error: error.message || String(error)
+                    }))
+            );
+
+            const results = await Promise.all(migrationPromises);
+
+            // Count successes and failures with type guards
+            const successfulInstances = results.filter((r): r is { index: number; status: 'success'; executed: number; success: boolean } =>
+                r.status === 'success' && 'success' in r && r.success
+            );
+            const failedInstances = results.filter((r): r is { index: number; status: 'failed'; error: string } =>
+                r.status === 'failed'
+            );
+
+            console.log(`\n📊 STRESS TEST RESULTS:`);
+            console.log(`   ✅ Successful: ${successfulInstances.length}`);
+            console.log(`   ❌ Failed (lock blocked): ${failedInstances.length}`);
+            console.log(`   📝 Total: ${results.length}`);
+
+            // CRITICAL ASSERTIONS
+            expect(successfulInstances.length).to.equal(
+                1,
+                `Expected exactly 1 instance to succeed, but ${successfulInstances.length} succeeded`
+            );
+
+            expect(failedInstances.length).to.equal(
+                instanceCount - 1,
+                `Expected ${instanceCount - 1} instances to fail, but ${failedInstances.length} failed`
+            );
+
+            // Verify the successful instance actually executed migrations
+            const winner = successfulInstances[0];
+            console.log(`\n🏆 Winner: Instance #${winner.index} acquired lock and executed ${winner.executed} migration(s)`);
+            expect(winner.executed).to.be.greaterThan(0, "Winner should have executed at least one migration");
+
+            // Verify all failures are lock-related
+            failedInstances.forEach((failure) => {
+                const errorMsg = failure.error.toLowerCase();
+                expect(errorMsg).to.match(
+                    /lock|already running|concurrent|acquire/i,
+                    `Instance #${failure.index} failed with unexpected error: ${failure.error}`
+                );
+            });
+
+            console.log(`\n✅ Lock mechanism successfully prevented race conditions across ${instanceCount} concurrent instances!`);
+
+            // Cleanup
+            const cleanupRunner = await FirebaseRunner.getInstance({ config: stressConfig });
+            await cleanupRunner.getHandler().db.database.ref(testShift).remove();
+        });
     });
 
     describe("Lock Path with Shift Prefix", () => {
