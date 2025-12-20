@@ -148,14 +148,14 @@ describe("CLI", () => {
             const cliPath = join(__dirname, "../../src/cli.ts");
             const content = readFileSync(cliPath, "utf-8");
             expect(content).to.include("flags.databaseUrl");
-            expect(content).to.include("firebaseConfig.databaseUrl = flags.databaseUrl");
+            expect(content).to.include("config.databaseUrl = flags.databaseUrl");
         });
 
         it("should map flags.credentials to config.applicationCredentials", () => {
             const cliPath = join(__dirname, "../../src/cli.ts");
             const content = readFileSync(cliPath, "utf-8");
             expect(content).to.include("flags.credentials");
-            expect(content).to.include("firebaseConfig.applicationCredentials = flags.credentials");
+            expect(content).to.include("config.applicationCredentials = flags.credentials");
         });
 
         it("should handle optional flags gracefully", () => {

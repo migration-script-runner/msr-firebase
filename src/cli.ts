@@ -25,7 +25,7 @@ import { version } from '../package.json';
  * msr-firebase list --format table
  * ```
  */
-const program = createCLI<IFirebaseDB, FirebaseRunner>({
+const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
     name: 'msr-firebase',
     description: 'Firebase Realtime Database Migration Runner',
     version,
@@ -45,14 +45,12 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
 
     // Map custom CLI flags to config properties
     extendFlags: (config, flags) => {
-        // Cast to Partial<FirebaseConfig> to add Firebase-specific properties
-        const firebaseConfig = config as Partial<FirebaseConfig>;
-
+        // config is now properly typed as FirebaseConfig thanks to TConfig generic
         if (flags.databaseUrl && typeof flags.databaseUrl === 'string') {
-            firebaseConfig.databaseUrl = flags.databaseUrl;
+            config.databaseUrl = flags.databaseUrl;
         }
         if (flags.credentials && typeof flags.credentials === 'string') {
-            firebaseConfig.applicationCredentials = flags.credentials;
+            config.applicationCredentials = flags.credentials;
         }
     },
 
