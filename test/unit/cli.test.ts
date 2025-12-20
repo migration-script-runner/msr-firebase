@@ -116,4 +116,54 @@ describe("CLI", () => {
             expect(content).to.include("lockingService");
         });
     });
+
+    describe("Custom CLI flags (v0.8.3+)", () => {
+        it("should define addCustomOptions callback", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("addCustomOptions:");
+        });
+
+        it("should register --database-url flag", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("--database-url <url>");
+            expect(content).to.include("Firebase Realtime Database URL");
+        });
+
+        it("should register --credentials flag", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("--credentials <path>");
+            expect(content).to.include("Path to service account key file");
+        });
+
+        it("should define extendFlags callback", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("extendFlags:");
+        });
+
+        it("should map flags.databaseUrl to config.databaseUrl", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("flags.databaseUrl");
+            expect(content).to.include("firebaseConfig.databaseUrl = flags.databaseUrl");
+        });
+
+        it("should map flags.credentials to config.applicationCredentials", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            expect(content).to.include("flags.credentials");
+            expect(content).to.include("firebaseConfig.applicationCredentials = flags.credentials");
+        });
+
+        it("should handle optional flags gracefully", () => {
+            const cliPath = join(__dirname, "../../src/cli.ts");
+            const content = readFileSync(cliPath, "utf-8");
+            // Should check if flags exist before mapping
+            expect(content).to.include("if (flags.databaseUrl)");
+            expect(content).to.include("if (flags.credentials)");
+        });
+    });
 });

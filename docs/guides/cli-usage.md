@@ -33,15 +33,47 @@ npx msr-firebase <command>
 
 ## Configuration
 
-The CLI reads configuration from environment variables or a `.env` file:
+The CLI reads configuration from three sources (in order of priority):
+
+1. **CLI Flags** (highest priority) - Command-line arguments
+2. **Environment Variables** - `.env` file or shell variables
+3. **Config File** - `msr.config.js` or specified with `--config-file`
+
+### CLI Flags (v0.8.3+)
+
+The easiest way to get started is using CLI flags:
 
 ```bash
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
-MIGRATIONS_PATH=./migrations
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
 ```
+
+**Firebase-specific flags:**
+- `--database-url <url>` - Firebase Realtime Database URL
+- `--credentials <path>` - Path to service account key JSON file
+
+**Standard MSR flags:**
+- `--folder <path>` - Migrations folder (default: `./migrations`)
+- `--table-name <name>` - Schema version table name (default: `schema_version`)
+- `--config-file <path>` - Load config from file
+- `--dry-run` - Simulate without executing
+- `--no-lock` - Disable migration locking
+- `--format <format>` - Output format: `table` or `json`
+
+### Environment Variables
+
+Alternatively, use environment variables in `.env` file:
+
+```bash
+DATABASE_URL=https://your-project.firebaseio.com
+GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+MSR_FOLDER=./migrations
+MSR_TABLE_NAME=schema_version
+```
+
+{: .note }
+**Configuration Priority:** CLI flags override environment variables, which override config files. This allows flexible configuration per environment.
 
 ## Commands
 
@@ -50,23 +82,34 @@ MIGRATIONS_PATH=./migrations
 Apply pending migrations.
 
 ```bash
-msr-firebase migrate
+msr-firebase migrate [targetVersion] [options]
 ```
 
 **Options:**
+- `--database-url <url>` - Firebase Database URL
+- `--credentials <path>` - Service account key file path
 - `--dry-run` - Simulate migration without applying changes
-- `--to <timestamp>` - Migrate up to specific timestamp
+- `--no-lock` - Disable migration locking for this run
+- `--folder <path>` - Custom migrations folder
 
 **Examples:**
 ```bash
-# Apply all pending migrations
-msr-firebase migrate
+# Apply all pending migrations with inline credentials
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
 
-# Dry run
-msr-firebase migrate --dry-run
+# Apply using environment variables
+npx msr-firebase migrate
+
+# Dry run to preview changes
+npx msr-firebase migrate --dry-run
 
 # Migrate to specific version
-msr-firebase migrate --to 1234567890
+npx msr-firebase migrate 1234567890
+
+# Custom migrations folder
+npx msr-firebase migrate --folder ./db/migrations
 ```
 
 ### down
@@ -236,22 +279,39 @@ msr-firebase lock:release --force
 
 Available for all commands:
 
-- `--config <path>` - Path to config file
-- `--migrations-path <path>` - Override migrations directory
-- `--verbose` - Enable verbose logging
-- `--silent` - Suppress all output
-- `--help` - Show command help
+**Firebase-specific:**
+- `--database-url <url>` - Firebase Realtime Database URL
+- `--credentials <path>` - Path to service account key JSON file
+
+**Standard MSR Core:**
+- `--config-file <path>` - Path to config file
+- `--folder <path>` - Override migrations directory
+- `--table-name <name>` - Schema version table name
+- `--display-limit <number>` - Maximum migrations to display
+- `--dry-run` - Simulate without executing
+- `--no-lock` - Disable migration locking
+- `--logger <type>` - Logger type: `console`, `file`, or `silent`
+- `--log-level <level>` - Log level: `error`, `warn`, `info`, `debug`
+- `--log-file <path>` - Log file path (with `--logger file`)
+- `--format <format>` - Output format: `table` or `json`
+- `-h, --help` - Show command help
+- `-V, --version` - Show version number
 
 **Examples:**
 ```bash
-# Use custom config
-msr-firebase migrate --config ./config/production.env
+# Use CLI flags for credentials
+npx msr-firebase migrate \
+  --database-url https://prod.firebaseio.com \
+  --credentials ./prod-key.json
+
+# Use custom config file
+npx msr-firebase migrate --config-file ./msr.config.js
 
 # Custom migrations path
-msr-firebase list --migrations-path ./db/migrations
+npx msr-firebase list --folder ./db/migrations
 
-# Verbose output
-msr-firebase migrate --verbose
+# JSON output for scripting
+npx msr-firebase list --format json
 ```
 
 ## Exit Codes
@@ -283,6 +343,10 @@ fi
 
 ### GitHub Actions
 
+**Option 1: Using CLI Flags (Recommended)**
+
+Store service account key as a secret and use CLI flags:
+
 ```yaml
 name: Run Migrations
 
@@ -304,12 +368,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create service account key file
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}' > key.json
+
+      - name: Run migrations
+        run: |
+          npx msr-firebase migrate \
+            --database-url ${{ secrets.FIREBASE_DATABASE_URL }} \
+            --credentials ./key.json
+
+      - name: Cleanup
+        if: always()
+        run: rm -f key.json
+```
+
+**Option 2: Using Environment Variables**
+
+```yaml
       - name: Run migrations
         env:
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          GOOGLE_APPLICATION_CREDENTIALS: ./key.json
         run: npx msr-firebase migrate
 ```
 
@@ -319,19 +398,41 @@ jobs:
 migrate:
   stage: deploy
   image: node:18
-  script:
+  before_script:
     - npm ci
+    - echo "$FIREBASE_SERVICE_ACCOUNT_KEY" > key.json
+  script:
     - npx msr-firebase migrate
+        --database-url $FIREBASE_DATABASE_URL
+        --credentials ./key.json
+  after_script:
+    - rm -f key.json
   only:
     - main
-  variables:
-    FIREBASE_PROJECT_ID: $FIREBASE_PROJECT_ID
-    FIREBASE_CLIENT_EMAIL: $FIREBASE_CLIENT_EMAIL
-    FIREBASE_PRIVATE_KEY: $FIREBASE_PRIVATE_KEY
-    FIREBASE_DATABASE_URL: $FIREBASE_DATABASE_URL
 ```
 
 ### Docker
+
+**Using CLI flags:**
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY migrations ./migrations
+COPY serviceAccountKey.json ./key.json
+
+# Pass credentials via CLI flags
+CMD ["npx", "msr-firebase", "migrate", \
+     "--database-url", "${DATABASE_URL}", \
+     "--credentials", "./key.json"]
+```
+
+**Using environment variables:**
 
 ```dockerfile
 FROM node:18-alpine
@@ -349,30 +450,47 @@ CMD ["npx", "msr-firebase", "migrate"]
 
 ## Environment-Specific Configuration
 
-### Development
+### Development (Local Firebase Emulator)
 
+**Using CLI flags:**
+```bash
+npx msr-firebase migrate \
+  --database-url http://localhost:9000 \
+  --credentials ./dev-key.json \
+  --folder ./migrations
+```
+
+**Using .env file:**
 ```bash
 # .env.development
-FIREBASE_DATABASE_URL=http://localhost:9000
-MIGRATIONS_PATH=./migrations
+DATABASE_URL=http://localhost:9000?ns=my-project-dev
+GOOGLE_APPLICATION_CREDENTIALS=./dev-key.json
 ```
 
 ### Production
 
+**Using CLI flags:**
 ```bash
-# .env.production
-FIREBASE_DATABASE_URL=https://prod-project.firebaseio.com
-MIGRATIONS_PATH=./migrations
-VALIDATE_CHECKSUMS=true
+npx msr-firebase migrate \
+  --database-url https://prod-project.firebaseio.com \
+  --credentials ./prod-key.json \
+  --no-lock false
 ```
 
-**Usage:**
+**Using .env file:**
+```bash
+# .env.production
+DATABASE_URL=https://prod-project.firebaseio.com
+GOOGLE_APPLICATION_CREDENTIALS=./prod-key.json
+```
+
+**Usage with config files:**
 ```bash
 # Development
-msr-firebase migrate --config .env.development
+npx msr-firebase migrate --config-file ./msr.config.dev.js
 
 # Production
-msr-firebase migrate --config .env.production
+npx msr-firebase migrate --config-file ./msr.config.prod.js
 ```
 
 ## Troubleshooting

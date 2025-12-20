@@ -69,11 +69,14 @@ yarn add @migration-script-runner/firebase
 # Install
 npm install @migration-script-runner/firebase
 
-# Set environment variables
-export FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
-export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+# Run migrations with inline credentials
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
 
-# Run migrations
+# Or use environment variables
+export DATABASE_URL=https://your-project.firebaseio.com
+export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 npx msr-firebase migrate
 ```
 

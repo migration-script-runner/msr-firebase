@@ -69,13 +69,26 @@ export const down: IMigrationScript<admin.database.Database>['down'] = async (db
 
 ### 3. Run Migrations
 
-Using the CLI:
+**Using the CLI with inline credentials (easiest):**
 
 ```bash
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
+```
+
+**Using the CLI with environment variables:**
+
+```bash
+# Set environment variables
+export DATABASE_URL=https://your-project.firebaseio.com
+export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+
+# Run migrations
 npx msr-firebase migrate
 ```
 
-Or programmatically:
+**Or programmatically:**
 
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
@@ -83,7 +96,7 @@ import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebas
 const appConfig = new FirebaseConfig();
 appConfig.folder = './migrations';
 appConfig.tableName = 'schema_version';
-appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
+appConfig.databaseUrl = process.env.DATABASE_URL;
 appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
 const runner = await FirebaseRunner.getInstance({ config: appConfig });

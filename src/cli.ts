@@ -36,6 +36,26 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
         tableName: 'schema_version',
     },
 
+    // Register Firebase-specific CLI options
+    addCustomOptions: (program) => {
+        program
+            .option('--database-url <url>', 'Firebase Realtime Database URL')
+            .option('--credentials <path>', 'Path to service account key file');
+    },
+
+    // Map custom CLI flags to config properties
+    extendFlags: (config, flags) => {
+        // Cast to any since we're adding Firebase-specific properties not in base Config
+        const firebaseConfig = config as any;
+
+        if (flags.databaseUrl) {
+            firebaseConfig.databaseUrl = flags.databaseUrl;
+        }
+        if (flags.credentials) {
+            firebaseConfig.applicationCredentials = flags.credentials;
+        }
+    },
+
     // Factory function to create adapter with merged config
     createExecutor: async (config) => {
         // Initialize Firebase runner with merged configuration

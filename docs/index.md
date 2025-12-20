@@ -66,13 +66,21 @@ npm install @migration-script-runner/firebase
 
 ## Quick Example
 
-### 1. Setup Environment
+### 1. Setup Credentials
 
-Create `.env` file with minimal configuration:
+You can provide Firebase credentials in two ways:
 
+**Option A: CLI Flags (Recommended for quick start)**
+```bash
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
+```
+
+**Option B: Environment Variables**
 ```bash
 # .env
-FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+DATABASE_URL=https://your-project.firebaseio.com
 GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 ```
 
@@ -191,14 +199,19 @@ await runner.down();
 **With CLI:**
 
 ```bash
-# Run all pending migrations
+# Run with inline credentials (easiest)
+npx msr-firebase migrate \
+  --database-url https://your-project.firebaseio.com \
+  --credentials ./serviceAccountKey.json
+
+# Or use environment variables
 npx msr-firebase migrate
 
 # Rollback last migration
 npx msr-firebase down
 
 # Check status
-npx msr-firebase list
+npx msr-firebase list --format table
 ```
 
 ---
