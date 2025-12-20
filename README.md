@@ -65,54 +65,19 @@ yarn add @migration-script-runner/firebase
 
 ## Quick Start
 
-### 1. Create a migration
-
 ```bash
-npx msr-firebase create add-users-table
-```
+# Install
+npm install @migration-script-runner/firebase
 
-### 2. Write your migration
-
-```typescript
-// migrations/1234567890-add-users-table.ts
-import { IMigrationScript } from '@migration-script-runner/core';
-import * as admin from 'firebase-admin';
-
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
-  await db.ref('users').set({
-    user1: { name: 'Alice', email: 'alice@example.com' }
-  });
-};
-
-export const down: IMigrationScript<admin.database.Database>['down'] = async (db) => {
-  await db.ref('users').remove();
-};
-```
-
-### 3. Configure Firebase
-
-```javascript
-// msr.config.js
-module.exports = {
-  folder: './migrations',
-  tableName: 'schema_version',
-  locking: {
-    enabled: process.env.NODE_ENV === 'production',
-    timeout: 600000  // 10 minutes
-  }
-};
-```
-
-### 4. Run migrations
-
-```bash
 # Set environment variables
 export FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
 export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 
-# Apply all pending migrations
+# Run migrations
 npx msr-firebase migrate
 ```
+
+**👉 [View Full Getting Started Guide](https://migration-script-runner.github.io/msr-firebase/getting-started)** for complete setup instructions, migration examples, and configuration options.
 
 ## Key Features
 
@@ -203,13 +168,16 @@ Full documentation available at [https://migration-script-runner.github.io/msr-f
 
 ## How to obtain Service Account Key
 
-Firebase Documentation: https://firebase.google.com/docs/admin/setup
+To use the Firebase Admin SDK in non-Google environments, you need a service account key file.
 
-Steps:
-1. Open
-`https://console.firebase.google.com/project/{your_project_id}/settings/serviceaccounts/adminsdk` link,
-    where {your_project_id} should be replaced
-2. Click **Generate new private key** button and download your private key as a JSON file
+**Official Documentation:** [Initialize the SDK in non-Google environments](https://firebase.google.com/docs/admin/setup#initialize_the_sdk_in_non-google_environments)
+
+**Quick Steps:**
+1. Open `https://console.firebase.google.com/project/{your_project_id}/settings/serviceaccounts/adminsdk`
+   (replace `{your_project_id}` with your actual project ID)
+2. Click **Generate new private key** button
+3. Download the JSON file and store it securely
+4. Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the file path
 
 ---
 
