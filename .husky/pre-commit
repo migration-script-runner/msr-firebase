@@ -1,1 +1,17 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run lint and unit tests
 npm run lint && npm run test:unit
+
+# Check if documentation builds (optional - requires Jekyll)
+if command -v bundle >/dev/null 2>&1; then
+  echo "Checking documentation build..."
+  npm run docs:build || {
+    echo "❌ Documentation build failed. Please fix Jekyll errors before committing."
+    exit 1
+  }
+  echo "✅ Documentation build successful"
+else
+  echo "⚠️  Skipping docs build check (Jekyll not installed)"
+fi
