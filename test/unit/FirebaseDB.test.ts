@@ -60,44 +60,6 @@ describe("FirebaseDB", () => {
         });
     });
 
-    describe("runTransaction", () => {
-        it("should execute callback with database instance", async () => {
-            const mockDatabase = {} as database.Database;
-            const firebaseDB = new FirebaseDB(mockDatabase);
-
-            const callback = sinon.stub().resolves("result");
-
-            const result = await firebaseDB.runTransaction(callback);
-
-            sinon.assert.calledOnceWithExactly(callback, mockDatabase);
-            expect(result).eq("result");
-        });
-
-        it("should pass through callback return value", async () => {
-            const mockDatabase = {} as database.Database;
-            const firebaseDB = new FirebaseDB(mockDatabase);
-
-            const expectedValue = {data: "test", count: 42};
-            const callback = sinon.stub().resolves(expectedValue);
-
-            const result = await firebaseDB.runTransaction(callback);
-
-            expect(result).deep.eq(expectedValue);
-        });
-
-        it("should propagate errors from callback", async () => {
-            const mockDatabase = {} as database.Database;
-            const firebaseDB = new FirebaseDB(mockDatabase);
-
-            const error = new Error("Transaction failed");
-            const callback = sinon.stub().rejects(error);
-
-            await expect(
-                firebaseDB.runTransaction(callback)
-            ).to.be.rejectedWith("Transaction failed");
-        });
-    });
-
     describe("database property", () => {
         it("should expose database instance", () => {
             const mockDatabase = {

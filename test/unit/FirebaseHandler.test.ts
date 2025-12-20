@@ -107,7 +107,7 @@ describe("FirebaseHandler", () => {
 
             const name = handler.getName();
 
-            expect(name).to.equal("Firebase Realtime Database Handler");
+            expect(name).to.equal("Firebase Realtime Database Runner");
         });
     });
 

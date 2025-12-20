@@ -33,9 +33,12 @@ npm install @migration-script-runner/firebase
 - **Full MSR Core Integration** - All standard migration operations (migrate, list, down, validate, backup)
 - **Firebase-Specific Commands** - Custom CLI commands for Firebase operations
 - **TypeScript Support** - First-class TypeScript support with full type definitions
-- **Transaction Support** - Callback-based transactions for Firebase Realtime Database
+- **Single-Node Transactions** - Atomic operations via Firebase's `ref.transaction()`
 - **Backup & Restore** - Built-in backup and restore functionality
 - **CLI Ready** - Complete command-line interface with `msr-firebase` command
+
+{: .warning }
+**Important:** Firebase Realtime Database does NOT support database-wide transactions. Unlike SQL databases or MongoDB, Firebase only supports atomic operations on a **single node**. This is a Firebase platform limitation, not an MSR Firebase limitation. See the [Transaction Guide](guides/transactions) for safe migration patterns and workarounds.
 
 ---
 

@@ -321,24 +321,29 @@ describe('Firebase Integration Tests', () => {
     })
 
     describe('Transaction Support', () => {
-        it('should execute callback in transaction', async () => {
-            const result = await firebaseDB.runTransaction(async (txDb) => {
-                expect(txDb).not.undefined
-                expect(txDb).eq(db)
-                return 'transaction-result'
+        it('should perform single-node atomic transaction', async () => {
+            // Set initial value
+            const testPath = cfg.buildPath('transaction-test')
+            await db.ref(testPath).set({ counter: 0 })
+
+            // Perform atomic increment using Firebase's ref.transaction()
+            const snapshot = await db.ref(testPath).child('counter').transaction((current) => {
+                return (current || 0) + 1
             })
 
-            expect(result).eq('transaction-result')
+            expect(snapshot.committed).eq(true)
+            expect(snapshot.snapshot.val()).eq(1)
         })
 
         it('should perform database operations in transaction', async () => {
-            await firebaseDB.runTransaction(async (txDb) => {
-                const testPath = cfg.buildPath('transaction-test')
-                await txDb.ref(testPath).set({transactional: true, value: 123})
+            const testPath = cfg.buildPath('transaction-test-2')
+
+            // Use Firebase's single-node transaction
+            await db.ref(testPath).transaction((current) => {
+                return { transactional: true, value: 123 }
             })
 
             // Verify data was written
-            const testPath = cfg.buildPath('transaction-test')
             const snapshot = await db.ref(testPath).once('value')
             const data = snapshot.val()
 

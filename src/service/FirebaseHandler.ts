@@ -65,7 +65,7 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
         return handler;
     }
 
-    getName = () => 'Firebase Realtime Database Handler';
+    getName = () => 'Firebase Realtime Database Runner';
 
     getVersion = () => version;
 }

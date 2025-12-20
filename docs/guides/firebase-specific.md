@@ -36,17 +36,33 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 
 ## Transactions
 
-Use transactions for atomic operations:
+{: .warning }
+**Important:** Firebase Realtime Database only supports **single-node** atomic transactions via `ref.transaction()`. Database-wide or multi-document transactions are NOT supported. See the [Transactions Guide](transactions) for details and safe migration patterns.
+
+Use single-node transactions for atomic read-modify-write operations:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
-  const counterRef = db.ref('counters/posts');
+import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
+import { IFirebaseDB, FirebaseHandler } from '@migration-script-runner/firebase';
 
-  await counterRef.transaction((current) => {
-    return (current || 0) + 1;
-  });
-};
+export default class IncrementCounter implements IRunnableScript<IFirebaseDB> {
+  async up(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    const counterRef = db.database.ref(handler.cfg.buildPath('counters/posts'));
+
+    await counterRef.transaction((current) => {
+      return (current || 0) + 1;
+    });
+
+    return 'Incremented post counter';
+  }
+}
 ```
+
+For most migrations, use direct operations (`set()`, `update()`) without transactions. See [Multi-Path Updates](#multi-path-updates) below for atomic multi-path operations.
 
 ## Multi-Path Updates
 

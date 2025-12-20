@@ -179,14 +179,28 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 };
 ```
 
-### 4. Use Transactions for Counters
+### 4. Use Single-Node Transactions for Counters
+
+{: .info }
+Firebase only supports atomic transactions on **single nodes**, not database-wide transactions. See the [Transactions Guide](transactions) for details.
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
-  await db.ref('stats/userCount').transaction((current) => {
-    return (current || 0) + 1;
-  });
-};
+import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
+import { IFirebaseDB, FirebaseHandler } from '@migration-script-runner/firebase';
+
+export default class IncrementUserCount implements IRunnableScript<IFirebaseDB> {
+  async up(
+    db: IFirebaseDB,
+    info: IMigrationInfo,
+    handler: FirebaseHandler
+  ): Promise<string> {
+    const counterRef = db.database.ref(handler.cfg.buildPath('stats/userCount'));
+    await counterRef.transaction((current) => {
+      return (current || 0) + 1;
+    });
+    return 'Incremented user count';
+  }
+}
 ```
 
 ### 5. Validate Data Before Migration

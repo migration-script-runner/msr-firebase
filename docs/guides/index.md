@@ -25,6 +25,10 @@ Complete guide to using the `msr-firebase` command-line interface.
 
 Configure MSR Firebase for your specific needs.
 
+## Transactions
+
+Understanding Firebase's single-node transactions and safe migration patterns without database-wide transactions.
+
 ## Backup & Restore
 
 Learn about backup strategies and restore operations.

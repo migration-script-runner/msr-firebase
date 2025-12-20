@@ -180,15 +180,28 @@ describe("Smoke Test: Complete Migration Workflow", () => {
     });
 
     describe("7. Transaction Support", () => {
-        it("should support runTransaction from database", async () => {
-            const result = await handler.db.runTransaction(async (db) => {
-                // Read users
-                const usersRef = db.ref(handler.cfg.buildPath("users/user1"));
-                const snapshot = await usersRef.once("value");
-                expect(snapshot.exists()).to.be.true;
-                return "Transaction completed";
+        it("should support single-node atomic transactions", async () => {
+            // Firebase RTDB only supports single-node transactions via ref.transaction()
+            const userRef = handler.db.database.ref(handler.cfg.buildPath("users/user1"));
+
+            // Perform atomic update
+            const txResult = await userRef.transaction((userData) => {
+                if (!userData) return null;
+                return {
+                    ...userData,
+                    loginCount: (userData.loginCount || 0) + 1,
+                    lastLogin: Date.now()
+                };
             });
-            expect(result).to.equal("Transaction completed");
+
+            expect(txResult.committed).to.be.true;
+            expect(txResult.snapshot.exists()).to.be.true;
+
+            // Verify the update
+            const snapshot = await userRef.once("value");
+            const data = snapshot.val();
+            expect(data.loginCount).to.be.a("number");
+            expect(data.lastLogin).to.be.a("number");
         });
     });
 

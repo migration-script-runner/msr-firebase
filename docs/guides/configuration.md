@@ -84,22 +84,27 @@ config: {
 }
 ```
 
-### transactionEnabled
+### transaction
 
-Enable transaction support (where applicable).
+Transaction configuration for migrations.
+
+{: .warning }
+**Firebase Limitation:** Firebase Realtime Database does NOT support database-wide transactions. MSR Firebase automatically sets `transaction.mode = TransactionMode.NONE`. See the [Transactions Guide](transactions) for details.
 
 ```typescript
-transactionEnabled: boolean
-```
-
-**Default:** `true`
-
-**Example:**
-```typescript
-config: {
-  transactionEnabled: false // Disable transactions
+transaction: {
+  mode: TransactionMode.NONE  // Automatically set by AppConfig
 }
 ```
+
+**Default:** `TransactionMode.NONE` (set automatically)
+
+Firebase only supports single-node atomic operations via `ref.transaction()`. For safe migrations without database-wide transactions, use:
+- Backup & restore operations
+- Idempotent migrations
+- Small, focused changes
+
+See [Transactions Guide](transactions) for safe migration patterns.
 
 ### backupPath
 
@@ -220,13 +225,15 @@ Create a `.msrrc.json` file:
   "migrationsPath": "./migrations",
   "rollbackStrategy": "backup",
   "validateChecksums": true,
-  "transactionEnabled": true,
   "backupPath": "./backups",
   "firebase": {
     "databaseURL": "https://your-project.firebaseio.com"
   }
 }
 ```
+
+{: .note }
+Transaction mode is automatically set to `NONE` for Firebase. No manual configuration needed.
 
 Load configuration:
 
@@ -286,11 +293,11 @@ export const config = {
   rollbackStrategy: 'both' as const,
   validateChecksums: true,
   backupPath: '/var/backups/firebase',
-  transactionEnabled: true,
   locking: {
     enabled: true,        // Enable locking in production
     timeout: 600000      // 10 minutes
   }
+  // Note: transaction.mode is automatically set to NONE for Firebase
 };
 ```
 
