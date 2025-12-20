@@ -305,6 +305,145 @@ export default class CreateEmailIndex implements IRunnableScript<IFirebaseDB> {
 }
 ```
 
+## Using EntityService for Type-Safe Operations
+
+For working with collections of entities, EntityService provides a cleaner, type-safe alternative to raw Firebase API calls.
+
+### Why Use EntityService?
+
+- ✅ **Type Safety** - Full TypeScript support with generics
+- ✅ **Clean API** - Simple CRUD methods instead of raw Firebase references
+- ✅ **Batch Operations** - Built-in `updateAll()` for updating multiple entities
+- ✅ **Query Support** - Find entities by property values with `findAllBy()`
+- ✅ **Less Code** - Reduce boilerplate in your migrations
+
+### Quick Example
+
+**Without EntityService (Raw Firebase API):**
+```typescript
+export default class AddEmailField implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
+    const snapshot = await db.database.ref(handler.cfg.buildPath('users')).once('value');
+    const updates: Record<string, any> = {};
+
+    snapshot.forEach((child) => {
+      updates[`users/${child.key}/email`] = '';
+    });
+
+    await db.database.ref(handler.cfg.buildPath('')).update(updates);
+    return `Added email field to ${snapshot.numChildren()} users`;
+  }
+}
+```
+
+**With EntityService (Recommended):**
+```typescript
+import { EntityService, IEntity } from '@migration-script-runner/firebase';
+
+interface User extends IEntity {
+  name: string;
+  email?: string;
+}
+
+export default class AddEmailField implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
+    const userService = new EntityService<User>(
+      db.database,
+      handler.cfg.buildPath('users')
+    );
+
+    const results = await userService.updateAll((user) => {
+      if (user.email !== undefined) return false;
+      user.email = '';
+      return true;
+    });
+
+    return `Added email field to ${results.updated.length} users`;
+  }
+}
+```
+
+### Common EntityService Patterns
+
+#### Creating Initial Data
+
+```typescript
+import { EntityService, IEntity } from '@migration-script-runner/firebase';
+
+interface User extends IEntity {
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+export default class CreateInitialUsers implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
+    const userService = new EntityService<User>(
+      db.database,
+      handler.cfg.buildPath('users')
+    );
+
+    const users = [
+      { name: 'Admin', email: 'admin@example.com', role: 'admin' },
+      { name: 'User', email: 'user@example.com', role: 'user' }
+    ];
+
+    const keys = await Promise.all(users.map(u => userService.create(u)));
+    return `Created ${keys.length} users`;
+  }
+}
+```
+
+#### Adding Fields to All Entities
+
+```typescript
+export default class AddVerifiedField implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
+    const userService = new EntityService<User>(
+      db.database,
+      handler.cfg.buildPath('users')
+    );
+
+    const results = await userService.updateAll((user) => {
+      if (user.verified !== undefined) return false; // Skip if exists
+      user.verified = false;
+      return true; // Modified
+    });
+
+    return `Added verified field to ${results.updated.length} users`;
+  }
+}
+```
+
+#### Querying and Transforming
+
+```typescript
+export default class UpgradeAdminUsers implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
+    const userService = new EntityService<User>(
+      db.database,
+      handler.cfg.buildPath('users')
+    );
+
+    // Find all admin users
+    const admins = await userService.findAllBy('role', 'admin');
+
+    // Add permissions
+    const updatePromises = admins.map(admin =>
+      userService.update(admin.key!, { permissions: ['read', 'write', 'delete'] })
+    );
+
+    await Promise.all(updatePromises);
+    return `Updated ${admins.length} admin users`;
+  }
+}
+```
+
+{: .tip }
+> **Complete Guide:** See **[Using EntityService](using-entityservice)** for comprehensive documentation with 5+ complete examples, best practices, and API reference.
+
+---
+
 ## Testing Migrations
 
 Always test migrations before production:
@@ -319,6 +458,7 @@ See [Testing Guide](testing) for detailed instructions.
 
 ## See Also
 
+- **[Using EntityService](using-entityservice)** - Complete EntityService guide with examples
 - **[Transactions](transactions)** - Understanding Firebase transaction limitations
 - **[Testing](testing)** - Testing migrations with Firebase Emulator
 - **[Best Practices](best-practices)** - Firebase-specific patterns and tips

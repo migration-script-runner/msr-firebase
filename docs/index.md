@@ -13,8 +13,13 @@ Firebase implementation v{{ site.package_version }} for Migration Script Runner 
 {: .fs-6 .fw-300 }
 
 [Get started now](#getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/migration-script-runner/msr-firebase){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[MSR Core Docs](https://migration-script-runner.github.io/msr-core){: .btn .fs-5 .mb-4 .mb-md-0 }
+[View all features](features){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[View on GitHub](https://github.com/migration-script-runner/msr-firebase){: .btn .fs-5 .mb-4 .mb-md-0 }
+
+---
+
+{: .warning }
+**⚠️ Unstable Version:** Version v0.2.0 is currently unstable and **not recommended for production use**. The project is under active development and may receive significant updates. Please use with caution and test thoroughly before deploying to production environments.
 
 ---
 
@@ -38,29 +43,84 @@ npm install @migration-script-runner/firebase
 - **CLI Ready** - Complete command-line interface with `msr-firebase` command
 
 {: .warning }
-**Important:** Firebase Realtime Database does NOT support database-wide transactions. Unlike SQL databases or MongoDB, Firebase only supports atomic operations on a **single node**. This is a Firebase platform limitation, not an MSR Firebase limitation. See the [Transaction Guide](guides/transactions) for safe migration patterns and workarounds.
+**Important:** Firebase Realtime Database does NOT support database-wide transactions. Unlike SQL databases or MongoDB, Firebase only supports atomic operations on a **single node**. This is a Firebase platform limitation, not an MSR Firebase limitation. See the [Transaction Guide](writing-migrations/transactions) for safe migration patterns and workarounds.
 
 ---
 
-## Why MSR Firebase?
+## Key Features
 
-**Bring your own database.** MSR Firebase provides a lightweight, flexible framework for managing Firebase Realtime Database migrations without locking you into a specific ORM or pattern.
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 32px 0;">
 
-### Perfect for
+  <div style="background: #e8f5e9; padding: 24px; border-radius: 8px; border-left: 4px solid #66bb6a;">
+    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+      <span style="font-size: 32px; line-height: 1;">🔒</span>
+      <div>
+        <h3 style="color: #2e7d32; font-size: 20px; font-weight: 600; margin: 0 0 4px 0;">Migration Locking</h3>
+        <p style="color: #9e9e9e; font-size: 12px; margin: 0;">Production ready</p>
+      </div>
+    </div>
+    <p style="color: #5f6368; line-height: 1.6; margin: 0; font-size: 14px;">Perfect for Kubernetes, Docker, and multi-instance deployments. Prevents race conditions with automatic lock expiration and force-release commands.</p>
+  </div>
 
-- 🔥 **Firebase Realtime Database** - Native support for Firebase-specific features
-- 🎯 **Production applications** - Returns structured results instead of calling `process.exit()`
-- 🛡️ **Type-safe migrations** - Full TypeScript support with type definitions
-- 📦 **Library or CLI** - Use as a library in your app or run from command line
-- ⚡ **Flexible workflows** - Multiple rollback strategies, validation, and hooks
+  <div style="background: #e1f5fe; padding: 24px; border-radius: 8px; border-left: 4px solid #29b6f6;">
+    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+      <span style="font-size: 32px; line-height: 1;">💾</span>
+      <div>
+        <h3 style="color: #0277bd; font-size: 20px; font-weight: 600; margin: 0 0 4px 0;">Backup & Restore</h3>
+        <p style="color: #9e9e9e; font-size: 12px; margin: 0;">Automatic protection</p>
+      </div>
+    </div>
+    <p style="color: #5f6368; line-height: 1.6; margin: 0; font-size: 14px;">Automatic backups before migrations with flexible restore options. Protect your data with multiple backup modes and point-in-time recovery.</p>
+  </div>
 
-### Key Advantages
+  <div style="background: #fff3e0; padding: 24px; border-radius: 8px; border-left: 4px solid #ffa726;">
+    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+      <span style="font-size: 32px; line-height: 1;">🔥</span>
+      <div>
+        <h3 style="color: #e65100; font-size: 20px; font-weight: 600; margin: 0 0 4px 0;">Firebase Native</h3>
+        <p style="color: #9e9e9e; font-size: 12px; margin: 0;">Optimized for Firebase</p>
+      </div>
+    </div>
+    <p style="color: #5f6368; line-height: 1.6; margin: 0; font-size: 14px;">Built specifically for Firebase Realtime Database with support for single-node transactions, path prefixing, and full Firebase Admin SDK features.</p>
+  </div>
 
-1. **Database-Agnostic Core** - Built on proven MSR Core architecture
-2. **Firebase Native** - Optimized for Firebase Realtime Database operations
-3. **Production Ready** - Used in real-world applications
-4. **Well Tested** - Comprehensive test coverage with Firebase emulator support
-5. **Developer Friendly** - Clear API, detailed documentation, helpful error messages
+  <div style="background: #fce4ec; padding: 24px; border-radius: 8px; border-left: 4px solid #ec407a;">
+    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+      <span style="font-size: 32px; line-height: 1;">🛡️</span>
+      <div>
+        <h3 style="color: #c2185b; font-size: 20px; font-weight: 600; margin: 0 0 4px 0;">Type-Safe Migrations</h3>
+        <p style="color: #9e9e9e; font-size: 12px; margin: 0;">Full TypeScript support</p>
+      </div>
+    </div>
+    <p style="color: #5f6368; line-height: 1.6; margin: 0; font-size: 14px;">First-class TypeScript support with full type definitions. Write migrations with confidence using generic type parameters and interfaces.</p>
+  </div>
+
+  <div style="background: #f3e5f5; padding: 24px; border-radius: 8px; border-left: 4px solid #ab47bc;">
+    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+      <span style="font-size: 32px; line-height: 1;">🧪</span>
+      <div>
+        <h3 style="color: #6a1b9a; font-size: 20px; font-weight: 600; margin: 0 0 4px 0;">Emulator Support</h3>
+        <p style="color: #9e9e9e; font-size: 12px; margin: 0;">Test before deploy</p>
+      </div>
+    </div>
+    <p style="color: #5f6368; line-height: 1.6; margin: 0; font-size: 14px;">Test migrations locally with Firebase Emulator before deploying to production. Complete integration test support with isolated environments.</p>
+  </div>
+
+  <div style="background: #e8eaf6; padding: 24px; border-radius: 8px; border-left: 4px solid #5c6bc0;">
+    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+      <span style="font-size: 32px; line-height: 1;">📦</span>
+      <div>
+        <h3 style="color: #3f51b5; font-size: 20px; font-weight: 600; margin: 0 0 4px 0;">CLI & Library</h3>
+        <p style="color: #9e9e9e; font-size: 12px; margin: 0;">Use your way</p>
+      </div>
+    </div>
+    <p style="color: #5f6368; line-height: 1.6; margin: 0; font-size: 14px;">Use as a command-line tool for quick migrations or integrate programmatically into your Node.js application. Same powerful features, your choice.</p>
+  </div>
+
+</div>
+
+**[→ View all features](features)** - Complete feature list with detailed descriptions
+{: .fs-5 }
 
 ---
 
@@ -220,6 +280,7 @@ npx msr-firebase list --format table
 
 ### Getting Started
 - **[Getting Started](getting-started)** - Installation and quick start guide
+- **[Features](features)** - Complete feature list and comparison
 
 ### Using MSR Firebase
 
@@ -260,12 +321,32 @@ Complete guide to writing migration scripts:
 
 MSR Firebase is part of the [Migration Script Runner](https://github.com/migration-script-runner) ecosystem, providing database migration tooling for various database systems.
 
-### License
+---
 
-Distributed under the MIT License. See `LICENSE` for more information.
+## License
 
-### Links
+This project is licensed under the **MIT License with Commons Clause and Attribution Requirements**.
+
+Based on [Migration Script Runner Core](https://github.com/migration-script-runner/msr-core) by Volodymyr Lavrynovych.
+
+### Quick Summary
+
+- ✅ **Free to use** in your applications (including commercial)
+- ✅ **Free to modify** and contribute
+- ❌ **Cannot sell** this adapter or Firebase-specific extensions as standalone products
+- 🔒 **Attribution required** for Firebase migration extensions
+
+See the [LICENSE](https://github.com/migration-script-runner/msr-firebase/blob/master/LICENSE) file and [NOTICE](https://github.com/migration-script-runner/msr-firebase/blob/master/NOTICE) file for detailed examples and FAQ.
+
+---
+
+## Links
 
 - [GitHub Repository](https://github.com/migration-script-runner/msr-firebase)
 - [npm Package](https://www.npmjs.com/package/@migration-script-runner/firebase)
 - [MSR Core Documentation](https://migration-script-runner.github.io/msr-core)
+- [Report Issues](https://github.com/migration-script-runner/msr-firebase/issues)
+
+---
+
+**Created with ❤️ by [Volodymyr Lavrynovych](https://github.com/vlavrynovych) in Ukraine 🇺🇦**

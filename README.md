@@ -18,6 +18,10 @@
 
 Firebase Realtime Database implementation for [Migration Script Runner (MSR Core)](https://github.com/migration-script-runner/msr-core). Provides version-controlled database migrations with built-in backup, rollback, and distributed locking for production deployments.
 
+> **⚠️ UNSTABLE VERSION WARNING**
+>
+> Version v0.2.0 is currently **unstable and not recommended for production use**. The project is under active development and may receive significant updates. Please use with caution and test thoroughly before deploying to production environments.
+
 ## What's New in v0.2.0
 
 🎉 Major upgrade with production-ready features:
