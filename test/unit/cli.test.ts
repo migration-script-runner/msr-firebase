@@ -161,9 +161,9 @@ describe("CLI", () => {
         it("should handle optional flags gracefully", () => {
             const cliPath = join(__dirname, "../../src/cli.ts");
             const content = readFileSync(cliPath, "utf-8");
-            // Should check if flags exist before mapping
-            expect(content).to.include("if (flags.databaseUrl)");
-            expect(content).to.include("if (flags.credentials)");
+            // Should check if flags exist and are strings before mapping
+            expect(content).to.include("if (flags.databaseUrl && typeof flags.databaseUrl === 'string')");
+            expect(content).to.include("if (flags.credentials && typeof flags.credentials === 'string')");
         });
     });
 });

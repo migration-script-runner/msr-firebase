@@ -45,13 +45,13 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
 
     // Map custom CLI flags to config properties
     extendFlags: (config, flags) => {
-        // Cast to any since we're adding Firebase-specific properties not in base Config
-        const firebaseConfig = config as any;
+        // Cast to Partial<FirebaseConfig> to add Firebase-specific properties
+        const firebaseConfig = config as Partial<FirebaseConfig>;
 
-        if (flags.databaseUrl) {
+        if (flags.databaseUrl && typeof flags.databaseUrl === 'string') {
             firebaseConfig.databaseUrl = flags.databaseUrl;
         }
-        if (flags.credentials) {
+        if (flags.credentials && typeof flags.credentials === 'string') {
             firebaseConfig.applicationCredentials = flags.credentials;
         }
     },
