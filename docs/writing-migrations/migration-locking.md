@@ -1,8 +1,8 @@
 ---
 layout: default
 title: Migration Locking
-parent: Guides
-nav_order: 7
+parent: Writing Migrations
+nav_order: 5
 ---
 
 # Migration Locking

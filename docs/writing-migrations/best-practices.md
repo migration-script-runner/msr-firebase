@@ -1,11 +1,11 @@
 ---
 layout: default
-title: Firebase-Specific Features
-parent: Guides
-nav_order: 2
+title: Best Practices
+parent: Writing Migrations
+nav_order: 6
 ---
 
-# Firebase-Specific Features
+# Best Practices
 {: .no_toc }
 
 Firebase Realtime Database-specific patterns and features for migrations.

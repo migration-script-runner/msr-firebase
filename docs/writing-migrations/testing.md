@@ -1,8 +1,8 @@
 ---
 layout: default
 title: Testing
-parent: Guides
-nav_order: 6
+parent: Writing Migrations
+nav_order: 4
 ---
 
 # Testing

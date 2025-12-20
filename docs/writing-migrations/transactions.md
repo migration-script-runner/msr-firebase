@@ -1,8 +1,8 @@
 ---
 layout: default
 title: Transactions
-parent: Guides
-nav_order: 6
+parent: Writing Migrations
+nav_order: 2
 ---
 
 # Firebase Transactions

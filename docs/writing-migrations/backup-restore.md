@@ -1,8 +1,8 @@
 ---
 layout: default
 title: Backup & Restore
-parent: Guides
-nav_order: 5
+parent: Writing Migrations
+nav_order: 3
 ---
 
 # Backup & Restore

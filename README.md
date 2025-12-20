@@ -113,7 +113,7 @@ msr-firebase lock:status
 msr-firebase lock:release --force
 ```
 
-See [Migration Locking Guide](https://migration-script-runner.github.io/msr-firebase/guides/migration-locking) for details.
+See [Migration Locking Guide](https://migration-script-runner.github.io/msr-firebase/writing-migrations/migration-locking) for details.
 
 ### 💾 Backup & Restore
 
@@ -161,13 +161,20 @@ Full documentation available at [https://migration-script-runner.github.io/msr-f
 
 ### Quick Links
 
-- [Getting Started](https://migration-script-runner.github.io/msr-firebase/getting-started)
-- [Writing Migrations](https://migration-script-runner.github.io/msr-firebase/guides/writing-migrations)
-- [Migration Locking](https://migration-script-runner.github.io/msr-firebase/guides/migration-locking)
-- [Configuration](https://migration-script-runner.github.io/msr-firebase/guides/configuration)
-- [CLI Usage](https://migration-script-runner.github.io/msr-firebase/guides/cli-usage)
-- [API Reference](https://migration-script-runner.github.io/msr-firebase/api/)
-- [Examples](https://migration-script-runner.github.io/msr-firebase/examples/)
+**Getting Started:**
+- [Getting Started](https://migration-script-runner.github.io/msr-firebase/getting-started) - Installation and quick start
+
+**Using MSR Firebase:**
+- [CLI Usage](https://migration-script-runner.github.io/msr-firebase/cli-usage/) - Command-line interface guide
+- [Library Usage](https://migration-script-runner.github.io/msr-firebase/library-usage/) - Programmatic API usage
+- [API Reference](https://migration-script-runner.github.io/msr-firebase/api/) - Complete API documentation
+
+**Writing Migrations:**
+- [Migration Scripts](https://migration-script-runner.github.io/msr-firebase/writing-migrations/migration-scripts) - How to write migrations
+- [Migration Locking](https://migration-script-runner.github.io/msr-firebase/writing-migrations/migration-locking) - Distributed environments
+- [Transactions](https://migration-script-runner.github.io/msr-firebase/writing-migrations/transactions) - Firebase transaction limitations
+- [Testing](https://migration-script-runner.github.io/msr-firebase/writing-migrations/testing) - Testing with Firebase Emulator
+- [Backup & Restore](https://migration-script-runner.github.io/msr-firebase/writing-migrations/backup-restore) - Backup strategies
 
 ## How to obtain Service Account Key
 

@@ -219,28 +219,40 @@ npx msr-firebase list --format table
 ## Documentation
 
 ### Getting Started
-- [Getting Started](getting-started) - Quick start guide
-- [Installation](installation) - Detailed setup instructions
+- **[Getting Started](getting-started)** - Installation and quick start guide
 
-### Guides
-- [Writing Migrations](guides/writing-migrations) - Best practices for migrations
-- [CLI Usage](guides/cli-usage) - Command-line interface guide
-- [Configuration](guides/configuration) - Configuration options
-- [Backup & Restore](guides/backup-restore) - Backup strategies
-- [Testing](guides/testing) - Testing with Firebase emulator
+### Using MSR Firebase
 
-### API Reference
-- [FirebaseRunner](api/FirebaseRunner) - Main migration runner class
-- [FirebaseHandler](api/FirebaseHandler) - Database handler
-- [Services](api/services) - Firebase services
-- [Interfaces](api/interfaces) - Core interfaces
-- [Types](api/types) - TypeScript types
+#### [CLI Usage](cli-usage/)
+Complete command-line interface documentation:
+- [Commands](cli-usage/commands) - Firebase-specific and inherited commands
+- [Configuration](cli-usage/configuration) - CLI flags and options
+- [Examples](cli-usage/examples) - Real-world CLI workflows
+- [CI/CD Integration](cli-usage/ci-cd) - Pipeline integration
 
-### Examples
-- [Basic Usage](examples/basic-usage) - Simple examples
-- [CLI Examples](examples/with-cli) - CLI usage patterns
-- [Custom Commands](examples/custom-commands) - Custom scripts
-- [Firebase Emulator](examples/firebase-emulator) - Testing with emulator
+#### [Library Usage](library-usage/)
+Programmatic API documentation:
+- [Quick Start](library-usage/quick-start) - Get started with the API
+- [Configuration](library-usage/configuration) - Programmatic configuration
+- [Examples](library-usage/examples) - Advanced usage patterns
+
+#### [API Reference](api/)
+Complete API documentation:
+- [FirebaseRunner](api/FirebaseRunner) - Main migration runner
+- [FirebaseConfig](api/FirebaseConfig) - Configuration class
+- [Services](api/services) - Helper services
+- [Interfaces](api/interfaces) - TypeScript interfaces
+
+### Writing Migrations
+
+#### [Writing Migrations](writing-migrations/)
+Complete guide to writing migration scripts:
+- [Migration Scripts](writing-migrations/migration-scripts) - File structure and patterns
+- [Transactions](writing-migrations/transactions) - Understanding Firebase limitations
+- [Backup & Restore](writing-migrations/backup-restore) - Protecting your data
+- [Testing](writing-migrations/testing) - Testing with Firebase Emulator
+- [Migration Locking](writing-migrations/migration-locking) - Distributed environments
+- [Best Practices](writing-migrations/best-practices) - Firebase-specific patterns
 
 ---
 

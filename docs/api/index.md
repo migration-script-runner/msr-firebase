@@ -1,17 +1,17 @@
 ---
 layout: default
 title: API Reference
-nav_order: 4
+nav_order: 5
 has_children: true
 ---
 
 # API Reference
 
-Complete API documentation for MSR Firebase consumer-facing classes and interfaces.
+Complete API documentation for MSR Firebase classes, interfaces, and services.
 
-## Consumer API
+## Main Classes
 
-These are the classes you'll use when consuming MSR Firebase:
+These are the primary classes for using MSR Firebase:
 
 ### [FirebaseRunner](FirebaseRunner)
 
@@ -53,23 +53,12 @@ TypeScript type definitions and utilities for Firebase migrations.
 
 ---
 
-## Quick Start
+## Getting Started
 
-```typescript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
+For practical usage examples, see:
 
-// 1. Configure
-const config = new FirebaseConfig();
-config.databaseUrl = process.env.DATABASE_URL;
-config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-config.folder = './migrations';
-
-// 2. Create runner
-const runner = await FirebaseRunner.getInstance({ config });
-
-// 3. Run migrations
-await runner.migrate();
-```
+- **[Library Usage Quick Start](../library-usage/quick-start)** - Programmatic usage examples
+- **[CLI Usage](../cli-usage/)** - Command-line interface documentation
 
 ## External Documentation
 
