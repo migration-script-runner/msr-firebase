@@ -27,6 +27,9 @@ jobs:
             - node_modules
           key: v3-dependencies-{{ checksum "package-lock.json" }}
       - run:
+          name: Build TypeScript
+          command: npm run build
+      - run:
           name: Setup CI Environment
           command: source scripts/ci.sh
       - run:
