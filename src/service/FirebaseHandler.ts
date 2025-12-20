@@ -19,13 +19,13 @@ import { IFirebaseDB } from '../interface';
  * providing migration execution, schema versioning, and backup capabilities.
  */
 export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
-    db: IFirebaseDB;
-    backup: IBackupService;
-    schemaVersion: ISchemaVersion<IFirebaseDB>;
-    lockingService?: ILockingService<IFirebaseDB>;
+    readonly db: IFirebaseDB;
+    readonly backup: IBackupService;
+    readonly schemaVersion: ISchemaVersion<IFirebaseDB>;
+    readonly lockingService?: ILockingService<IFirebaseDB>;
 
     private constructor(
-        public cfg: FirebaseConfig,
+        public readonly cfg: FirebaseConfig,
         firebaseDatabase: FirebaseDB
     ) {
         this.db = firebaseDatabase;

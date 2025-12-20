@@ -2,7 +2,7 @@
 
 [![Test](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml/badge.svg)](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml)
 [![Coverage Status](https://coveralls.io/repos/github/migration-script-runner/msr-firebase/badge.svg?branch=master)](https://coveralls.io/github/migration-script-runner/msr-firebase?branch=master)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vlavrynovych_msr-firebase&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vlavrynovych_msr-firebase)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=migration-script-runner_msr-firebase&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=migration-script-runner_msr-firebase)
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][npm-downloads-image]][npm-url]
 [![GitHub issues](https://img.shields.io/github/issues/migration-script-runner/msr-firebase.svg)](https://github.com/migration-script-runner/msr-firebase/issues)

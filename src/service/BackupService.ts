@@ -18,8 +18,8 @@ export class BackupService implements IBackupService {
     private lastBackup?: string;
 
     constructor(
-        private db: database.Database,
-        private nodes = BackupService.NODES.ALL
+        private readonly db: database.Database,
+        private readonly nodes = BackupService.NODES.ALL
     ) {}
 
     private async getData(): Promise<Record<string, unknown>> {
@@ -55,12 +55,12 @@ export class BackupService implements IBackupService {
      * Restores Firebase Realtime Database from backup.
      *
      * @param backupPath - Optional backup content (JSON string). If not provided, uses last backup.
-     * @throws Error if no backup data available
+     * @throws ReferenceError if no backup data available
      */
     async restore(backupPath?: string): Promise<void> {
         const backupData = backupPath ?? this.lastBackup;
         if (!backupData) {
-            throw new Error('No backup data available to restore');
+            throw new ReferenceError('No backup data available to restore');
         }
         await this.saveData(JSON.parse(backupData));
     }

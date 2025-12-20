@@ -28,8 +28,8 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * @param db - Firebase Realtime Database instance
      * @param root - Root path for the entity collection (e.g., 'users', 'production/users')
      */
-    constructor(public db: database.Database,
-                protected root:string) {
+    constructor(public readonly db: database.Database,
+                protected readonly root:string) {
         super(db);
     }
 

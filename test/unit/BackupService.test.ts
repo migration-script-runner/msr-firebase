@@ -48,7 +48,7 @@ describe("BackupService", () => {
             const service = new BackupService(mockDatabase, ["/test/root"]);
 
             // Try to restore without creating backup first
-            await expect(service.restore()).to.be.rejectedWith("No backup data available to restore");
+            await expect(service.restore()).to.be.rejectedWith(ReferenceError, "No backup data available to restore");
         });
 
         it("should restore from last backup when no backup path provided", async () => {

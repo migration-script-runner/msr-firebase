@@ -18,7 +18,7 @@ describe("DBConnector", () => {
         cfg.applicationCredentials = undefined
 
         // when: establish connection we expect an error
-        await expect(DBConnector.connect(cfg)).to.be.rejectedWith(Error, "Application credentials not found");
+        await expect(DBConnector.connect(cfg)).to.be.rejectedWith(TypeError, "Application credentials not found in configuration");
     })
 
     it("connect: no Database URL", async () => {

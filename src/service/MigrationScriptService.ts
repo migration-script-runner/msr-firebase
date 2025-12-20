@@ -11,9 +11,9 @@ import { database } from 'firebase-admin';
  * Uses composition with EntityService for Firebase operations.
  */
 export class MigrationScriptService implements IMigrationScript<IFirebaseDB> {
-    private entityService: EntityService<MigrationInfo>;
+    private readonly entityService: EntityService<MigrationInfo>;
 
-    constructor(public db: database.Database, root: string) {
+    constructor(public readonly db: database.Database, root: string) {
         this.entityService = new EntityService<MigrationInfo>(db, root);
     }
 

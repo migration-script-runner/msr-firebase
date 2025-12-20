@@ -6,7 +6,7 @@ const KEY = 'key';
 
 export class FirebaseDataService {
 
-    public constructor(protected db:database.Database) {}
+    public constructor(protected readonly db:database.Database) {}
 
     public async getList<T = unknown>(path: string): Promise<T[]> {
         const snapshot = await this.getSnapshot(path)

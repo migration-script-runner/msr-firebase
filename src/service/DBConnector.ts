@@ -6,7 +6,7 @@ export class DBConnector {
 
     public static async connect(cfg:FirebaseConfig): Promise<admin.database.Database> {
         const filePath = cfg.applicationCredentials
-        if(!filePath) throw new Error("Application credentials not found")
+        if(!filePath) throw new TypeError("Application credentials not found in configuration")
 
         const serviceAccount = await import(filePath)
         const name = `${Date.now()}-${_.random(10)}`

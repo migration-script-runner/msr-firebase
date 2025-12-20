@@ -13,11 +13,11 @@ export class SchemaVersionService implements ISchemaVersion<IFirebaseDB> {
     /**
      * Migration records interface for accessing executed migrations.
      */
-    migrationRecords: MigrationScriptService;
+    readonly migrationRecords: MigrationScriptService;
 
     constructor(
         migrations: MigrationScriptService,
-        private cfg: FirebaseConfig
+        private readonly cfg: FirebaseConfig
     ) {
         this.migrationRecords = migrations;
     }
