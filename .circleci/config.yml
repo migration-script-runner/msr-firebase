@@ -9,6 +9,12 @@ jobs:
           password: $DOCKER_TOKEN
     steps:
       - checkout
+      - run:
+          name: Install Java 21 (for Firebase Emulator)
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y openjdk-21-jdk
+            java -version
       - restore_cache:
           keys:
             - v3-dependencies-{{ checksum "package-lock.json" }}
