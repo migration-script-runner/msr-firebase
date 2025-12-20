@@ -46,7 +46,7 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * ```
      */
     public getAll():Promise<T[]> {
-        return this.getList(this.root);
+        return this.getList<T>(this.root);
     }
 
     /**
@@ -60,8 +60,8 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * const user = usersObject['user-key-123'];
      * ```
      */
-    getAllAsObject() {
-        return this.getObject(this.root);
+    getAllAsObject(): Promise<Record<string, T>> {
+        return this.getObject<Record<string, T>>(this.root);
     }
 
     /**
@@ -79,7 +79,7 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * ```
      */
     get(key:string):Promise<T> {
-        return this.getObject(`${this.root}/${key}`);
+        return this.getObject<T>(`${this.root}/${key}`);
     }
 
     /**
@@ -286,7 +286,7 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      */
     findAllBy(propertyName:string,
               value:number | string | boolean | null):Promise<T[]> {
-        return super.findAllObjectsBy(this.root, propertyName, value);
+        return super.findAllObjectsBy<T>(this.root, propertyName, value);
     }
 }
 

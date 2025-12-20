@@ -22,19 +22,16 @@ export class BackupService implements IBackupService {
         private nodes = BackupService.NODES.ALL
     ) {}
 
-    private async getData() {
+    private async getData(): Promise<Record<string, unknown>> {
         const data = await Promise.all(this.nodes.map(node => this.db.ref(node).once('value')));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const obj = {} as any;
+        const obj: Record<string, unknown> = {};
         return this.nodes.reduce((acc, name, index) => {
             acc[name] = data[index].val();
-            console.log(acc[name]);
             return acc;
         }, obj);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async saveData(data: any) {
+    private async saveData(data: Record<string, unknown>): Promise<void> {
         const tasks = Object.keys(data).map((node: string) => {
             const ref = this.db.ref(node);
             const value = data[node];

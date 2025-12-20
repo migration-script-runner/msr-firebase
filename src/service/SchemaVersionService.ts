@@ -53,8 +53,8 @@ export class SchemaVersionService implements ISchemaVersion<IFirebaseDB> {
      * @param tableName - Name of the migration tracking node
      * @returns Promise resolving to true
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async validateTable(tableName: string): Promise<boolean> {
-        console.log(tableName);
         return true;
     }
 }

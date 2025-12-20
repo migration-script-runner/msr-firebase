@@ -8,50 +8,50 @@ export class FirebaseDataService {
 
     public constructor(protected db:database.Database) {}
 
-    public async getList(path: string) {
+    public async getList<T = unknown>(path: string): Promise<T[]> {
         const snapshot = await this.getSnapshot(path)
-        return FirebaseDataService.convertObjectToList(snapshot.val());
+        return FirebaseDataService.convertObjectToList<T>(snapshot.val());
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public updateObject(path:string, obj:any) {
-        return this.db.ref(path).update(obj);
+    public updateObject(path:string, obj:unknown): Promise<void> {
+        return this.db.ref(path).update(obj as Record<string, unknown>);
     }
 
-    public async getObject(path: string) {
+    public async getObject<T = unknown>(path: string): Promise<T> {
         const snapshot = await this.getSnapshot(path)
-        return FirebaseDataService.mixKey(snapshot.val(), snapshot.key)
+        return FirebaseDataService.mixKey(snapshot.val(), snapshot.key);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public setObject(path:string, obj:any) {
+    public setObject(path:string, obj:unknown): Promise<void> {
         return this.db.ref(path).set(obj);
     }
 
-    public async findAllObjectsBy(path: string,
+    public async findAllObjectsBy<T = unknown>(path: string,
                            propertyName: string,
-                           value: number | string | boolean | null) {
+                           value: number | string | boolean | null): Promise<T[]> {
         const snapshot = await this.db.ref(path)
             .orderByChild(propertyName)
             .equalTo(value)
             .once(VALUE);
-        return FirebaseDataService.convertObjectToList(snapshot.val());
+        return FirebaseDataService.convertObjectToList<T>(snapshot.val());
+    }
+
+    public static convertObjectToList<T = unknown>(obj:Record<string, unknown> | null): T[] {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return _.map(obj, (value, key) => this.mixKey(value instanceof Object ? value: {value:value}, key)) as any;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static convertObjectToList(obj:any) {
-        return _.map(obj, (value, key) => this.mixKey(value instanceof Object ? value: {value:value}, key));
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static mixKey(obj:any, key:string|null|undefined) {
+    public static mixKey(obj:any, key:string|null|undefined): any {
         if(!obj || !key) return obj;
 
-        Object.defineProperty(obj, KEY, {
-            value: key,
-            enumerable: false,
-            writable: false
-        });
+        if (typeof obj === 'object' && obj !== null) {
+            Object.defineProperty(obj, KEY, {
+                value: key,
+                enumerable: false,
+                writable: false
+            });
+        }
         return obj;
     }
 

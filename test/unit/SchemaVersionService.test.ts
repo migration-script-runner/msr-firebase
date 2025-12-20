@@ -96,27 +96,10 @@ describe("SchemaVersionService", () => {
     });
 
     describe("validateTable", () => {
-        let consoleLogStub: sinon.SinonStub;
-
-        beforeEach(() => {
-            consoleLogStub = sinon.stub(console, 'log');
-        });
-
-        afterEach(() => {
-            consoleLogStub.restore();
-        });
-
         it("should always return true for Firebase", async () => {
             const result = await service.validateTable("schema_version");
 
             expect(result).to.be.true;
-        });
-
-        it("should log the table name", async () => {
-            await service.validateTable("test_table");
-
-            sinon.assert.calledOnce(consoleLogStub);
-            sinon.assert.calledWith(consoleLogStub, "test_table");
         });
     });
 });

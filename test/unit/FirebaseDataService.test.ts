@@ -3,6 +3,12 @@ import sinon from "sinon";
 import {FirebaseDataService} from "../../src";
 import { database } from "firebase-admin";
 
+interface TestObject {
+    key?: string;
+    name: string;
+    value?: number;
+}
+
 describe("FirebaseDataService - Instance Methods", () => {
     let service: FirebaseDataService;
     let mockDatabase: any;
@@ -67,7 +73,7 @@ describe("FirebaseDataService - Instance Methods", () => {
             mockSnapshot.val.returns({ name: "test", value: 42 });
             mockSnapshot.key = "my-key";
 
-            const result = await service.getObject("/test/path");
+            const result = await service.getObject<TestObject>("/test/path");
 
             expect(result.name).to.equal("test");
             expect(result.value).to.equal(42);
@@ -78,7 +84,7 @@ describe("FirebaseDataService - Instance Methods", () => {
             mockSnapshot.val.returns(null);
             mockSnapshot.key = "my-key";
 
-            const result = await service.getObject("/test/path");
+            const result = await service.getObject<TestObject | null>("/test/path");
 
             expect(result).to.be.null;
         });
@@ -91,7 +97,7 @@ describe("FirebaseDataService - Instance Methods", () => {
                 'id2': { name: 'item2' },
             });
 
-            const result = await service.getList("/test/path");
+            const result = await service.getList<TestObject>("/test/path");
 
             expect(result).to.be.an('array');
             expect(result).to.have.lengthOf(2);
@@ -102,7 +108,7 @@ describe("FirebaseDataService - Instance Methods", () => {
         it("should handle empty object", async () => {
             mockSnapshot.val.returns(null);
 
-            const result = await service.getList("/test/path");
+            const result = await service.getList<TestObject>("/test/path");
 
             expect(result).to.be.an('array');
             expect(result).to.have.lengthOf(0);
@@ -116,7 +122,7 @@ describe("FirebaseDataService - Instance Methods", () => {
                 'id2': { name: 'Bob', age: 30 },
             });
 
-            const result = await service.findAllObjectsBy("/users", "age", 30);
+            const result = await service.findAllObjectsBy<TestObject>("/users", "age", 30);
 
             sinon.assert.calledWith(mockRef.orderByChild, "age");
             sinon.assert.calledWith(mockRef.equalTo, 30);
@@ -129,7 +135,7 @@ describe("FirebaseDataService - Instance Methods", () => {
                 'id1': { status: 'active' },
             });
 
-            await service.findAllObjectsBy("/items", "status", "active");
+            await service.findAllObjectsBy<TestObject>("/items", "status", "active");
 
             sinon.assert.calledWith(mockRef.orderByChild, "status");
             sinon.assert.calledWith(mockRef.equalTo, "active");
@@ -140,7 +146,7 @@ describe("FirebaseDataService - Instance Methods", () => {
                 'id1': { published: true },
             });
 
-            await service.findAllObjectsBy("/posts", "published", true);
+            await service.findAllObjectsBy<TestObject>("/posts", "published", true);
 
             sinon.assert.calledWith(mockRef.orderByChild, "published");
             sinon.assert.calledWith(mockRef.equalTo, true);
@@ -151,7 +157,7 @@ describe("FirebaseDataService - Instance Methods", () => {
                 'id1': { deleted: null },
             });
 
-            await service.findAllObjectsBy("/items", "deleted", null);
+            await service.findAllObjectsBy<TestObject>("/items", "deleted", null);
 
             sinon.assert.calledWith(mockRef.orderByChild, "deleted");
             sinon.assert.calledWith(mockRef.equalTo, null);
@@ -200,13 +206,13 @@ describe("FirebaseDataService - Static Methods", () => {
 
     describe("convertObjectToList", () => {
         it("should return empty array for null", () => {
-            const result = FirebaseDataService.convertObjectToList(null);
+            const result = FirebaseDataService.convertObjectToList<TestObject>(null);
             expect(result).to.be.an('array');
             expect(result.length).eq(0);
         });
 
         it("should return empty array for undefined", () => {
-            const result = FirebaseDataService.convertObjectToList(undefined);
+            const result = FirebaseDataService.convertObjectToList<TestObject>(undefined as unknown as Record<string, unknown>);
             expect(result).to.be.an('array');
             expect(result.length).eq(0);
         });
@@ -217,7 +223,7 @@ describe("FirebaseDataService - Static Methods", () => {
                 'key2': {name: 'item2', value: 20}
             };
 
-            const result = FirebaseDataService.convertObjectToList(input);
+            const result = FirebaseDataService.convertObjectToList<TestObject>(input);
 
             expect(result).to.be.an('array');
             expect(result.length).eq(2);
@@ -234,7 +240,7 @@ describe("FirebaseDataService - Static Methods", () => {
                 }
             };
 
-            const result = FirebaseDataService.convertObjectToList(input);
+            const result = FirebaseDataService.convertObjectToList<{key?: string, child: {value: number}}>(input);
 
             expect(result.length).eq(1);
             expect(result[0].key).eq('parent1');
@@ -248,7 +254,7 @@ describe("FirebaseDataService - Static Methods", () => {
                 'c': true
             };
 
-            const result = FirebaseDataService.convertObjectToList(input);
+            const result = FirebaseDataService.convertObjectToList<{key?: string, value: number | string | boolean}>(input);
 
             expect(result.length).eq(3);
             // mixKey adds key property to all values including primitives wrapped as objects
