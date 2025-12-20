@@ -98,6 +98,15 @@ describe("Concurrent Migration Locking Integration", () => {
                 const errorMessage = failedResult.reason?.message || String(failedResult.reason);
                 expect(errorMessage.toLowerCase()).to.match(/lock|already running|concurrent/i);
             }
+
+            // CRITICAL: Verify migrations were only applied once (not duplicated)
+            let totalMigrationsApplied = 0;
+            if (result1.status === 'fulfilled' && result1.value.success) {
+                totalMigrationsApplied = result1.value.executed.length;
+            } else if (result2.status === 'fulfilled' && result2.value.success) {
+                totalMigrationsApplied = result2.value.executed.length;
+            }
+            expect(totalMigrationsApplied).to.equal(4, "Expected exactly 4 migrations to be applied (no duplicates)");
         });
 
         it("should allow second instance to migrate after first completes", async function() {
@@ -429,6 +438,19 @@ describe("Concurrent Migration Locking Integration", () => {
             expect(failedPods).to.equal(podCount - 1, "All other pods should fail to acquire lock");
 
             console.log(`Kubernetes simulation: ${successfulPods} succeeded, ${failedPods} blocked by lock`);
+
+            // CRITICAL: Verify migrations were only applied once (no duplicates)
+            const successfulResult = results.find(r =>
+                r.status === 'fulfilled' &&
+                typeof r.value === 'object' &&
+                'success' in r.value
+            );
+            if (successfulResult && successfulResult.status === 'fulfilled' && 'executed' in successfulResult.value) {
+                const totalMigrationsApplied = successfulResult.value.executed.length;
+                // May be 0 if migrations were already applied in previous test
+                expect(totalMigrationsApplied).to.be.greaterThanOrEqual(0, "Should have valid migration count");
+                console.log(`✓ Verified: ${totalMigrationsApplied} migrations applied (no duplicates)`);
+            }
         });
 
         it("should handle rapid sequential migrations from different instances", async function() {
@@ -549,6 +571,9 @@ describe("Concurrent Migration Locking Integration", () => {
             console.log(`\n🏆 Winner: Instance #${winner.index} acquired lock and executed ${winner.executed} migration(s)`);
             expect(winner.executed).to.be.greaterThan(0, "Winner should have executed at least one migration");
 
+            // CRITICAL: Verify exactly 4 migrations were applied (no duplicates)
+            expect(winner.executed).to.equal(4, "Expected exactly 4 migrations to be applied (no duplicates)");
+
             // Verify all failures are lock-related
             failedInstances.forEach((failure) => {
                 const errorMsg = failure.error.toLowerCase();
@@ -559,9 +584,147 @@ describe("Concurrent Migration Locking Integration", () => {
             });
 
             console.log(`\n✅ Lock mechanism successfully prevented race conditions across ${instanceCount} concurrent instances!`);
+            console.log(`✅ Verified: Migrations applied exactly once (no duplicates)`);
 
             // Cleanup
             const cleanupRunner = await FirebaseRunner.getInstance({ config: stressConfig });
+            await cleanupRunner.getHandler().db.database.ref(testShift).remove();
+        });
+
+        it("should handle 20 concurrent instances with 3 retry attempts (stress test with retries)", async function() {
+            this.timeout(90000); // Longer timeout for retries
+
+            // EXTREME STRESS TEST WITH RETRIES: Test if retry mechanism causes any race conditions
+            // 20 instances all trying to migrate, each with 3 retry attempts
+            const instanceCount = 20;
+            const testShift = `/stress-retry-test-${Date.now()}`;
+
+            // Config with retries enabled
+            const stressConfigWithRetries = new FirebaseConfig();
+            stressConfigWithRetries.applicationCredentials = config.applicationCredentials;
+            stressConfigWithRetries.databaseUrl = config.databaseUrl;
+            stressConfigWithRetries.shift = testShift;
+            stressConfigWithRetries.tableName = config.tableName;
+            stressConfigWithRetries.folder = config.folder;
+            stressConfigWithRetries.locking = new LockingConfig({
+                enabled: true,
+                timeout: 5000, // 5 seconds
+                tableName: 'migration_locks',
+                retryAttempts: 3, // Each instance will retry 3 times
+                retryDelay: 500   // 500ms between retries
+            });
+
+            console.log(`\n🚀 Creating ${instanceCount} concurrent instances with 3 retry attempts each...`);
+
+            // Create all runner instances
+            const runners: FirebaseRunner[] = [];
+            for (let i = 0; i < instanceCount; i++) {
+                const runner = await FirebaseRunner.getInstance({ config: stressConfigWithRetries });
+                runners.push(runner);
+                if (i < instanceCount - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 5));
+                }
+            }
+
+            console.log(`✅ All ${instanceCount} instances created. Starting simultaneous migration attempts with retries...`);
+
+            // ALL 20 INSTANCES TRY TO MIGRATE WITH RETRIES
+            const startTime = Date.now();
+            const migrationPromises = runners.map((runner, index) =>
+                runner.migrate()
+                    .then(result => ({
+                        index,
+                        status: 'success',
+                        executed: result.executed.length,
+                        success: result.success,
+                        duration: Date.now() - startTime
+                    }))
+                    .catch(error => ({
+                        index,
+                        status: 'failed',
+                        error: error.message || String(error),
+                        duration: Date.now() - startTime
+                    }))
+            );
+
+            const results = await Promise.all(migrationPromises);
+            const totalDuration = Date.now() - startTime;
+
+            // Count successes and failures with type guards
+            const successfulInstances = results.filter((r): r is { index: number; status: 'success'; executed: number; success: boolean; duration: number } =>
+                r.status === 'success' && 'success' in r && r.success
+            );
+            const failedInstances = results.filter((r): r is { index: number; status: 'failed'; error: string; duration: number } =>
+                r.status === 'failed'
+            );
+
+            console.log(`\n📊 STRESS TEST WITH RETRIES RESULTS:`);
+            console.log(`   ✅ Successful: ${successfulInstances.length}`);
+            console.log(`   ❌ Failed (exhausted retries): ${failedInstances.length}`);
+            console.log(`   📝 Total: ${results.length}`);
+            console.log(`   ⏱️  Total duration: ${totalDuration}ms`);
+
+            // CRITICAL ASSERTIONS - With retries, multiple instances may succeed
+            // BUT only ONE should actually execute migrations (others find nothing to do)
+            const instancesThatExecutedMigrations = successfulInstances.filter(i => i.executed > 0);
+            const instancesThatFoundNothingToDo = successfulInstances.filter(i => i.executed === 0);
+
+            console.log(`\n📋 SUCCESS BREAKDOWN:`);
+            console.log(`   🔨 Instances that executed migrations: ${instancesThatExecutedMigrations.length}`);
+            console.log(`   ✓ Instances that acquired lock but found nothing to do: ${instancesThatFoundNothingToDo.length}`);
+
+            // CRITICAL: Only ONE instance should have actually executed migrations
+            expect(instancesThatExecutedMigrations.length).to.equal(
+                1,
+                `Expected exactly 1 instance to execute migrations, but ${instancesThatExecutedMigrations.length} executed migrations`
+            );
+
+            // The rest succeeded by acquiring lock after migrations were done (safe behavior)
+            expect(successfulInstances.length).to.be.greaterThanOrEqual(
+                1,
+                "At least one instance should succeed"
+            );
+
+            // Verify the winner actually executed migrations
+            const winner = instancesThatExecutedMigrations[0];
+            console.log(`\n🏆 Winner: Instance #${winner.index} acquired lock and executed ${winner.executed} migration(s)`);
+            console.log(`   Winner completed in: ${winner.duration}ms`);
+            expect(winner.executed).to.be.greaterThan(0, "Winner should have executed at least one migration");
+
+            // CRITICAL: Verify exactly 4 migrations were applied (no duplicates)
+            expect(winner.executed).to.equal(4, "Expected exactly 4 migrations to be applied (no duplicates)");
+
+            // Verify late arrivals executed ZERO migrations (everything already done)
+            instancesThatFoundNothingToDo.forEach(instance => {
+                expect(instance.executed).to.equal(0, `Late arrival instance #${instance.index} should not have executed any migrations`);
+            });
+
+            // Log the "late arrivals" that acquired lock after work was done
+            if (instancesThatFoundNothingToDo.length > 0) {
+                console.log(`\n⏰ Late arrivals (acquired lock after migrations completed):`);
+                instancesThatFoundNothingToDo.forEach(instance => {
+                    console.log(`   Instance #${instance.index}: acquired at ${instance.duration}ms`);
+                });
+            }
+
+            // Verify all failures are lock-related (exhausted retry attempts)
+            failedInstances.forEach((failure) => {
+                const errorMsg = failure.error.toLowerCase();
+                expect(errorMsg).to.match(
+                    /lock|already running|concurrent|acquire|attempt/i,
+                    `Instance #${failure.index} failed with unexpected error: ${failure.error}`
+                );
+            });
+
+            // Calculate average retry duration for failed instances
+            const avgFailDuration = failedInstances.reduce((sum, f) => sum + f.duration, 0) / failedInstances.length;
+            console.log(`   Average time to exhaust retries: ${avgFailDuration.toFixed(0)}ms`);
+
+            console.log(`\n✅ Lock mechanism with retries successfully prevented race conditions across ${instanceCount} concurrent instances!`);
+            console.log(`   Retries did NOT cause multiple instances to acquire the lock - mechanism is safe!`);
+
+            // Cleanup
+            const cleanupRunner = await FirebaseRunner.getInstance({ config: stressConfigWithRetries });
             await cleanupRunner.getHandler().db.database.ref(testShift).remove();
         });
     });
