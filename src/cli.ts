@@ -37,15 +37,12 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
     },
 
     // Factory function to create adapter with merged config
-    createExecutor: (config) => {
+    createExecutor: async (config) => {
         // Initialize Firebase runner with merged configuration
-        // Note: createCLI expects synchronous factory, but Firebase requires async connection
-        // Type cast is needed as workaround until MSR Core supports Promise<Executor>
-        // @see https://github.com/migration-script-runner/msr-core/issues/145
         const appConfig = new AppConfig();
         Object.assign(appConfig, config);
 
-        return FirebaseRunner.getInstance({ config: appConfig }) as unknown as FirebaseRunner;
+        return FirebaseRunner.getInstance({ config: appConfig });
     },
 
     // Add Firebase-specific custom commands
@@ -55,8 +52,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
             .description('Show Firebase connection information')
             .action(async () => {
                 try {
-                    const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
-                    const runner = await runnerPromise;
+                    const runner = await createExecutor();
                     const info = runner.getConnectionInfo();
 
                     console.log('\n📊 Firebase Connection Information:\n');
@@ -77,8 +73,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
             .description('Test Firebase database connection')
             .action(async () => {
                 try {
-                    const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
-                    const runner = await runnerPromise;
+                    const runner = await createExecutor();
                     const firebaseDb = runner.getHandler().db;
                     const isConnected = await firebaseDb.checkConnection();
 
@@ -102,8 +97,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
             .description('List all root nodes in Firebase database')
             .action(async () => {
                 try {
-                    const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
-                    const runner = await runnerPromise;
+                    const runner = await createExecutor();
                     const nodes = await runner.listNodes();
 
                     if (nodes.length === 0) {
@@ -130,8 +124,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner>({
             .argument('<nodes...>', 'Node paths to backup (e.g., users posts)')
             .action(async (nodes: string[]) => {
                 try {
-                    const runnerPromise = createExecutor() as unknown as Promise<FirebaseRunner>;
-                    const runner = await runnerPromise;
+                    const runner = await createExecutor();
                     const backup = await runner.backupNodes(nodes);
 
                     console.log('\n💾 Node Backup:\n');

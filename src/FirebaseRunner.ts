@@ -1,6 +1,7 @@
-import { MigrationScriptExecutor, IMigrationExecutorDependencies } from '@migration-script-runner/core';
+import { MigrationScriptExecutor, IMigrationExecutorDependencies, IExecutorOptions } from '@migration-script-runner/core';
 import { FirebaseHandler } from './service/FirebaseHandler';
-import { IFirebaseDB, IFirebaseRunnerOptions } from './interface';
+import { IFirebaseDB } from './interface';
+import { AppConfig } from './model/AppConfig';
 
 /**
  * Firebase Realtime Database Migration Script Runner.
@@ -25,8 +26,8 @@ import { IFirebaseDB, IFirebaseRunnerOptions } from './interface';
  * await runner.migrate();
  * ```
  */
-export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler> {
-    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler>) {
+export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler, AppConfig> {
+    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler, AppConfig>) {
         super(dependencies);
     }
 
@@ -79,14 +80,13 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
      * });
      * ```
      */
-    static async getInstance(options: IFirebaseRunnerOptions): Promise<FirebaseRunner> {
-        // Initialize Firebase handler internally
-        const handler = await FirebaseHandler.getInstance(options.config);
-
-        return new FirebaseRunner({
-            handler,
-            ...options
-        });
+    static async getInstance(options: IExecutorOptions<IFirebaseDB, AppConfig>): Promise<FirebaseRunner> {
+        return MigrationScriptExecutor.createInstance(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            FirebaseRunner as any, // Required: createInstance expects public constructor, but we use private for factory pattern
+            options,
+            (config: AppConfig) => FirebaseHandler.getInstance(config)
+        );
     }
 
     /**
