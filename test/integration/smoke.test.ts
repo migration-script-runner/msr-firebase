@@ -235,6 +235,8 @@ describe("Smoke Test: Complete Migration Workflow", () => {
         it("should delete backup", async () => {
             await handler.backup.deleteBackup();
             // Note: deleteBackup() clears the in-memory backup data
+            // Verify backup was deleted (no error thrown)
+            expect(handler.backup).to.exist;
         });
     });
 

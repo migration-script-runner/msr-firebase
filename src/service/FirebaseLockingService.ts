@@ -111,7 +111,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
         const parts = executorId.split('-');
         const hostname = parts[0] || '';
         const pidStr = parts[1];
-        const processId = pidStr ? parseInt(pidStr, 10) : undefined;
+        const processId = pidStr ? Number.parseInt(pidStr, 10) : undefined;
 
         const lockRef = this.db.database.ref(this.lockPath);
 
@@ -124,7 +124,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
                         lockedAt: now,
                         expiresAt,
                         hostname,
-                        processId: processId !== undefined && !isNaN(processId) ? processId : null
+                        processId: processId !== undefined && !Number.isNaN(processId) ? processId : null
                     };
                 }
 
@@ -135,7 +135,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
                         lockedAt: now,
                         expiresAt,
                         hostname,
-                        processId: processId !== undefined && !isNaN(processId) ? processId : null
+                        processId: processId !== undefined && !Number.isNaN(processId) ? processId : null
                     };
                 }
 

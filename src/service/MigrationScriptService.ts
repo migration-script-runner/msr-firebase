@@ -55,7 +55,7 @@ export class MigrationScriptService implements IMigrationScript<IFirebaseDB> {
         // Find the entity with this timestamp and remove it
         const entities = await this.entityService.getAll();
         const entity = entities.find((e) => e.timestamp === timestamp);
-        if (entity && entity.key) {
+        if (entity?.key) {
             await this.entityService.remove(entity.key);
         }
     }
