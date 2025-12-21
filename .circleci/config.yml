@@ -3,27 +3,43 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/node:16.13.0
+      - image: cimg/node:20.18
         auth:
           username: $DOCKER_USER
           password: $DOCKER_TOKEN
     steps:
       - checkout
+      - run:
+          name: Install Java 21 (for Firebase Emulator)
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y openjdk-21-jdk
+            java -version
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "package.json" }}
+            - v3-dependencies-{{ checksum "package-lock.json" }}
+            - v3-dependencies-
       - run:
           name: Install Dependencies
-          command: npm install
+          command: npm ci
       - save_cache:
           paths:
             - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
+          key: v3-dependencies-{{ checksum "package-lock.json" }}
+      - run:
+          name: Build TypeScript
+          command: npm run build
+      - run:
+          name: Setup CI Environment
+          command: source scripts/ci.sh
       - run:
           name: Run Tests with reports
+          command: npm run test:report
+      - run:
+          name: Upload coverage to Coveralls
           command: |
-            source scripts/ci.sh
-            npm run test:report
+            curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
+            ./coveralls report reports/coverage/lcov.info
       - store_test_results:
           path: reports
       - store_artifacts:

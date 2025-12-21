@@ -1,0 +1,7 @@
+{
+  "extensions": ["ts"],
+  "spec": ["test/integration/**/*.test.ts"],
+  "require": ["ts-node/register", "test/setup.ts"],
+  "color": true,
+  "exit": true
+}

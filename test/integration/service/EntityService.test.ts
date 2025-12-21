@@ -1,12 +1,14 @@
-import {TestUtils} from "../TestUtils";
-import {TestConfig} from "../TestConfig";
-import {EntityService} from "../../src";
-import {TestEntity} from "../TestEntity";
+import {DBConnector, EntityService} from "../../../src";
+import {TestEntity} from "../../TestEntity";
+import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
+import {database} from "firebase-admin";
 
 describe('EntityService', () => {
 
     let entityService:EntityService<TestEntity>
+    let db:database.Database
+    const cfg = new IntegrationTestConfig()
 
     const seedKey = 'seed-id'
     const seedObj = new TestEntity("123")
@@ -19,14 +21,13 @@ describe('EntityService', () => {
     }
 
     before(async () => {
-        const db = await TestUtils.getDB()
-        const cfg = new TestConfig()
+        db = await DBConnector.connect(cfg)
         entityService = new EntityService<TestEntity>(db, cfg.buildPath("some-entity"))
         seedData()
     })
 
     after(async () => {
-        await TestUtils.clean()
+        await db.ref(cfg.shift!).remove()
     })
 
     it('getAll', async () => {

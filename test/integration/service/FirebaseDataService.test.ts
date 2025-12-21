@@ -1,21 +1,31 @@
-import {TestUtils} from "../TestUtils";
-import {TestConfig} from "../TestConfig";
-import {FirebaseDataService} from "../../src";
+import {DBConnector, FirebaseDataService} from "../../../src";
+import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
+import {database} from "firebase-admin";
+
+interface TestData {
+    key?: string;
+    a?: number | string;
+    b?: number | string;
+    c?: number;
+    d?: number;
+    value?: number;
+}
 
 describe("FirebaseDataService", () => {
 
-    const cfg = new TestConfig()
+    const cfg = new IntegrationTestConfig()
     const basePath = cfg.buildPath('test')
     let service:FirebaseDataService
+    let db:database.Database
 
     before(async () => {
-        const db = await TestUtils.getDB()
+        db = await DBConnector.connect(cfg)
         service = new FirebaseDataService(db)
     })
 
     after(async () => {
-        await TestUtils.clean()
+        await db.ref(cfg.shift!).remove()
     })
 
     it("setObject", async () => {
@@ -23,7 +33,7 @@ describe("FirebaseDataService", () => {
         await service.setObject(basePath, {a: 1, b: 2})
 
         // then
-        const obj = await service.getObject(basePath)
+        const obj = await service.getObject<TestData>(basePath)
         expect(obj).not.undefined
         expect(obj.key).eq('test', 'key should be = test')
         expect(obj.a).eq(1, 'a prop should have provided value = 1')
@@ -32,7 +42,7 @@ describe("FirebaseDataService", () => {
     })
     it("getObject", async () => {
         // when
-        const obj = await service.getObject(basePath)
+        const obj = await service.getObject<TestData>(basePath)
 
         // then
         expect(obj).not.undefined
@@ -45,7 +55,7 @@ describe("FirebaseDataService", () => {
         await service.updateObject(basePath, {c:3,d:4})
 
         // and
-        const obj = await service.getObject(basePath)
+        const obj = await service.getObject<TestData>(basePath)
 
         // then
         expect(obj).not.undefined
@@ -58,7 +68,7 @@ describe("FirebaseDataService", () => {
 
     it("getList", async () => {
         // when
-        const list = await service.getList(basePath)
+        const list = await service.getList<TestData>(basePath)
 
         // then
         expect(list).not.undefined
@@ -78,7 +88,7 @@ describe("FirebaseDataService", () => {
         await service.setObject(`${basePath}/objects/t3`, {a: 'v3', b: 'group1'})
 
         // when search by b = 3
-        let list = await service.findAllObjectsBy(`${basePath}/objects`, 'b', '3')
+        let list = await service.findAllObjectsBy<TestData>(`${basePath}/objects`, 'b', '3')
 
         // then
         expect(list).not.undefined
@@ -88,7 +98,7 @@ describe("FirebaseDataService", () => {
         expect(list[0].b).eq('3')
 
         // when search by a = v1
-        list = await service.findAllObjectsBy(`${basePath}/objects`, 'a', 'v1')
+        list = await service.findAllObjectsBy<TestData>(`${basePath}/objects`, 'a', 'v1')
 
         // then
         expect(list).not.undefined
@@ -98,7 +108,7 @@ describe("FirebaseDataService", () => {
         expect(list[0].b).eq('v2')
 
         // when search by b = group1
-        list = await service.findAllObjectsBy(`${basePath}/objects`, 'b', 'group1')
+        list = await service.findAllObjectsBy<TestData>(`${basePath}/objects`, 'b', 'group1')
 
         // then
         expect(list).not.undefined
@@ -120,7 +130,7 @@ describe("FirebaseDataService", () => {
     it("convertObjectToList", async () => {
         // when
         const snapshot = await service.getSnapshot(basePath)
-        const list = FirebaseDataService.convertObjectToList(snapshot.val())
+        const list = FirebaseDataService.convertObjectToList<TestData>(snapshot.val())
 
         // then
         expect(list).not.undefined
@@ -152,8 +162,8 @@ describe("FirebaseDataService", () => {
         expect(res4.key).eq('key1')
 
         expect(() => {
-            res4.key = 3
-        }).to.throw(`Cannot assign to read only property 'key' of object '#<Object>'`);
+            res4.key = 'new-key'
+        }).to.throw(TypeError, `Cannot assign to read only property 'key' of object '#<Object>'`);
     })
 
     it("getSnapshot", async () => {

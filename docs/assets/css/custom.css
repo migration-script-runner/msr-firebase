@@ -1,0 +1,68 @@
+---
+---
+
+/* Custom styles for MSR Firebase documentation */
+
+/* Ensure logo and title are visible in sidebar */
+.site-header {
+  border-bottom: 1px solid #eeebee;
+}
+
+.site-title {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  line-height: 1.5 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem;
+}
+
+.site-logo {
+  max-height: 40px;
+  max-width: 40px;
+}
+
+/* Limit height of large Mermaid diagrams */
+.main-content .language-mermaid {
+  max-height: 600px;
+  overflow-y: auto;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+/* Specific diagram height limits */
+.main-content h2#high-level-architecture + p + .language-mermaid {
+  max-height: 400px;
+}
+
+.main-content h2#class-diagram + p + .language-mermaid,
+.main-content h3#dependency-graph + p + .language-mermaid {
+  max-height: 600px;
+}
+
+/* Code blocks */
+.highlight {
+  border-radius: 4px;
+}
+
+/* Callout styling enhancements */
+.highlight-note {
+  background-color: #e7f2fa;
+  border-left: 4px solid #2c7be5;
+}
+
+.highlight-warning {
+  background-color: #fff3cd;
+  border-left: 4px solid #f5c518;
+}
+
+.highlight-tip {
+  background-color: #d4edda;
+  border-left: 4px solid #28a745;
+}
+
+.highlight-important {
+  background-color: #e7d5f7;
+  border-left: 4px solid #7952b3;
+}

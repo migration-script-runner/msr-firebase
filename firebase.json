@@ -1,0 +1,17 @@
+{
+  "emulators": {
+    "database": {
+      "host": "localhost",
+      "port": 9000
+    },
+    "ui": {
+      "enabled": false
+    },
+    "hub": {
+      "port": 4400
+    },
+    "logging": {
+      "port": 4500
+    }
+  }
+}

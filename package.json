@@ -1,9 +1,12 @@
 {
-  "name": "msr-firebase",
+  "name": "@migration-script-runner/firebase",
   "version": "0.1.6",
-  "description": "Firebase Migration Script Runner",
+  "description": "Migration Script Runner for Firebase Realtime Database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "msr-firebase": "./dist/src/cli.js"
+  },
   "files": [
     "/dist"
   ],
@@ -12,68 +15,88 @@
     "start:js": "npm run build && node dist/index.js",
     "start:ts": "npm run build && npx ts-node src/index.ts",
     "build": "rimraf ./dist && tsc && rimraf ./dist/test",
-    "test": "npm run lint && npm run test:mocha",
-    "test:mocha": "cross-env TS_NODE_FILES=true mocha test/**/*.ts",
+    "test": "npm run lint && npm run test:unit && npm run test:integration",
+    "test:unit": "mocha --config .mocharc.json",
+    "test:integration": "firebase emulators:exec --only database 'npx mocha --config .mocharc.integration.json'",
+    "test:all": "npm run test:unit && npm run test:integration",
     "test:watch": "npx nodemon",
-    "test:mocha:report": "cross-env TS_NODE_FILES=true mocha --reporter mocha-junit-reporter --reporter-options mochaFile=./reports/mocha/test-results.xml test/**/*.ts",
-    "test:coverage": "nyc npm run test:mocha:report",
+    "test:mocha:report": "mocha --reporter mocha-junit-reporter --reporter-options mochaFile=./reports/mocha/test-results.xml",
+    "test:coverage:unit": "nyc mocha --config .mocharc.json",
+    "test:coverage:integration": "nyc --no-clean firebase emulators:exec --only database 'npx mocha --config .mocharc.integration.json'",
+    "test:coverage": "npm run test:coverage:unit && npm run test:coverage:integration && nyc report",
+    "test:coverage:report": "nyc report --reporter=html --reporter=text",
     "test:coverage:coveralls": "nyc report --reporter=text-lcov | coveralls",
     "test:report": "rimraf ./reports && npm run lint:report && npm run test:coverage",
-    "lint": "eslint ./src/ --ext .ts",
-    "lint:report": "eslint ./src/ --ext .ts --format junit --output-file ./reports/eslint.xml"
+    "emulator:start": "firebase emulators:start --only database",
+    "lint": "eslint ./src/",
+    "lint:report": "eslint ./src/ --format junit --output-file ./reports/eslint.xml",
+    "docs:install": "cd docs && bundle install",
+    "docs:serve": "cd docs && bundle exec jekyll serve",
+    "docs:build": "cd docs && bundle exec jekyll build",
+    "prepare": "husky",
+    "prepublishOnly": "npm run build && npm run lint && npm run test:unit"
   },
   "keywords": [
     "firebase",
     "migration",
-    "migration script runner",
-    "migration script"
+    "migration-script-runner",
+    "msr",
+    "database",
+    "schema",
+    "realtime-database",
+    "@migration-script-runner"
   ],
   "author": {
     "name": "Volodymyr Lavrynovych",
     "email": "volodyalavrynovych@gmail.com",
     "url": "https://www.instagram.com/vlavrynovych/"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/chai": "^4.3.9",
     "@types/chai-as-promised": "^7.1.7",
     "@types/chai-spies": "^1.0.5",
     "@types/figlet": "^1.5.7",
-    "@types/mocha": "^10.0.3",
-    "@types/node": "^20.8.10",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.19.26",
     "@types/sinon": "^17.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.9.1",
-    "@typescript-eslint/parser": "^6.11.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
     "chai": "^4.3.10",
     "chai-as-promised": "^7.1.1",
     "chai-spies": "^1.1.0",
     "coveralls": "^3.1.1",
     "cross-env": "^7.0.3",
-    "eslint": "^8.53.0",
+    "eslint": "^9.39.2",
+    "eslint-formatter-junit": "^9.0.1",
     "eslint-plugin-only-warn": "^1.1.0",
     "firebase-admin": "^11.11.0",
-    "mocha": "^10.2.0",
+    "firebase-tools": "^15.0.0",
+    "husky": "^9.1.7",
+    "mocha": "^11.7.5",
     "mocha-junit-reporter": "^2.2.1",
     "nodemon": "^3.0.1",
     "nyc": "^15.1.0",
     "rimraf": "^5.0.5",
     "sinon": "^17.0.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0"
   },
   "dependencies": {
+    "@migration-script-runner/core": "^0.8.4",
     "@types/lodash": "^4.14.200",
-    "ascii-table3": "^0.9.0",
+    "ascii-table3": "^1.0.1",
     "lodash": "^4.17.21",
-    "migration-script-runner": "^0.1.11",
-    "moment": "^2.29.4"
+    "moment": "^2.30.1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/vlavrynovych/msr-firebase.git"
+    "url": "https://github.com/migration-script-runner/msr-firebase.git"
   },
   "bugs": {
-    "url": "https://github.com/vlavrynovych/msr-firebase/issues",
+    "url": "https://github.com/migration-script-runner/msr-firebase/issues",
     "email": "volodyalavrynovych@gmail.com"
   }
 }

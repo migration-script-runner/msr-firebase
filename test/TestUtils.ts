@@ -1,16 +1,7 @@
 import {TestDataCleaner} from "./TestDataCleaner";
-
-// inits chai-spies
-import * as chai from "chai";
-import spies from 'chai-spies';
-chai.use(spies);
-
-// inits chai-as-promised
-import chaiAsPromised from 'chai-as-promised';
-import {DBConnector, EntityService, IEntity} from "../src";
+import {DBConnector} from "../src";
 import {database} from "firebase-admin";
 import {TestConfig} from "./TestConfig";
-chai.use(chaiAsPromised);
 
 export class TestUtils {
     public static shift = `/test-${Date.now()}`
