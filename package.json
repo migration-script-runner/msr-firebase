@@ -1,6 +1,6 @@
 {
   "name": "@migration-script-runner/firebase",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Migration Script Runner for Firebase Realtime Database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
