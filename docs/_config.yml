@@ -4,8 +4,8 @@
 # Site settings
 title: "MSR: Firebase"
 description: "Firebase implementation for Migration Script Runner - Database migrations for Firebase Realtime Database"
-baseurl: "/msr-firebase"
-url: "https://migration-script-runner.github.io"
+baseurl: ""
+url: "https://firebase.migration-script-runner.dev"
 
 # Theme
 remote_theme: just-the-docs/just-the-docs
