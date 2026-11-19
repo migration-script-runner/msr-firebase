@@ -1,5 +1,4 @@
 import * as admin from "firebase-admin";
-import _ from "lodash";
 import {FirebaseConfig} from "../model";
 
 export class DBConnector {
@@ -9,7 +8,7 @@ export class DBConnector {
         if(!filePath) throw new TypeError("Application credentials not found in configuration")
 
         const serviceAccount = await import(filePath)
-        const name = `${Date.now()}-${_.random(10)}`
+        const name = `${Date.now()}-${Math.floor(Math.random() * 11)}`
         const options = {
             credential: admin.credential.cert(serviceAccount),
         } as admin.AppOptions

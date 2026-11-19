@@ -1,5 +1,4 @@
 import {database} from "firebase-admin";
-import _ from 'lodash';
 
 const VALUE = 'value';
 const KEY = 'key';
@@ -99,8 +98,11 @@ export class FirebaseDataService {
      * @returns Array of items with keys mixed in
      */
     public static convertObjectToList<T = unknown>(obj:Record<string, unknown> | null): T[] {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return _.map(obj, (value, key) => this.mixKey(value instanceof Object ? value: {value:value}, key)) as any;
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        return Object.entries(obj || {}).map(([key, value]) =>
+            this.mixKey(value instanceof Object ? value : {value}, key)
+        ) as any;
+        /* eslint-enable @typescript-eslint/no-explicit-any */
     }
 
     /**
