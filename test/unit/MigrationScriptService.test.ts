@@ -1,13 +1,13 @@
 import {expect} from "chai";
 import sinon from "sinon";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import {MigrationScriptService} from "../../src";
 
 describe("MigrationScriptService", () => {
 
     describe("constructor", () => {
         it("should create instance with database and root path", () => {
-            const mockDatabase = {} as database.Database;
+            const mockDatabase = {} as Database;
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
 
             expect(service.db).eq(mockDatabase);
@@ -22,7 +22,7 @@ describe("MigrationScriptService", () => {
             };
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef)
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             const result = await service.getSnapshot("/test/path");
@@ -39,7 +39,7 @@ describe("MigrationScriptService", () => {
                 ref: sinon.stub().returns({
                     once: sinon.stub().resolves({val: sinon.stub().returns(null)})
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             const result = await service.getAllExecuted();
@@ -59,7 +59,7 @@ describe("MigrationScriptService", () => {
                         val: sinon.stub().returns(mockMigrations)
                     })
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             const result = await service.getAllExecuted();
@@ -78,7 +78,7 @@ describe("MigrationScriptService", () => {
             };
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef)
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             const details = {
@@ -117,7 +117,7 @@ describe("MigrationScriptService", () => {
                         })
                     };
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             await service.remove(timestamp);
@@ -137,7 +137,7 @@ describe("MigrationScriptService", () => {
                         val: sinon.stub().returns(mockMigrations)
                     })
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
 

@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import sinon from "sinon";
-import { database } from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import {EntityService} from "../../src/service/EntityService";
 import type {IEntity} from "../../src/interface/IEntity";
 
@@ -47,7 +47,7 @@ describe("EntityService", () => {
 
         mockDatabase = {
             ref: sinon.stub().returns(mockRef),
-        } as unknown as database.Database;
+        } as unknown as Database;
 
         service = new EntityService<TestEntity>(mockDatabase, '/test/entities');
     });

@@ -1,5 +1,5 @@
 import {expect} from "chai"
-import {database} from "firebase-admin"
+import type { Database } from 'firebase-admin/database';
 import {MigrationScriptExecutor, SilentLogger} from "@migration-script-runner/core"
 
 import {
@@ -13,7 +13,7 @@ import {IntegrationTestConfig} from "../IntegrationTestConfig"
 import {TestEntity} from "../TestEntity"
 
 describe('Firebase Integration Tests', () => {
-    let db: database.Database
+    let db: Database
     let firebaseDB: IFirebaseDB
     let handler: FirebaseHandler
     let executor: MigrationScriptExecutor<IFirebaseDB>

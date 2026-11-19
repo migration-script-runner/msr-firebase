@@ -1,12 +1,12 @@
 import {TestDataCleaner} from "./TestDataCleaner";
 import {DBConnector} from "../src";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import {TestConfig} from "./TestConfig";
 
 export class TestUtils {
     public static shift = `/test-${Date.now()}`
     private static cleaner:TestDataCleaner
-    private static db:database.Database
+    private static db:Database
 
     public static async clean() {
         const database = await this.getDB();

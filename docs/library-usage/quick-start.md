@@ -118,21 +118,22 @@ Create a migration file in `./migrations/`:
 ```typescript
 // migrations/202501200001-create-users.ts
 import { IMigrationScript } from '@migration-script-runner/core';
-import * as admin from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
+import { ServerValue } from 'firebase-admin/database';
 
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   await db.ref('users').set({
     user1: {
       name: 'John Doe',
       email: 'john@example.com',
-      createdAt: admin.database.ServerValue.TIMESTAMP
+      createdAt: ServerValue.TIMESTAMP
     }
   });
 
   console.log('✓ Created users');
 };
 
-export const down: IMigrationScript<admin.database.Database>['down'] = async (db) => {
+export const down: IMigrationScript<Database>['down'] = async (db) => {
   await db.ref('users').remove();
   console.log('✓ Removed users');
 };

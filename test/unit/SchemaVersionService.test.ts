@@ -3,7 +3,7 @@ import sinon from "sinon";
 import { SchemaVersionService } from "../../src/service/SchemaVersionService";
 import { MigrationScriptService } from "../../src/service/MigrationScriptService";
 import { FirebaseConfig } from "../../src/model";
-import { database } from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 describe("SchemaVersionService", () => {
     let service: SchemaVersionService;
@@ -25,7 +25,7 @@ describe("SchemaVersionService", () => {
 
         const mockDatabase = {
             ref: sinon.stub().returns(mockRef),
-        } as unknown as database.Database;
+        } as unknown as Database;
 
         mockMigrationService = {
             db: mockDatabase,

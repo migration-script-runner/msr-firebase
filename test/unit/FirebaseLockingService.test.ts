@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import sinon from "sinon";
-import { database } from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import { FirebaseLockingService } from "../../src";
 import { IFirebaseDB } from "../../src/interface";
 import { LockingConfig } from "@migration-script-runner/core";
 
 describe("FirebaseLockingService", () => {
-    let mockDatabase: database.Database;
+    let mockDatabase: Database;
     let mockFirebaseDB: IFirebaseDB;
     let lockingService: FirebaseLockingService;
     let lockingConfig: LockingConfig;
@@ -23,7 +23,7 @@ describe("FirebaseLockingService", () => {
     describe("constructor", () => {
         it("should create instance with default timeout", () => {
             mockFirebaseDB = {
-                database: {} as database.Database,
+                database: {} as Database,
                 checkConnection: sinon.stub(),
                 runTransaction: sinon.stub()
             };
@@ -34,7 +34,7 @@ describe("FirebaseLockingService", () => {
 
         it("should create instance with custom timeout", () => {
             mockFirebaseDB = {
-                database: {} as database.Database,
+                database: {} as Database,
                 checkConnection: sinon.stub(),
                 runTransaction: sinon.stub()
             };
@@ -48,7 +48,7 @@ describe("FirebaseLockingService", () => {
 
         it("should create instance with shift path", () => {
             mockFirebaseDB = {
-                database: {} as database.Database,
+                database: {} as Database,
                 checkConnection: sinon.stub(),
                 runTransaction: sinon.stub()
             };
@@ -60,7 +60,7 @@ describe("FirebaseLockingService", () => {
 
     describe("acquireLock", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -146,7 +146,7 @@ describe("FirebaseLockingService", () => {
 
     describe("verifyLockOwnership", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -252,7 +252,7 @@ describe("FirebaseLockingService", () => {
 
     describe("releaseLock", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -338,7 +338,7 @@ describe("FirebaseLockingService", () => {
 
     describe("getLockStatus", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -417,7 +417,7 @@ describe("FirebaseLockingService", () => {
 
     describe("forceReleaseLock", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -454,7 +454,7 @@ describe("FirebaseLockingService", () => {
 
     describe("checkAndReleaseExpiredLock", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -537,7 +537,7 @@ describe("FirebaseLockingService", () => {
 
     describe("initLockStorage", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),
@@ -596,7 +596,7 @@ describe("FirebaseLockingService", () => {
 
     describe("ensureLockStorageAccessible", () => {
         beforeEach(() => {
-            mockDatabase = {} as database.Database;
+            mockDatabase = {} as Database;
             mockFirebaseDB = {
                 database: mockDatabase,
                 checkConnection: sinon.stub(),

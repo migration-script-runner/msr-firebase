@@ -2,7 +2,7 @@ import { IMigrationScript, MigrationScript, IMigrationInfo } from '@migration-sc
 import { EntityService } from './EntityService';
 import { MigrationInfo } from '../model';
 import { IFirebaseDB } from '../interface';
-import { database } from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
 
 /**
  * Firebase implementation of migration script record management.
@@ -13,7 +13,7 @@ import { database } from 'firebase-admin';
 export class MigrationScriptService implements IMigrationScript<IFirebaseDB> {
     private readonly entityService: EntityService<MigrationInfo>;
 
-    constructor(public readonly db: database.Database, root: string) {
+    constructor(public readonly db: Database, root: string) {
         this.entityService = new EntityService<MigrationInfo>(db, root);
     }
 

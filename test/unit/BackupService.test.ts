@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import sinon from "sinon";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import {BackupService} from "../../src";
 
 describe("BackupService", () => {
@@ -13,7 +13,7 @@ describe("BackupService", () => {
                         val: sinon.stub().returns({test: "data"})
                     })
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new BackupService(mockDatabase, ["/test/root"]);
 
@@ -31,7 +31,7 @@ describe("BackupService", () => {
         });
 
         it("should be safe to call when no backup exists", () => {
-            const mockDatabase = {} as database.Database;
+            const mockDatabase = {} as Database;
             const service = new BackupService(mockDatabase, ["/test/root"]);
 
             // Should not throw when no backup exists
@@ -44,7 +44,7 @@ describe("BackupService", () => {
 
     describe("restore", () => {
         it("should throw error when no backup data available", async () => {
-            const mockDatabase = {} as database.Database;
+            const mockDatabase = {} as Database;
             const service = new BackupService(mockDatabase, ["/test/root"]);
 
             // Try to restore without creating backup first
@@ -68,7 +68,7 @@ describe("BackupService", () => {
                         once: sinon.stub().resolves({val: sinon.stub().returns(null)})
                     };
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new BackupService(mockDatabase, ["/test/root"]);
 
@@ -89,7 +89,7 @@ describe("BackupService", () => {
                 ref: sinon.stub().returns({
                     set: setStub
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new BackupService(mockDatabase, ["/test/root"]);
             const backupJson = JSON.stringify(mockData);
@@ -112,7 +112,7 @@ describe("BackupService", () => {
                         val: sinon.stub().returns(mockData)
                     })
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new BackupService(mockDatabase, ["/test/root"]);
             await service.backup();
@@ -131,7 +131,7 @@ describe("BackupService", () => {
                         val: sinon.stub().returns(null)
                     })
                 })
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const service = new BackupService(mockDatabase, ["/test/root"]);
             await service.backup();

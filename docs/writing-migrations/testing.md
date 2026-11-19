@@ -74,18 +74,19 @@ View Emulator UI at http://localhost:4000
 
 ```typescript
 // test-config.ts
-import * as admin from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
 
 export function initializeTestDatabase() {
   // Use emulator
   process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
 
-  admin.initializeApp({
+  const app = initializeApp({
     projectId: 'test-project',
     databaseURL: 'http://localhost:9000?ns=test-project'
   });
 
-  return admin.database();
+  return getDatabase(app);
 }
 ```
 
@@ -129,19 +130,21 @@ npm install --save-dev mocha chai @types/mocha @types/chai
 ```typescript
 // test/migrations/001-create-users.test.ts
 import { expect } from 'chai';
-import * as admin from 'firebase-admin';
+import { deleteApp, initializeApp, type App } from 'firebase-admin/app';
+import { getDatabase, type Database } from 'firebase-admin/database';
 import { up, down } from '../../migrations/001-create-users';
 
 describe('Migration 001: Create Users', () => {
-  let db: admin.database.Database;
+  let app: App;
+  let db: Database;
 
   before(() => {
     process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-    admin.initializeApp({
+    app = initializeApp({
       projectId: 'test-project',
       databaseURL: 'http://localhost:9000?ns=test-project'
     });
-    db = admin.database();
+    db = getDatabase(app);
   });
 
   afterEach(async () => {
@@ -150,7 +153,7 @@ describe('Migration 001: Create Users', () => {
   });
 
   after(async () => {
-    await admin.app().delete();
+    await deleteApp(app);
   });
 
   describe('up()', () => {
@@ -203,15 +206,17 @@ npm test
 // test/integration/migration-flow.test.ts
 import { expect } from 'chai';
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { deleteApp, initializeApp, type App } from 'firebase-admin/app';
+import { getDatabase, type Database } from 'firebase-admin/database';
 
 describe('Migration Flow', () => {
+  let app: App;
   let runner: FirebaseRunner;
-  let db: admin.database.Database;
+  let db: Database;
 
   before(async () => {
     process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-    admin.initializeApp({
+    app = initializeApp({
       projectId: 'test-project',
       databaseURL: 'http://localhost:9000?ns=test-project'
     });
@@ -234,7 +239,7 @@ describe('Migration Flow', () => {
   });
 
   after(async () => {
-    await admin.app().delete();
+    await deleteApp(app);
   });
 
   it('should apply all migrations', async () => {
@@ -359,7 +364,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci

@@ -1,5 +1,5 @@
 import { IBackupService } from '@migration-script-runner/core';
-import { database } from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
 
 /**
  * Firebase Realtime Database backup service.
@@ -18,7 +18,7 @@ export class BackupService implements IBackupService {
     private lastBackup?: string;
 
     constructor(
-        private readonly db: database.Database,
+        private readonly db: Database,
         private readonly nodes = BackupService.NODES.ALL
     ) {}
 

@@ -1,5 +1,5 @@
 import { IDB } from '@migration-script-runner/core';
-import { database } from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
 
 /**
  * Firebase database interface for MSR migrations.
@@ -38,5 +38,5 @@ export interface IFirebaseDB extends IDB {
      * @see https://firebase.google.com/docs/database/web/read-and-write
      * @see https://firebase.google.com/docs/database/web/read-and-write#save_data_as_transactions
      */
-    database: database.Database;
+    database: Database;
 }

@@ -2,12 +2,12 @@ import {DBConnector, EntityService} from "../../../src";
 import {TestEntity} from "../../TestEntity";
 import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 describe('EntityService', () => {
 
     let entityService:EntityService<TestEntity>
-    let db:database.Database
+    let db:Database
     const cfg = new IntegrationTestConfig()
 
     const seedKey = 'seed-id'

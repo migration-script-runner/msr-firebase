@@ -1,12 +1,11 @@
 import {expect} from "chai"
-import {database} from "firebase-admin"
-
+import type { Database } from 'firebase-admin/database';
 import {BackupService, EntityService, DBConnector} from "../../../src"
 import {TestEntity} from "../../TestEntity"
 import {IntegrationTestConfig} from "../../IntegrationTestConfig"
 
 describe('BackupService', () => {
-    let db:database.Database
+    let db:Database
     let dataService:EntityService<TestEntity>
     const cfg = new IntegrationTestConfig()
 

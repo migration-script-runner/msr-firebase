@@ -1,4 +1,4 @@
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 const VALUE = 'value';
 const KEY = 'key';
@@ -17,7 +17,7 @@ const KEY = 'key';
  */
 export class FirebaseDataService {
 
-    public constructor(protected readonly db:database.Database) {}
+    public constructor(protected readonly db:Database) {}
 
     /**
      * Retrieves data from Firebase path and converts to array.

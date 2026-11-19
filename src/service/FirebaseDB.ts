@@ -1,4 +1,4 @@
-import { database } from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
 import { IFirebaseDB } from '../interface';
 
 /**
@@ -27,7 +27,7 @@ export class FirebaseDB implements IFirebaseDB {
      *
      * @param database - Firebase Realtime Database instance from firebase-admin
      */
-    constructor(public readonly database: database.Database) {}
+    constructor(public readonly database: Database) {}
 
     /**
      * Checks the connection to Firebase Realtime Database.

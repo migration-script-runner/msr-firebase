@@ -75,16 +75,20 @@ Implementation of `FirebaseDataService`.
 ### Constructor
 
 ```typescript
-constructor(db: admin.database.Database)
+constructor(db: Database)
 ```
 
 ### Usage Example
 
 ```typescript
 import { FirebaseDataServiceImpl } from '@migration-script-runner/firebase';
-import * as admin from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
+import { getDatabase } from 'firebase-admin/database';
 
-const dataService = new FirebaseDataServiceImpl(admin.database());
+const app = initializeApp({
+  databaseURL: process.env.DATABASE_URL
+});
+const dataService = new FirebaseDataServiceImpl(getDatabase(app));
 
 // Get data
 const users = await dataService.get('users');
@@ -112,7 +116,7 @@ Type-safe service for managing entities in Firebase Realtime Database. Provides 
 
 ```typescript
 constructor(
-  db: admin.database.Database,
+  db: Database,
   root: string
 )
 ```

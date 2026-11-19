@@ -20,7 +20,7 @@ Quick start guide to get up and running with MSR Firebase.
 
 ## Prerequisites
 
-- Node.js 16.x or higher
+- Node.js 22.13.0 or higher
 - Firebase project with Realtime Database enabled
 - Firebase Admin SDK service account credentials
 

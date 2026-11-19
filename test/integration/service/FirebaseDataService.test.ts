@@ -1,7 +1,7 @@
 import {DBConnector, FirebaseDataService} from "../../../src";
 import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 interface TestData {
     key?: string;
@@ -17,7 +17,7 @@ describe("FirebaseDataService", () => {
     const cfg = new IntegrationTestConfig()
     const basePath = cfg.buildPath('test')
     let service:FirebaseDataService
-    let db:database.Database
+    let db:Database
 
     before(async () => {
         db = await DBConnector.connect(cfg)

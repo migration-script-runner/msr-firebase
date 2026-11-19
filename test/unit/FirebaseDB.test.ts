@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import sinon from "sinon";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import {FirebaseDB} from "../../src";
 
 describe("FirebaseDB", () => {
@@ -15,7 +15,7 @@ describe("FirebaseDB", () => {
             const refStub = sinon.stub().returns(mockRef);
             const mockDatabase = {
                 ref: refStub
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const firebaseDB = new FirebaseDB(mockDatabase);
 
@@ -33,7 +33,7 @@ describe("FirebaseDB", () => {
             };
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef)
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const firebaseDB = new FirebaseDB(mockDatabase);
 
@@ -50,7 +50,7 @@ describe("FirebaseDB", () => {
             const refStub = sinon.stub().returns(mockRef);
             const mockDatabase = {
                 ref: refStub
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const firebaseDB = new FirebaseDB(mockDatabase);
 
@@ -64,7 +64,7 @@ describe("FirebaseDB", () => {
         it("should expose database instance", () => {
             const mockDatabase = {
                 ref: sinon.stub()
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const firebaseDB = new FirebaseDB(mockDatabase);
 
@@ -72,7 +72,7 @@ describe("FirebaseDB", () => {
         });
 
         it("should be accessible as readonly", () => {
-            const mockDatabase = {test: 'value'} as unknown as database.Database;
+            const mockDatabase = {test: 'value'} as unknown as Database;
             const firebaseDB = new FirebaseDB(mockDatabase);
 
             // TypeScript marks it as readonly, but at runtime it's just a property

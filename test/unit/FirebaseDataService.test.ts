@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import sinon from "sinon";
 import {FirebaseDataService} from "../../src";
-import { database } from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 interface TestObject {
     key?: string;
@@ -31,7 +31,7 @@ describe("FirebaseDataService - Instance Methods", () => {
 
         mockDatabase = {
             ref: sinon.stub().returns(mockRef),
-        } as unknown as database.Database;
+        } as unknown as Database;
 
         service = new FirebaseDataService(mockDatabase);
     });
