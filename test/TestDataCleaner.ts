@@ -1,12 +1,12 @@
 import {TestConfig} from "./TestConfig";
 import {EntityService, IEntity} from "../src";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 export class TestDataCleaner {
 
     private readonly cfg:TestConfig
 
-    constructor(private db:database.Database) {
+    constructor(private db:Database) {
         this.cfg = new TestConfig()
     }
 

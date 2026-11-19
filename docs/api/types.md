@@ -24,7 +24,9 @@ TypeScript type definitions and utilities for MSR Firebase.
 Type alias for Firebase Realtime Database.
 
 ```typescript
-type FirebaseDatabase = admin.database.Database;
+import type { Database } from 'firebase-admin/database';
+
+type FirebaseDatabase = Database;
 ```
 
 Used throughout MSR Firebase to represent the Firebase database instance.
@@ -162,11 +164,13 @@ type ValidationWarning = {
 MSR Firebase uses the generic type parameter `IDB` to represent the database type:
 
 ```typescript
+import type { Database } from 'firebase-admin/database';
+
 // In your migrations
-IMigrationScript<admin.database.Database>
+IMigrationScript<Database>
 
 // In FirebaseRunner
-class FirebaseRunner extends MigrationScriptExecutor<admin.database.Database>
+class FirebaseRunner extends MigrationScriptExecutor<Database>
 ```
 
 This provides full TypeScript type safety for Firebase operations.

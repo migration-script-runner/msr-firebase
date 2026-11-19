@@ -1,5 +1,5 @@
 import {FirebaseDataService} from "./FirebaseDataService";
-import {database} from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import {IEntity} from "../interface";
 
 /**
@@ -28,7 +28,7 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * @param db - Firebase Realtime Database instance
      * @param root - Root path for the entity collection (e.g., 'users', 'production/users')
      */
-    constructor(public readonly db: database.Database,
+    constructor(public readonly db: Database,
                 protected readonly root:string) {
         super(db);
     }

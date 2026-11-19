@@ -4,7 +4,7 @@ import { MigrationScriptExecutor, Config, IMigrationExecutorDependencies } from 
 import { FirebaseRunner } from "../../src/FirebaseRunner";
 import { FirebaseHandler } from "../../src/service/FirebaseHandler";
 import { IFirebaseDB } from "../../src/interface";
-import { database } from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 
 // Test helper to create FirebaseRunner with mocked dependencies
 // Note: Constructor is private in production, but we bypass it here for unit testing
@@ -31,7 +31,7 @@ describe("FirebaseRunner", () => {
         it("should create runner instance with handler and configuration", () => {
             const mockHandler = {
                 db: {
-                    database: {} as database.Database,
+                    database: {} as Database,
                     checkConnection: sinon.stub().resolves(true),
                 },
                 cfg: {
@@ -57,7 +57,7 @@ describe("FirebaseRunner", () => {
         it("should return Firebase connection information", () => {
             const mockHandler = {
                 db: {
-                    database: {} as database.Database,
+                    database: {} as Database,
                     checkConnection: sinon.stub().resolves(true),
                 },
                 cfg: {
@@ -83,7 +83,7 @@ describe("FirebaseRunner", () => {
         it("should handle undefined databaseUrl", () => {
             const mockHandler = {
                 db: {
-                    database: {} as database.Database,
+                    database: {} as Database,
                     checkConnection: sinon.stub().resolves(true),
                 },
                 cfg: {
@@ -109,7 +109,7 @@ describe("FirebaseRunner", () => {
         it("should return Firebase database instance", () => {
             const mockDatabase = {
                 ref: sinon.stub(),
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -138,7 +138,7 @@ describe("FirebaseRunner", () => {
         it("should return FirebaseHandler instance", () => {
             const mockHandler = {
                 db: {
-                    database: {} as database.Database,
+                    database: {} as Database,
                     checkConnection: sinon.stub().resolves(true),
                 },
                 cfg: {
@@ -171,7 +171,7 @@ describe("FirebaseRunner", () => {
 
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef),
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -211,7 +211,7 @@ describe("FirebaseRunner", () => {
 
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef),
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -250,7 +250,7 @@ describe("FirebaseRunner", () => {
 
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef),
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -288,7 +288,7 @@ describe("FirebaseRunner", () => {
 
             const mockDatabase = {
                 ref: refStub,
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -331,7 +331,7 @@ describe("FirebaseRunner", () => {
 
             const mockDatabase = {
                 ref: mockRef,
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -370,7 +370,7 @@ describe("FirebaseRunner", () => {
 
             const mockDatabase = {
                 ref: sinon.stub().returns(mockRef),
-            } as unknown as database.Database;
+            } as unknown as Database;
 
             const mockHandler = {
                 db: {
@@ -398,7 +398,7 @@ describe("FirebaseRunner", () => {
         it("should handle empty node list", async () => {
             const mockHandler = {
                 db: {
-                    database: {} as database.Database,
+                    database: {} as Database,
                     checkConnection: sinon.stub().resolves(true),
                 },
                 cfg: {

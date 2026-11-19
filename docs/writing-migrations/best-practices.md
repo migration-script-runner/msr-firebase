@@ -24,12 +24,13 @@ Firebase Realtime Database-specific patterns and features for migrations.
 Use Firebase server timestamps for consistent timing:
 
 ```typescript
-import * as admin from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
+import { ServerValue } from 'firebase-admin/database';
 
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   await db.ref('posts/post1').set({
     title: 'Hello World',
-    createdAt: admin.database.ServerValue.TIMESTAMP
+    createdAt: ServerValue.TIMESTAMP
   });
 };
 ```
@@ -69,12 +70,12 @@ For most migrations, use direct operations (`set()`, `update()`) without transac
 Update multiple paths atomically:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   const updates: Record<string, any> = {};
 
   updates['users/user1/name'] = 'John Doe';
   updates['usernames/johndoe'] = 'user1';
-  updates['meta/lastUpdate'] = admin.database.ServerValue.TIMESTAMP;
+  updates['meta/lastUpdate'] = ServerValue.TIMESTAMP;
 
   await db.ref().update(updates);
 };
@@ -85,7 +86,7 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 Set priorities for ordering:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   await db.ref('items/item1').setWithPriority({
     name: 'Item 1'
   }, 1);
@@ -101,7 +102,7 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 Work with ordered data:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   // Get last 10 items by timestamp
   const snapshot = await db.ref('items')
     .orderByChild('timestamp')
@@ -125,7 +126,7 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 
 ```typescript
 // Migration creates new structure
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   await db.ref('publicData').set({
     config: { theme: 'light' }
   });
@@ -147,7 +148,7 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 Import/export JSON structures:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   const data = {
     users: {
       user1: { name: 'John' },
@@ -167,7 +168,7 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 Process large datasets in batches:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   const BATCH_SIZE = 100;
   let lastKey: string | null = null;
 
@@ -211,7 +212,7 @@ export const up: IMigrationScript<admin.database.Database>['up'] = async (db) =>
 Validate data structure before migration:
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   const snapshot = await db.ref('users').once('value');
   const users = snapshot.val();
 

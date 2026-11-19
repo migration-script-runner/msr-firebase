@@ -1,20 +1,23 @@
-import * as admin from "firebase-admin";
+import { cert, initializeApp, type AppOptions } from "firebase-admin/app";
+import { getDatabase } from "firebase-admin/database";
+import type { Database } from "firebase-admin/database";
 import {FirebaseConfig} from "../model";
 
 export class DBConnector {
 
-    public static async connect(cfg:FirebaseConfig): Promise<admin.database.Database> {
+    public static async connect(cfg:FirebaseConfig): Promise<Database> {
         const filePath = cfg.applicationCredentials
         if(!filePath) throw new TypeError("Application credentials not found in configuration")
 
         const serviceAccount = await import(filePath)
         const name = `${Date.now()}-${Math.floor(Math.random() * 11)}`
-        const options = {
-            credential: admin.credential.cert(serviceAccount),
-        } as admin.AppOptions
+        const options: AppOptions = {
+            credential: cert(serviceAccount),
+            databaseURL: cfg.databaseUrl,
+        }
 
-        const app = admin.initializeApp(options, name)
+        const app = initializeApp(options, name)
 
-        return app.database(cfg.databaseUrl)
+        return getDatabase(app)
     }
 }

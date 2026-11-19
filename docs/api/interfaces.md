@@ -90,13 +90,13 @@ interface IMigrationScript<IDB> {
 
 ```typescript
 import { IMigrationScript } from '@migration-script-runner/core';
-import * as admin from 'firebase-admin';
+import type { Database } from 'firebase-admin/database';
 
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   await db.ref('users').set({ ... });
 };
 
-export const down: IMigrationScript<admin.database.Database>['down'] = async (db) => {
+export const down: IMigrationScript<Database>['down'] = async (db) => {
   await db.ref('users').remove();
 };
 ```

@@ -310,7 +310,10 @@ await uploadBackup(result.path, result.backupId);
 ### Exclude Unnecessary Data
 
 ```typescript
-export const up: IMigrationScript<admin.database.Database>['up'] = async (db) => {
+import type { Database } from 'firebase-admin/database';
+import type { IMigrationScript } from '@migration-script-runner/core';
+
+export const up: IMigrationScript<Database>['up'] = async (db) => {
   // Temporarily remove large data before backup
   const largeData = await db.ref('analytics').once('value');
   await db.ref('analytics').remove();

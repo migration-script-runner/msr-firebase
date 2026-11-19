@@ -148,12 +148,12 @@ console.log('Table name:', info.tableName);
 Returns the Firebase database reference for direct access.
 
 ```typescript
-getDatabase(): admin.database.Database
+getDatabase(): Database
 ```
 
 #### Returns
 
-`admin.database.Database` - Firebase Admin SDK database instance
+`Database` - Firebase Admin SDK database instance
 
 #### Example
 

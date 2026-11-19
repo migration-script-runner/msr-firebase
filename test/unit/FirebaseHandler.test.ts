@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import sinon from "sinon";
-import { database } from "firebase-admin";
+import type { Database } from 'firebase-admin/database';
 import { FirebaseHandler, FirebaseConfig, DBConnector, FirebaseDB } from "../../src";
 import { LockingConfig } from "@migration-script-runner/core";
 
 describe("FirebaseHandler", () => {
-    let mockDatabase: database.Database;
+    let mockDatabase: Database;
     let connectStub: sinon.SinonStub;
     let config: FirebaseConfig;
 
@@ -20,7 +20,7 @@ describe("FirebaseHandler", () => {
         };
         mockDatabase = {
             ref: sinon.stub().returns(mockRef)
-        } as unknown as database.Database;
+        } as unknown as Database;
 
         // Stub DBConnector.connect
         connectStub = sinon.stub(DBConnector, "connect").resolves(mockDatabase);
