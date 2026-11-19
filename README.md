@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://migration-script-runner.dev/images/msr-logo-color-glass-translucent.png" alt="Migration Script Runner logo" width="180">
+</p>
+
 # Firebase Migration Script Runner
 
 [![Test](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml/badge.svg)](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml)
