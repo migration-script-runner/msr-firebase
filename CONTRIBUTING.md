@@ -21,7 +21,7 @@ Thank you for your interest in contributing. Please use GitHub Issues and pull r
    npm run docs:build
    ```
 
-Integration tests use the Firebase Realtime Database Emulator configured by `firebase.json`; never point them at a production Firebase project. `npm test` runs lint, unit tests, and integration tests. The local pre-commit hook runs lint and unit tests, and builds the documentation when Bundler is installed. CI also runs the build and coverage checks.
+Integration tests use the Firebase Realtime Database Emulator configured by `firebase.json`; never point them at a production Firebase project. `npm test` runs lint, repository-script tests, unit tests, and integration tests. The local pre-commit hook runs lint and unit tests, and builds the documentation when Bundler is installed. CI also runs the build and coverage checks.
 
 ## Issues and pull requests
 
