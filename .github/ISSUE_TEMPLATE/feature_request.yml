@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a Firebase-specific capability or improvement
+title: "Feature: "
+labels: ["✨ Type: Feature"]
+assignees: ["vlavrynovych"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Explain who needs this and what is difficult today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_behavior
+    attributes:
+      label: Proposed behavior
+      description: Include example configuration, API, or CLI usage when helpful.
+    validations:
+      required: true
+  - type: input
+    id: firebase_version
+    attributes:
+      label: MSR Firebase version
+      placeholder: "e.g. 0.2.0"
+  - type: input
+    id: core_version
+    attributes:
+      label: MSR Core version, if relevant
+      placeholder: "e.g. 0.8.4"
+  - type: dropdown
+    id: implementation
+    attributes:
+      label: Are you willing to implement this feature?
+      options:
+        - "Yes"
+        - "Maybe, with guidance"
+        - "No"
+    validations:
+      required: true

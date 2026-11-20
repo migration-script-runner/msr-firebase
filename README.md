@@ -46,6 +46,9 @@ Firebase Realtime Database implementation for [Migration Script Runner (MSR Core
 - [Quick Start](#quick-start)
 - [Key Features](#key-features)
 - [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
 ## Features
 
@@ -207,6 +210,16 @@ For complete upgrade instructions, troubleshooting, and migration scenarios, see
 
 ---
 
+<a id="contributing"></a>
+
+## 🤝 Contributing
+
+Contributions are welcome. Read the [Contributing Guide](CONTRIBUTING.md) for the project setup, checks, and pull request process. See [GitHub Issues](https://github.com/migration-script-runner/msr-firebase/issues) for planned work. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and read the [Security Policy](SECURITY.md) before reporting community or security concerns.
+
+---
+
+<a id="license"></a>
+
 ## 📄 License
 
 This project is licensed under the **MIT License with Commons Clause and Attribution Requirements**.
@@ -220,6 +233,16 @@ Based on [Migration Script Runner](https://github.com/migration-script-runner/ms
 - 🔒 Firebase migration extensions require attribution
 
 See the [LICENSE](LICENSE) file and [NOTICE](NOTICE) file for detailed examples and FAQ.
+
+---
+
+<a id="support"></a>
+
+## 📞 Support
+
+- **📚 Documentation:** [MSR Firebase documentation](https://migration-script-runner.github.io/msr-firebase/)
+- **🐛 Issues:** [GitHub Issues](https://github.com/migration-script-runner/msr-firebase/issues)
+- **📦 npm:** [@migration-script-runner/firebase](https://www.npmjs.com/package/@migration-script-runner/firebase)
 
 ---
 
