@@ -13,7 +13,7 @@ Use Firebase Admin's modular imports, such as `Database` and `getDatabase` from 
 - `package.json`: Node requirement, package version, scripts, and dependency declarations.
 - `package-lock.json`: locked npm dependency graph; keep it in sync with `package.json`.
 - `.nvmrc`: local Node major version.
-- `.github/workflows/test.yml`, `.circleci/config.yml`, `.travis.yml`: CI behavior and supported runtime matrix.
+- `.github/workflows/test.yml`, `pr-validation.yml`, `security.yml`, and `docs.yml`: CI checks and supported runtime behavior. Check any remaining legacy CI configuration directly before relying on it.
 - `.github/workflows/npm-publish.yml`: npm publishing trigger and steps.
 - `.husky/pre-commit`: local checks run before commits.
 - `.nycrc`: coverage thresholds and report configuration.
@@ -44,7 +44,7 @@ The current package requires Node.js `>=22.13.0`; `.nvmrc` selects Node 22. CI t
 - `npm run lint`: lint `src/`.
 - `npm run test:unit`: unit tests.
 - `npm run test:integration`: integration tests against the Firebase Realtime Database Emulator.
-- `npm test`: lint, unit tests, then integration tests.
+- `npm test`: lint, repository-script tests, unit tests, then integration tests.
 - `npm run test:coverage`: unit and integration coverage. Current thresholds in `.nycrc` are 80% lines, functions, and statements, and 70% branches. Do not change thresholds as part of unrelated work.
 - `npm run docs:build`: build the Jekyll documentation site.
 - `npm run docs:serve`: serve the documentation locally.

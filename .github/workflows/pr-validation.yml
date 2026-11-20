@@ -1,0 +1,36 @@
+name: PR title validation
+
+on:
+  pull_request:
+    branches: [master, develop, 'release/*']
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    name: Validate pull request title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the trusted base revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if [ ! -f .github/scripts/validate-pr-title.mjs ]; then
+            echo "::notice::Skipping title validation because the trusted base does not contain the validator yet."
+            exit 0
+          fi
+          node .github/scripts/validate-pr-title.mjs

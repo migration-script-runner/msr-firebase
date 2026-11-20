@@ -1,0 +1,37 @@
+name: Documentation
+
+on:
+  push:
+    branches: [master, develop, 'release/*']
+  pull_request:
+    branches: [master, develop, 'release/*']
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    name: Build and check documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.6'
+          # Match the Ruby and Bundler versions used to build docs locally.
+          bundler-cache: true
+          working-directory: docs
+
+      - name: Build Jekyll site
+        run: bundle exec jekyll build
+        working-directory: docs
+
+      - name: Check internal documentation links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress --fallback-extensions html --root-dir docs/_site docs/_site
+          fail: true

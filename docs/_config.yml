@@ -24,11 +24,11 @@ custom_css:
 # Aux links for the upper right navigation
 aux_links:
   "MSR: Firebase on GitHub":
-    - "//github.com/migration-script-runner/msr-firebase"
+    - "https://github.com/migration-script-runner/msr-firebase"
   "MSR: Firebase on npm":
-    - "//npmjs.org/package/@migration-script-runner/firebase"
+    - "https://npmjs.org/package/@migration-script-runner/firebase"
   "MSR Core Docs":
-    - "//migration-script-runner.github.io/msr-core"
+    - "https://migration-script-runner.github.io/msr-core"
 
 # Makes Aux links open in a new tab
 aux_links_new_tab: true
@@ -100,6 +100,7 @@ plugins:
 # Exclude from processing
 exclude:
   - node_modules/
+  - vendor/
   - "*.json"
   - "*.yml"
   - Gemfile

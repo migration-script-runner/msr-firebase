@@ -11,7 +11,7 @@ This section contains guides for upgrading between major versions of Firebase Mi
 
 ## Current Upgrade Guide
 
-- [**v0.1.x → v0.2.0**](v0.1-to-v0.2.md) - **Breaking:** Package rename from `msr-firebase` to `@migration-script-runner/firebase`, MSR Core v0.8.0 upgrade, migration locking support
+- [**v0.1.x → v0.2.0**]({% link version-migration/v0.1-to-v0.2.md %}) - **Breaking:** Package rename from `msr-firebase` to `@migration-script-runner/firebase`, MSR Core v0.8.0 upgrade, migration locking support
 
 ## Migration Policy
 
@@ -57,5 +57,5 @@ If you encounter issues during migration:
 To stay informed about new releases:
 
 - Watch the [GitHub repository](https://github.com/migration-script-runner/msr-firebase)
-- Check the [CHANGELOG](../../CHANGELOG.md) for detailed release notes
+- Check the [GitHub releases](https://github.com/migration-script-runner/msr-firebase/releases) for detailed release notes
 - Follow migration guides sequentially if skipping versions

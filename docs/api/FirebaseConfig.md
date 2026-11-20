@@ -165,7 +165,7 @@ transaction: {
 **Default:** `{ mode: TransactionMode.NONE }`
 
 {: .note }
-> Firebase Realtime Database does not support database-wide transactions. MSR Firebase automatically sets this to `NONE`. See [Transaction Guide](../guides/transactions) for details.
+> Firebase Realtime Database does not support database-wide transactions. MSR Firebase automatically sets this to `NONE`. See [Transaction Guide]({% link writing-migrations/transactions.md %}) for details.
 
 ---
 
