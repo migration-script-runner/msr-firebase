@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible defect in MSR Firebase
+title: "Bug: "
+labels: ["🐛 Type: Bug"]
+assignees: ["vlavrynovych"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not report security vulnerabilities here. See [SECURITY.md](https://github.com/migration-script-runner/msr-firebase/blob/master/SECURITY.md) for private reporting. Remove credentials, tokens, and personal data from logs before posting."
+  - type: input
+    id: firebase_version
+    attributes:
+      label: MSR Firebase version
+      placeholder: "e.g. 0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: core_version
+    attributes:
+      label: MSR Core version
+      placeholder: "e.g. 0.8.4"
+    validations:
+      required: true
+  - type: input
+    id: firebase_admin_version
+    attributes:
+      label: Firebase Admin SDK version
+      placeholder: "e.g. 14.5.1"
+    validations:
+      required: true
+  - type: input
+    id: node_version
+    attributes:
+      label: Node.js version
+      placeholder: "e.g. 22.13.0"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include a minimal example and state whether the issue reproduces with the Firebase Emulator.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and sanitized logs
+      description: Remove credentials, tokens, database URLs, and personal data before sharing.
+    validations:
+      required: true
