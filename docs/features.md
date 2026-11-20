@@ -63,7 +63,7 @@ MSR Firebase is a production-ready migration framework for Firebase Realtime Dat
 - **[Programmatic API](library-usage/)** - Full TypeScript API for application integration
 - **[FirebaseRunner](api/FirebaseRunner)** - Main migration runner with singleton pattern
 - **[FirebaseConfig](api/FirebaseConfig)** - Type-safe configuration class
-- **[FirebaseHandler](api/FirebaseHandler)** - Database handler with Firebase Admin SDK integration
+- **[FirebaseHandler]({% link api/index.md %}#migration-writing-api)** - Database handler with Firebase Admin SDK integration
 - **[Type-Safe Migrations](writing-migrations/migration-scripts#type-safety)** - Generic type parameters with `IFirebaseDB`
 - **[Structured Results](library-usage/examples#handling-results)** - Returns results instead of calling `process.exit()`
 

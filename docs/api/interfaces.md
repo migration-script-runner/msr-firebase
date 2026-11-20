@@ -227,7 +227,7 @@ if (handler.lockingService) {
 }
 ```
 
-**See**: [Migration Locking Guide](../guides/migration-locking) for detailed usage.
+**See**: [Migration Locking Guide]({% link writing-migrations/migration-locking.md %}) for detailed usage.
 
 ---
 
