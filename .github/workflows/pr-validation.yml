@@ -28,4 +28,9 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: node .github/scripts/validate-pr-title.mjs
+        run: |
+          if [ ! -f .github/scripts/validate-pr-title.mjs ]; then
+            echo "::notice::Skipping title validation because the trusted base does not contain the validator yet."
+            exit 0
+          fi
+          node .github/scripts/validate-pr-title.mjs
