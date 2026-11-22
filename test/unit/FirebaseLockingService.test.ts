@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import type { Database } from 'firebase-admin/database';
-import { FirebaseLockingService } from "../../src";
+import { FirebaseLockingService, LockOperationError } from "../../src";
 import { IFirebaseDB } from "../../src/interface";
 import { LockingConfig } from "@migration-script-runner/core";
 
@@ -141,6 +141,19 @@ describe("FirebaseLockingService", () => {
             } catch (error: any) {
                 expect(error.message).to.include("Failed to acquire lock");
             }
+        });
+
+        it("should wrap non-Error transaction failures with a useful message", async () => {
+            const mockRef = {
+                transaction: sinon.stub().callsFake(() => Promise.reject("connection unavailable"))
+            };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            const error = await lockingService.acquireLock("host-123-uuid").catch((reason: unknown) => reason);
+
+            expect(error).to.be.instanceOf(LockOperationError);
+            expect(error).to.have.property("message", "Failed to acquire lock: connection unavailable");
+            expect(error).to.have.property("cause", undefined);
         });
     });
 

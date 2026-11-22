@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { cert, initializeApp, type AppOptions } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 import type { Database } from "firebase-admin/database";
@@ -10,7 +11,7 @@ export class DBConnector {
         if(!filePath) throw new TypeError("Application credentials not found in configuration")
 
         const serviceAccount = await import(filePath)
-        const name = `${Date.now()}-${Math.floor(Math.random() * 11)}`
+        const name = randomUUID()
         const options: AppOptions = {
             credential: cert(serviceAccount),
             databaseURL: cfg.databaseUrl,
