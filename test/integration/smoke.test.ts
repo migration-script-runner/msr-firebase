@@ -70,7 +70,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
     describe("3. Run First Two Migrations", () => {
         it("should run first 2 migrations", async function() {
             this.timeout(15000);
-            const result = await runner.migrate(202501010002);
+            const result = await runner.up(202501010002);
             expect(result.success).to.be.true;
             expect(result.executed).to.have.lengthOf(2);
         });
@@ -131,7 +131,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
     describe("5. Run Remaining Migrations", () => {
         it("should run remaining 2 migrations", async function() {
             this.timeout(15000);
-            const result = await runner.migrate();
+            const result = await runner.up();
             expect(result.success).to.be.true;
             expect(result.executed).to.have.lengthOf(2);
         });
@@ -173,7 +173,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
     describe("6. Verify No Pending Migrations", () => {
         it("should not run any migrations when all are applied", async function() {
             this.timeout(10000);
-            const result = await runner.migrate();
+            const result = await runner.up();
             expect(result.success).to.be.true;
             expect(result.executed).to.have.lengthOf(0);
         });
@@ -225,7 +225,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
             expect(snapshot.val()).to.equal("Modified");
 
             // Restore from last backup (doesn't require path parameter)
-            await handler.backup.restore();
+            await runner.restoreFromBackup();
 
             // Verify data was restored to original value
             snapshot = await handler.db.database.ref(handler.cfg.buildPath("users/user1/name")).once("value");
@@ -233,7 +233,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
         });
 
         it("should delete backup", async () => {
-            await handler.backup.deleteBackup();
+            runner.deleteBackup();
             // Note: deleteBackup() clears the in-memory backup data
             // Verify backup was deleted (no error thrown)
             expect(handler.backup).to.exist;
@@ -291,7 +291,7 @@ describe("Smoke Test: Complete Migration Workflow", () => {
     describe("10. Re-run Migrations After Rollback", () => {
         it("should run migrations again after rollback", async function() {
             this.timeout(15000);
-            const result = await runner.migrate();
+            const result = await runner.up();
             expect(result.success).to.be.true;
             expect(result.executed).to.have.lengthOf(3); // posts, comments, settings
         });

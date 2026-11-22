@@ -41,36 +41,36 @@ describe("Simple Locking Integration Tests", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            const executorId = `executor-${Date.now()}`;
-            const acquired = await lockService.acquireLock(executorId);
+            const runnerId = `runner-${Date.now()}`;
+            const acquired = await lockService.acquireLock(runnerId);
 
             expect(acquired).to.be.true;
 
             // Cleanup
-            await lockService.releaseLock(executorId);
+            await lockService.releaseLock(runnerId);
         });
 
-        it("should prevent second executor from acquiring lock", async function() {
+        it("should prevent second runner from acquiring lock", async function() {
             this.timeout(10000);
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            // First executor acquires lock
-            const executorId1 = `executor1-${Date.now()}`;
-            const acquired1 = await lockService.acquireLock(executorId1);
+            // First runner acquires lock
+            const runnerId1 = `runner1-${Date.now()}`;
+            const acquired1 = await lockService.acquireLock(runnerId1);
             expect(acquired1).to.be.true;
 
-            // Second executor tries to acquire
-            const executorId2 = `executor2-${Date.now()}`;
-            const acquired2 = await lockService.acquireLock(executorId2);
+            // Second runner tries to acquire
+            const runnerId2 = `runner2-${Date.now()}`;
+            const acquired2 = await lockService.acquireLock(runnerId2);
             expect(acquired2).to.be.false;
 
             // Cleanup
-            await lockService.releaseLock(executorId1);
+            await lockService.releaseLock(runnerId1);
         });
 
         it("should allow acquisition after lock is released", async function() {
@@ -78,20 +78,20 @@ describe("Simple Locking Integration Tests", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            // First executor acquires and releases
-            const executorId1 = `executor1-${Date.now()}`;
-            await lockService.acquireLock(executorId1);
-            await lockService.releaseLock(executorId1);
+            // First runner acquires and releases
+            const runnerId1 = `runner1-${Date.now()}`;
+            await lockService.acquireLock(runnerId1);
+            await lockService.releaseLock(runnerId1);
 
-            // Second executor should now be able to acquire
-            const executorId2 = `executor2-${Date.now()}`;
-            const acquired = await lockService.acquireLock(executorId2);
+            // Second runner should now be able to acquire
+            const runnerId2 = `runner2-${Date.now()}`;
+            const acquired = await lockService.acquireLock(runnerId2);
             expect(acquired).to.be.true;
 
             // Cleanup
-            await lockService.releaseLock(executorId2);
+            await lockService.releaseLock(runnerId2);
         });
     });
 
@@ -113,27 +113,27 @@ describe("Simple Locking Integration Tests", () => {
 
             const runner = await FirebaseRunner.getInstance({ config: shortConfig });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            // First executor acquires lock
-            const executorId1 = `expiry1-${Date.now()}`;
-            await lockService.acquireLock(executorId1);
+            // First runner acquires lock
+            const runnerId1 = `expiry1-${Date.now()}`;
+            await lockService.acquireLock(runnerId1);
 
             // Wait for lock to expire (2 seconds + buffer)
             await new Promise(resolve => setTimeout(resolve, 3000));
 
-            // Second executor should acquire expired lock
-            const executorId2 = `expiry2-${Date.now()}`;
-            const acquired = await lockService.acquireLock(executorId2);
+            // Second runner should acquire expired lock
+            const runnerId2 = `expiry2-${Date.now()}`;
+            const acquired = await lockService.acquireLock(runnerId2);
             expect(acquired).to.be.true;
 
             // Cleanup
-            await lockService.releaseLock(executorId2);
+            await lockService.releaseLock(runnerId2);
         });
     });
 
     describe("Concurrent Lock Acquisition", () => {
-        it("should handle two executors trying to acquire simultaneously", async function() {
+        it("should handle two runners trying to acquire simultaneously", async function() {
             this.timeout(15000);
 
             // Create two separate runner instances
@@ -143,19 +143,19 @@ describe("Simple Locking Integration Tests", () => {
 
             const handler1 = runner1.getHandler();
             const handler2 = runner2.getHandler();
-            const lockService1 = handler1.lockingService as FirebaseLockingService;
-            const lockService2 = handler2.lockingService as FirebaseLockingService;
+            const lockService1 = handler1.lockingProvider as FirebaseLockingService;
+            const lockService2 = handler2.lockingProvider as FirebaseLockingService;
 
-            const executorId1 = `concurrent1-${Date.now()}`;
-            const executorId2 = `concurrent2-${Date.now() + 1}`;
+            const runnerId1 = `concurrent1-${Date.now()}`;
+            const runnerId2 = `concurrent2-${Date.now() + 1}`;
 
             // Both try to acquire at the same time
             const [acquired1, acquired2] = await Promise.all([
-                lockService1.acquireLock(executorId1),
-                lockService2.acquireLock(executorId2)
+                lockService1.acquireLock(runnerId1),
+                lockService2.acquireLock(runnerId2)
             ]);
 
-            console.log(`Executor 1 acquired: ${acquired1}, Executor 2 acquired: ${acquired2}`);
+            console.log(`runner 1 acquired: ${acquired1}, runner 2 acquired: ${acquired2}`);
 
             // Exactly one should succeed
             expect(acquired1 || acquired2).to.be.true;
@@ -163,10 +163,10 @@ describe("Simple Locking Integration Tests", () => {
 
             // Cleanup - release whoever got the lock
             if (acquired1) {
-                await lockService1.releaseLock(executorId1);
+                await lockService1.releaseLock(runnerId1);
             }
             if (acquired2) {
-                await lockService2.releaseLock(executorId2);
+                await lockService2.releaseLock(runnerId2);
             }
         });
     });
@@ -177,29 +177,29 @@ describe("Simple Locking Integration Tests", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            const executorId = `verify-${Date.now()}`;
+            const runnerId = `verify-${Date.now()}`;
 
             // Before acquiring
-            let verified = await lockService.verifyLockOwnership(executorId);
+            let verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.false;
 
             // After acquiring
-            await lockService.acquireLock(executorId);
-            verified = await lockService.verifyLockOwnership(executorId);
+            await lockService.acquireLock(runnerId);
+            verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.true;
 
-            // Different executor should fail
-            const otherExecutorId = `other-${Date.now()}`;
-            verified = await lockService.verifyLockOwnership(otherExecutorId);
+            // Different runner should fail
+            const otherRunnerId = `other-${Date.now()}`;
+            verified = await lockService.verifyLockOwnership(otherRunnerId);
             expect(verified).to.be.false;
 
             // Cleanup
-            await lockService.releaseLock(executorId);
+            await lockService.releaseLock(runnerId);
 
             // After release
-            verified = await lockService.verifyLockOwnership(executorId);
+            verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.false;
         });
     });
@@ -210,23 +210,23 @@ describe("Simple Locking Integration Tests", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
             // No lock initially
             let status = await lockService.getLockStatus();
             expect(status).to.be.null;
 
             // After acquiring
-            const executorId = `status-${Date.now()}`;
-            await lockService.acquireLock(executorId);
+            const runnerId = `status-${Date.now()}`;
+            await lockService.acquireLock(runnerId);
 
             status = await lockService.getLockStatus();
             expect(status).to.not.be.null;
             expect(status?.isLocked).to.be.true;
-            expect(status?.lockedBy).to.equal(executorId);
+            expect(status?.lockedBy).to.equal(runnerId);
 
             // Cleanup
-            await lockService.releaseLock(executorId);
+            await lockService.releaseLock(runnerId);
 
             // After release
             status = await lockService.getLockStatus();

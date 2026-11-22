@@ -1,4 +1,4 @@
-import { IDatabaseMigrationHandler, IBackupService, ISchemaVersion, ILockingService } from '@migration-script-runner/core';
+import { IDatabaseMigrationHandler, IBackup, ISchemaVersion, ILockingProvider } from '@migration-script-runner/core';
 import { version } from '../../package.json';
 
 import {
@@ -20,9 +20,9 @@ import { IFirebaseDB } from '../interface';
  */
 export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
     readonly db: IFirebaseDB;
-    readonly backup: IBackupService;
+    readonly backup: IBackup<IFirebaseDB>;
     readonly schemaVersion: ISchemaVersion<IFirebaseDB>;
-    readonly lockingService?: ILockingService<IFirebaseDB>;
+    readonly lockingProvider?: ILockingProvider<IFirebaseDB>;
 
     private constructor(
         public readonly cfg: FirebaseConfig,
@@ -33,9 +33,9 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
         const mss = new MigrationScriptService(firebaseDatabase.database, this.cfg.buildPath(this.cfg.tableName));
         this.schemaVersion = new SchemaVersionService(mss, cfg);
 
-        // Initialize locking service if locking is enabled in config
+        // Initialize the locking provider if locking is enabled in config
         if (cfg.locking?.enabled) {
-            this.lockingService = new FirebaseLockingService(
+            this.lockingProvider = new FirebaseLockingService(
                 firebaseDatabase,
                 cfg.locking,
                 cfg.shift
@@ -58,8 +58,8 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
         const handler = new FirebaseHandler(cfg, firebaseDb);
 
         // Initialize lock storage if locking is enabled
-        if (handler.lockingService && 'initLockStorage' in handler.lockingService) {
-            await (handler.lockingService as FirebaseLockingService).initLockStorage();
+        if (handler.lockingProvider) {
+            await handler.lockingProvider.initLockStorage();
         }
 
         return handler;

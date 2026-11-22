@@ -278,7 +278,7 @@ npx msr-firebase lock:status
 ```
 🔒 Lock Status: LOCKED
 
-   Executor ID:  web-server-1-12345-a1b2c3d4
+   Runner ID:  web-server-1-12345-a1b2c3d4
    Acquired At:  2024-01-15T10:30:00.000Z
    Expires At:   2024-01-15T10:40:00.000Z
    Process ID:   12345

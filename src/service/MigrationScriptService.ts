@@ -32,7 +32,7 @@ export class MigrationScriptService implements IMigrationScript<IFirebaseDB> {
      */
     async getAllExecuted(): Promise<MigrationScript<IFirebaseDB>[]> {
         const entities = await this.entityService.getAll();
-        return entities as unknown as MigrationScript<IFirebaseDB>[];
+        return entities;
     }
 
     /**

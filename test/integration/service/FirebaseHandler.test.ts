@@ -1,10 +1,12 @@
 import { expect, spy } from 'chai';
 import sinon from 'sinon';
 import { afterEach, after } from 'mocha';
-import { MigrationScriptExecutor } from '@migration-script-runner/core';
+import { MigrationScriptRunner } from '@migration-script-runner/core';
 
 import { FirebaseHandler, IFirebaseDB } from '../../../src';
 import { IntegrationTestConfig } from '../../IntegrationTestConfig';
+
+class TestRunner extends MigrationScriptRunner<IFirebaseDB> {}
 
 let processExit = sinon.stub(process, 'exit');
 
@@ -30,7 +32,7 @@ describe('FirebaseHandler', () => {
         spy.on(handler, ['getName']);
         spy.on(handler.schemaVersion, ['isInitialized', 'createTable', 'validateTable']);
         spy.on(handler.schemaVersion.migrationRecords, ['save', 'getAllExecuted']);
-        new MigrationScriptExecutor<IFirebaseDB>({ handler });
+        new TestRunner({ handler });
 
         // then
         expect(handler.getName).have.been.called.once;
@@ -49,7 +51,7 @@ describe('FirebaseHandler', () => {
         spy.on(handler, ['getName']);
         spy.on(handler.schemaVersion, ['isInitialized', 'createTable', 'validateTable']);
         spy.on(handler.schemaVersion.migrationRecords, ['save', 'getAllExecuted']);
-        await new MigrationScriptExecutor<IFirebaseDB>({ handler }).up();
+        await new TestRunner({ handler }).up();
 
         // then
         expect(handler.getName).have.been.called.once;

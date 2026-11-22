@@ -50,7 +50,7 @@ async function runMigrations() {
   }
 
   // 5. Create backup (optional but recommended)
-  await runner.backup();
+  await runner.createBackup();
 
   // 6. Run migrations
   const result = await runner.migrate();
@@ -79,8 +79,8 @@ async function safeMigrate() {
 
   try {
     // Create backup before migration
-    const backup = await runner.backup();
-    console.log('Backup created:', backup.id);
+    const backupPath = await runner.createBackup();
+    console.log('Backup created:', backupPath);
 
     // Run migrations
     const result = await runner.migrate();
@@ -91,7 +91,7 @@ async function safeMigrate() {
       console.error('✗ Migrations failed:', result.errors);
 
       // Restore from backup
-      await runner.restore(backup.id);
+      await runner.restoreFromBackup(backupPath);
       console.log('Restored from backup');
     }
   } catch (error) {

@@ -21,17 +21,17 @@ Main migration runner class for Firebase Realtime Database migrations.
 
 ## Overview
 
-`FirebaseRunner` is the primary class for executing migrations in Firebase Realtime Database. It extends MSR Core's `MigrationScriptExecutor` and provides Firebase-specific functionality.
+`FirebaseRunner` is the primary class for executing migrations in Firebase Realtime Database. It extends MSR Core's `MigrationScriptRunner` and provides Firebase-specific functionality.
 
-**Inheritance:** Extends [`MigrationScriptExecutor`](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptexecutor) from MSR Core
+**Inheritance:** Extends [`MigrationScriptRunner`](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner) from MSR Core
 
 {: .note }
-> For inherited methods like `migrate()`, `down()`, `list()`, `validate()`, see the [MSR Core MigrationScriptExecutor API](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptexecutor)
+> For inherited methods like `migrate()`, `down()`, `list()`, `validate()`, see the [MSR Core MigrationScriptRunner API](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner)
 
 ## Class Signature
 
 ```typescript
-class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler, FirebaseConfig>
+class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseHandler, FirebaseConfig>
 ```
 
 ---
@@ -44,14 +44,14 @@ Creates a new FirebaseRunner instance (recommended method).
 
 ```typescript
 static async getInstance(
-  options: IExecutorOptions<IFirebaseDB, FirebaseConfig>
+  options: IRunnerOptions<IFirebaseDB, FirebaseConfig>
 ): Promise<FirebaseRunner>
 ```
 
 #### Parameters
 
-**options.config** - `FirebaseConfig` (required)
-Configuration for Firebase connection and migrations. See [FirebaseConfig](FirebaseConfig) for details.
+**options.config** - `FirebaseConfig` (optional)
+Configuration for Firebase connection and migrations. Defaults to a new `FirebaseConfig` when omitted. See [FirebaseConfig](FirebaseConfig) for details.
 
 **options.logger** - `ILogger` (optional)
 Custom logger implementation. Defaults to console logger.
@@ -226,7 +226,7 @@ await db.ref('users').set(backup.users);
 
 ## Inherited Methods
 
-FirebaseRunner inherits all standard migration methods from MSR Core's `MigrationScriptExecutor`:
+FirebaseRunner inherits all standard migration methods from MSR Core's `MigrationScriptRunner`:
 
 ### Migration Operations
 
@@ -237,11 +237,12 @@ FirebaseRunner inherits all standard migration methods from MSR Core's `Migratio
 
 ### Data Operations
 
-- **`backup()`** - Create database backup
-- **`restore(backupId)`** - Restore from backup
+- **`createBackup()`** - Create a backup file and return its path
+- **`restoreFromBackup(backupPath?)`** - Restore from a backup file
+- **`deleteBackup()`** - Delete the current backup when configured
 
 {: .note }
-> **Full documentation:** See [MSR Core MigrationScriptExecutor API](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptexecutor) for detailed documentation of inherited methods.
+> **Full documentation:** See [MSR Core MigrationScriptRunner API](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner) for detailed documentation of inherited methods.
 
 ---
 
@@ -276,7 +277,7 @@ async function runMigrations() {
   }
 
   // 5. Create backup (optional but recommended)
-  await runner.backup();
+  await runner.createBackup();
 
   // 6. Run migrations
   const result = await runner.migrate();
@@ -301,8 +302,8 @@ async function safeMigrate() {
 
   try {
     // Create backup before migration
-    const backup = await runner.backup();
-    console.log('Backup created:', backup.id);
+    const backupPath = await runner.createBackup();
+    console.log('Backup created:', backupPath);
 
     // Run migrations
     const result = await runner.migrate();
@@ -313,7 +314,7 @@ async function safeMigrate() {
       console.error('✗ Migrations failed:', result.errors);
 
       // Restore from backup
-      await runner.restore(backup.id);
+      await runner.restoreFromBackup(backupPath);
       console.log('Restored from backup');
     }
   } catch (error) {

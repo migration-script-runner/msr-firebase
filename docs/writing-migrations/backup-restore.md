@@ -39,43 +39,32 @@ appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Create backup
-const result = await runner.backup();
-console.log('Backup created:', result.backupId);
-console.log('Location:', result.path);
+const backupPath = await runner.createBackup();
+console.log('Backup created:', backupPath);
 ```
 
 ### Using the CLI
 
 ```bash
-msr-firebase backup
+msr-firebase backup create
 ```
 
 **Output:**
 ```
 Creating backup...
-✓ Backup created: backup-1234567890.json
-Location: ./backups/backup-1234567890.json
-Size: 2.5 MB
+✓ Backup created successfully: ./backups/backup-2025-01-22-01-30-45.bkp
 ```
 
 ## Backup Format
 
-Backups are stored as JSON files:
+Firebase backup files contain the serialized database data returned by the adapter's backup implementation. Core writes that content to the configured backup file; the file path is returned by `createBackup()`.
 
 ```json
 {
-  "metadata": {
-    "timestamp": 1234567890,
-    "databaseURL": "https://your-project.firebaseio.com",
-    "createdAt": "2024-01-15T10:30:00.000Z",
-    "version": "0.1.0"
-  },
-  "data": {
-    "users": {
-      "user1": {
-        "name": "John Doe",
-        "email": "john@example.com"
-      }
+  "users": {
+    "user1": {
+      "name": "John Doe",
+      "email": "john@example.com"
     }
   }
 }
@@ -116,7 +105,7 @@ appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Restore from backup
-await runner.restore('backup-1234567890.json');
+await runner.restoreFromBackup('./backups/backup-2025-01-22-01-30-45.bkp');
 ```
 
 {: .warning }
@@ -125,20 +114,10 @@ await runner.restore('backup-1234567890.json');
 ### Using the CLI
 
 ```bash
-msr-firebase restore backup-1234567890.json
+msr-firebase backup restore ./backups/backup-2025-01-22-01-30-45.bkp
 ```
 
-**Confirmation prompt:**
-```
-⚠️  Warning: This will overwrite all data in the database!
-Database: https://your-project.firebaseio.com
-Backup: backup-1234567890.json (created 2024-01-15 10:30:00)
-
-Are you sure you want to continue? (y/N): y
-
-Restoring backup...
-✓ Backup restored successfully
-```
+The command restores the file immediately; it does not prompt for confirmation. Restore overwrites the database data represented by the backup, so verify the target and backup path before running it.
 
 ## Rollback with Backups
 
@@ -169,10 +148,10 @@ await runner.down();
 ### Strategy 1: Before Every Migration Run
 
 ```typescript
-config: {
-  rollbackStrategy: 'backup',
-  backupPath: './backups'
-}
+import { RollbackStrategy } from '@migration-script-runner/core';
+
+appConfig.rollbackStrategy = RollbackStrategy.BACKUP;
+appConfig.backup.folder = './backups';
 ```
 
 **Pros:** Maximum safety
@@ -182,7 +161,7 @@ config: {
 
 ```typescript
 // Create backup manually before important migrations
-await runner.backup();
+await runner.createBackup();
 
 // Run migrations
 await runner.migrate();
@@ -198,7 +177,7 @@ import { schedule } from 'node-cron';
 
 // Backup every day at 2 AM
 schedule('0 2 * * *', async () => {
-  await runner.backup();
+  await runner.createBackup();
 });
 ```
 
@@ -208,9 +187,9 @@ schedule('0 2 * * *', async () => {
 ### Strategy 4: Hybrid Approach
 
 ```typescript
-config: {
-  rollbackStrategy: 'both' // Use down() if available, backup as fallback
-}
+import { RollbackStrategy } from '@migration-script-runner/core';
+
+appConfig.rollbackStrategy = RollbackStrategy.BOTH; // Use down() if available, backup as fallback
 ```
 
 **Pros:** Fast rollback with safety net
@@ -226,7 +205,7 @@ import { join } from 'path';
 
 const backupDir = './backups';
 const backups = readdirSync(backupDir)
-  .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
+  .filter(f => f.startsWith('backup-') && f.endsWith('.bkp'))
   .map(f => {
     const stat = statSync(join(backupDir, f));
     return {
@@ -248,7 +227,7 @@ import { join } from 'path';
 
 function deleteOldBackups(backupDir: string, keepLast: number = 10) {
   const backups = readdirSync(backupDir)
-    .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
+    .filter(f => f.startsWith('backup-') && f.endsWith('.bkp'))
     .map(f => ({
       file: f,
       path: join(backupDir, f),
@@ -271,9 +250,7 @@ deleteOldBackups('./backups', 10);
 ### Local Storage
 
 ```typescript
-config: {
-  backupPath: './backups' // Local directory
-}
+appConfig.backup.folder = './backups'; // Local directory
 ```
 
 **Pros:** Fast, simple
@@ -301,8 +278,8 @@ async function uploadBackup(localPath: string, backupId: string) {
 }
 
 // After creating backup
-const result = await runner.backup();
-await uploadBackup(result.path, result.backupId);
+const backupPath = await runner.createBackup();
+await uploadBackup(backupPath, backupPath.split('/').pop() ?? 'firebase-backup.bkp');
 ```
 
 ## Backup Size Optimization
@@ -377,8 +354,8 @@ function validateBackup(backupPath: string): boolean {
 
 ```typescript
 // 1. Create backup before risky operation
-const backup = await runner.backup();
-console.log('Backup created:', backup.backupId);
+const backupPath = await runner.createBackup();
+console.log('Backup created:', backupPath);
 
 try {
   // 2. Perform risky migration
@@ -395,7 +372,7 @@ try {
   console.error('Migration failed, restoring backup...');
 
   // 4. Restore on failure
-  await runner.restore(backup.backupId);
+  await runner.restoreFromBackup(backupPath);
 
   console.log('Database restored from backup');
   throw error;

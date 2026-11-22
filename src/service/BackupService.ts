@@ -1,5 +1,6 @@
-import { IBackupService } from '@migration-script-runner/core';
+import { IBackup } from '@migration-script-runner/core';
 import type { Database } from 'firebase-admin/database';
+import { IFirebaseDB } from '../interface';
 
 /**
  * Firebase Realtime Database backup service.
@@ -7,7 +8,7 @@ import type { Database } from 'firebase-admin/database';
  * Implements content-based backup by serializing Firebase data to JSON.
  * Supports backing up all nodes or specific filtered nodes.
  */
-export class BackupService implements IBackupService {
+export class BackupService implements IBackup<IFirebaseDB> {
     static NODES = {
         ALL: ['/'],
         SELECTED: [

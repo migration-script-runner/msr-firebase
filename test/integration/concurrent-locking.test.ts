@@ -62,8 +62,8 @@ describe("Concurrent Migration Locking Integration", () => {
 
             // Both instances try to run migrations at the exact same time
             const results = await Promise.allSettled([
-                runner1.migrate(),
-                runner2.migrate()
+                runner1.up(),
+                runner2.up()
             ]);
 
             // Extract results
@@ -114,7 +114,7 @@ describe("Concurrent Migration Locking Integration", () => {
 
             // First instance runs migrations
             const runner1 = await FirebaseRunner.getInstance({ config });
-            const result1 = await runner1.migrate();
+            const result1 = await runner1.up();
             expect(result1.success).to.be.true;
 
             // Wait a moment to ensure lock is released
@@ -122,7 +122,7 @@ describe("Concurrent Migration Locking Integration", () => {
 
             // Second instance should be able to run now (no pending migrations, but shouldn't fail with lock error)
             const runner2 = await FirebaseRunner.getInstance({ config });
-            const result2 = await runner2.migrate();
+            const result2 = await runner2.up();
             expect(result2.success).to.be.true;
             // No migrations to run, but should not throw lock error
             expect(result2.executed.length).to.equal(0);
@@ -151,10 +151,10 @@ describe("Concurrent Migration Locking Integration", () => {
             // First instance acquires lock
             const runner1 = await FirebaseRunner.getInstance({ config: shortTimeoutConfig });
             const handler1 = runner1.getHandler();
-            const lockService1 = handler1.lockingService as FirebaseLockingService;
+            const lockService1 = handler1.lockingProvider as FirebaseLockingService;
 
-            const executorId1 = `test-executor-1-${Date.now()}`;
-            const acquired1 = await lockService1.acquireLock(executorId1);
+            const runnerId1 = `test-runner-1-${Date.now()}`;
+            const acquired1 = await lockService1.acquireLock(runnerId1);
             expect(acquired1).to.be.true;
 
             // Wait for lock to expire (2 seconds + buffer)
@@ -163,18 +163,18 @@ describe("Concurrent Migration Locking Integration", () => {
             // Second instance should be able to acquire the expired lock
             const runner2 = await FirebaseRunner.getInstance({ config: shortTimeoutConfig });
             const handler2 = runner2.getHandler();
-            const lockService2 = handler2.lockingService as FirebaseLockingService;
+            const lockService2 = handler2.lockingProvider as FirebaseLockingService;
 
-            const executorId2 = `test-executor-2-${Date.now()}`;
-            const acquired2 = await lockService2.acquireLock(executorId2);
+            const runnerId2 = `test-runner-2-${Date.now()}`;
+            const acquired2 = await lockService2.acquireLock(runnerId2);
             expect(acquired2).to.be.true;
 
             // Verify second instance owns the lock
-            const verified = await lockService2.verifyLockOwnership(executorId2);
+            const verified = await lockService2.verifyLockOwnership(runnerId2);
             expect(verified).to.be.true;
 
             // Cleanup
-            await lockService2.releaseLock(executorId2);
+            await lockService2.releaseLock(runnerId2);
         });
 
         it("should automatically clean up expired lock during acquisition", async function() {
@@ -197,16 +197,16 @@ describe("Concurrent Migration Locking Integration", () => {
 
             const runner1 = await FirebaseRunner.getInstance({ config: shortTimeoutConfig });
             const handler1 = runner1.getHandler();
-            const lockService1 = handler1.lockingService as FirebaseLockingService;
+            const lockService1 = handler1.lockingProvider as FirebaseLockingService;
 
-            // First executor acquires lock
-            const executorId1 = `expired-test-1-${Date.now()}`;
-            await lockService1.acquireLock(executorId1);
+            // First runner acquires lock
+            const runnerId1 = `expired-test-1-${Date.now()}`;
+            await lockService1.acquireLock(runnerId1);
 
             // Verify lock status shows lock is active
             let status = await lockService1.getLockStatus();
             expect(status).to.not.be.null;
-            expect(status?.lockedBy).to.equal(executorId1);
+            expect(status?.lockedBy).to.equal(runnerId1);
 
             // Wait for lock to expire
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -215,21 +215,21 @@ describe("Concurrent Migration Locking Integration", () => {
             status = await lockService1.getLockStatus();
             expect(status).to.be.null;
 
-            // Second executor should acquire lock (expired lock gets cleaned up atomically)
+            // Second runner should acquire lock (expired lock gets cleaned up atomically)
             const runner2 = await FirebaseRunner.getInstance({ config: shortTimeoutConfig });
             const handler2 = runner2.getHandler();
-            const lockService2 = handler2.lockingService as FirebaseLockingService;
+            const lockService2 = handler2.lockingProvider as FirebaseLockingService;
 
-            const executorId2 = `expired-test-2-${Date.now()}`;
-            const acquired = await lockService2.acquireLock(executorId2);
+            const runnerId2 = `expired-test-2-${Date.now()}`;
+            const acquired = await lockService2.acquireLock(runnerId2);
             expect(acquired).to.be.true;
 
-            // Verify new lock is owned by executor2
+            // Verify new lock is owned by runner2
             status = await lockService2.getLockStatus();
-            expect(status?.lockedBy).to.equal(executorId2);
+            expect(status?.lockedBy).to.equal(runnerId2);
 
             // Cleanup
-            await lockService2.releaseLock(executorId2);
+            await lockService2.releaseLock(runnerId2);
         });
     });
 
@@ -239,26 +239,26 @@ describe("Concurrent Migration Locking Integration", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
             // Initially, no lock should exist
             let status = await lockService.getLockStatus();
             expect(status).to.be.null;
 
             // Acquire lock
-            const executorId = `status-test-${Date.now()}`;
-            await lockService.acquireLock(executorId);
+            const runnerId = `status-test-${Date.now()}`;
+            await lockService.acquireLock(runnerId);
 
             // Status should show lock details
             status = await lockService.getLockStatus();
             expect(status).to.not.be.null;
             expect(status?.isLocked).to.be.true;
-            expect(status?.lockedBy).to.equal(executorId);
+            expect(status?.lockedBy).to.equal(runnerId);
             expect(status?.lockedAt).to.be.instanceof(Date);
             expect(status?.expiresAt).to.be.instanceof(Date);
 
             // Release lock
-            await lockService.releaseLock(executorId);
+            await lockService.releaseLock(runnerId);
 
             // Status should be null again
             status = await lockService.getLockStatus();
@@ -270,15 +270,15 @@ describe("Concurrent Migration Locking Integration", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            // Executor 1 acquires lock
-            const executorId1 = `force-test-1-${Date.now()}`;
-            await lockService.acquireLock(executorId1);
+            // runner 1 acquires lock
+            const runnerId1 = `force-test-1-${Date.now()}`;
+            await lockService.acquireLock(runnerId1);
 
             // Verify lock exists
             let status = await lockService.getLockStatus();
-            expect(status?.lockedBy).to.equal(executorId1);
+            expect(status?.lockedBy).to.equal(runnerId1);
 
             // Force release (simulating admin intervention)
             await lockService.forceReleaseLock();
@@ -287,36 +287,36 @@ describe("Concurrent Migration Locking Integration", () => {
             status = await lockService.getLockStatus();
             expect(status).to.be.null;
 
-            // Another executor should be able to acquire lock now
-            const executorId2 = `force-test-2-${Date.now()}`;
-            const acquired = await lockService.acquireLock(executorId2);
+            // Another runner should be able to acquire lock now
+            const runnerId2 = `force-test-2-${Date.now()}`;
+            const acquired = await lockService.acquireLock(runnerId2);
             expect(acquired).to.be.true;
 
             // Cleanup
-            await lockService.releaseLock(executorId2);
+            await lockService.releaseLock(runnerId2);
         });
 
-        it("should not release lock owned by another executor", async function() {
+        it("should not release lock owned by another runner", async function() {
             this.timeout(10000);
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            // Executor 1 acquires lock
-            const executorId1 = `owner-test-1-${Date.now()}`;
-            await lockService.acquireLock(executorId1);
+            // runner 1 acquires lock
+            const runnerId1 = `owner-test-1-${Date.now()}`;
+            await lockService.acquireLock(runnerId1);
 
-            // Executor 2 tries to release it (should not work)
-            const executorId2 = `owner-test-2-${Date.now()}`;
-            await lockService.releaseLock(executorId2);
+            // runner 2 tries to release it (should not work)
+            const runnerId2 = `owner-test-2-${Date.now()}`;
+            await lockService.releaseLock(runnerId2);
 
-            // Lock should still exist and be owned by executor 1
+            // Lock should still exist and be owned by runner 1
             const status = await lockService.getLockStatus();
-            expect(status?.lockedBy).to.equal(executorId1);
+            expect(status?.lockedBy).to.equal(runnerId1);
 
             // Cleanup
-            await lockService.releaseLock(executorId1);
+            await lockService.releaseLock(runnerId1);
         });
     });
 
@@ -326,31 +326,31 @@ describe("Concurrent Migration Locking Integration", () => {
 
             const runner = await FirebaseRunner.getInstance({ config });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            const executorId = `verify-test-${Date.now()}`;
+            const runnerId = `verify-test-${Date.now()}`;
 
             // Before acquiring, verification should fail
-            let verified = await lockService.verifyLockOwnership(executorId);
+            let verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.false;
 
             // Acquire lock
-            await lockService.acquireLock(executorId);
+            await lockService.acquireLock(runnerId);
 
             // Now verification should succeed
-            verified = await lockService.verifyLockOwnership(executorId);
+            verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.true;
 
-            // Different executor should fail verification
-            const otherExecutorId = `verify-other-${Date.now()}`;
-            verified = await lockService.verifyLockOwnership(otherExecutorId);
+            // Different runner should fail verification
+            const otherRunnerId = `verify-other-${Date.now()}`;
+            verified = await lockService.verifyLockOwnership(otherRunnerId);
             expect(verified).to.be.false;
 
             // Cleanup
-            await lockService.releaseLock(executorId);
+            await lockService.releaseLock(runnerId);
 
             // After release, verification should fail
-            verified = await lockService.verifyLockOwnership(executorId);
+            verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.false;
         });
 
@@ -374,22 +374,22 @@ describe("Concurrent Migration Locking Integration", () => {
 
             const runner = await FirebaseRunner.getInstance({ config: shortTimeoutConfig });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            const executorId = `verify-expire-${Date.now()}`;
+            const runnerId = `verify-expire-${Date.now()}`;
 
             // Acquire lock
-            await lockService.acquireLock(executorId);
+            await lockService.acquireLock(runnerId);
 
             // Should be valid initially
-            let verified = await lockService.verifyLockOwnership(executorId);
+            let verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.true;
 
             // Wait for expiration
             await new Promise(resolve => setTimeout(resolve, 2000));
 
             // Verification should fail for expired lock
-            verified = await lockService.verifyLockOwnership(executorId);
+            verified = await lockService.verifyLockOwnership(runnerId);
             expect(verified).to.be.false;
         });
     });
@@ -414,7 +414,7 @@ describe("Concurrent Migration Locking Integration", () => {
 
             // All pods try to migrate simultaneously
             const migrationPromises = runners.map((runner) =>
-                runner.migrate().catch(error => ({
+                runner.up().catch(error => ({
                     error: error.message || String(error)
                 }))
             );
@@ -464,7 +464,7 @@ describe("Concurrent Migration Locking Integration", () => {
                 const runner = await FirebaseRunner.getInstance({ config });
 
                 try {
-                    const result = await runner.migrate();
+                    const result = await runner.up();
                     results.push({ instance: i, success: true, executed: result.executed.length });
                 } catch (error) {
                     results.push({ instance: i, success: false, error: String(error) });
@@ -526,7 +526,7 @@ describe("Concurrent Migration Locking Integration", () => {
 
             // ALL 20 INSTANCES TRY TO MIGRATE AT THE EXACT SAME TIME
             const migrationPromises = runners.map((runner, index) =>
-                runner.migrate()
+                runner.up()
                     .then(result => ({
                         index,
                         status: 'success',
@@ -631,7 +631,7 @@ describe("Concurrent Migration Locking Integration", () => {
             // ALL 20 INSTANCES TRY TO MIGRATE WITH RETRIES
             const startTime = Date.now();
             const migrationPromises = runners.map((runner, index) =>
-                runner.migrate()
+                runner.up()
                     .then(result => ({
                         index,
                         status: 'success',
@@ -744,19 +744,19 @@ describe("Concurrent Migration Locking Integration", () => {
 
             const runner = await FirebaseRunner.getInstance({ config: customConfig });
             const handler = runner.getHandler();
-            const lockService = handler.lockingService as FirebaseLockingService;
+            const lockService = handler.lockingProvider as FirebaseLockingService;
 
-            const executorId = `shift-test-${Date.now()}`;
-            await lockService.acquireLock(executorId);
+            const runnerId = `shift-test-${Date.now()}`;
+            await lockService.acquireLock(runnerId);
 
             // Verify lock exists at correct path
             const lockRef = handler.db.database.ref(`${customShift}/migrations/_lock`);
             const snapshot = await lockRef.once('value');
             expect(snapshot.exists()).to.be.true;
-            expect(snapshot.val().executorId).to.equal(executorId);
+            expect(snapshot.val().runnerId).to.equal(runnerId);
 
             // Cleanup
-            await lockService.releaseLock(executorId);
+            await lockService.releaseLock(runnerId);
             await handler.db.database.ref(customShift).remove();
         });
     });

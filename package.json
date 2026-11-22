@@ -87,7 +87,7 @@
     "typescript-eslint": "^8.73.0"
   },
   "dependencies": {
-    "@migration-script-runner/core": "^0.8.4"
+    "@migration-script-runner/core": "^1.0.0-beta.1"
   },
   "repository": {
     "type": "git",

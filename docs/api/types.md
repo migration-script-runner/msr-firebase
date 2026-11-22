@@ -170,7 +170,7 @@ import type { Database } from 'firebase-admin/database';
 IMigrationScript<Database>
 
 // In FirebaseRunner
-class FirebaseRunner extends MigrationScriptExecutor<Database>
+class FirebaseRunner extends MigrationScriptRunner<Database>
 ```
 
 This provides full TypeScript type safety for Firebase operations.

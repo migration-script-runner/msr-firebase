@@ -46,7 +46,7 @@ describe("FirebaseHandler", () => {
             expect(handler.db).to.exist;
             expect(handler.backup).to.exist;
             expect(handler.schemaVersion).to.exist;
-            expect(handler.lockingService).to.be.undefined;
+            expect(handler.lockingProvider).to.be.undefined;
             sinon.assert.calledOnce(connectStub);
         });
 
@@ -58,8 +58,8 @@ describe("FirebaseHandler", () => {
             const handler = await FirebaseHandler.getInstance(config);
 
             expect(handler).to.be.instanceOf(FirebaseHandler);
-            expect(handler.lockingService).to.exist;
-            expect(handler.lockingService).to.not.be.undefined;
+            expect(handler.lockingProvider).to.exist;
+            expect(handler.lockingProvider).to.not.be.undefined;
         });
 
         it("should not create locking service when disabled", async () => {
@@ -68,7 +68,7 @@ describe("FirebaseHandler", () => {
 
             const handler = await FirebaseHandler.getInstance(config);
 
-            expect(handler.lockingService).to.be.undefined;
+            expect(handler.lockingProvider).to.be.undefined;
         });
 
         it("should initialize lock storage when locking is enabled", async () => {
@@ -78,7 +78,7 @@ describe("FirebaseHandler", () => {
             const handler = await FirebaseHandler.getInstance(config);
 
             // Verify initLockStorage was called (ref was accessed)
-            expect(handler.lockingService).to.exist;
+            expect(handler.lockingProvider).to.exist;
             // The mock should have been called for initLockStorage
             sinon.assert.called(mockDatabase.ref as sinon.SinonStub);
         });
@@ -96,7 +96,7 @@ describe("FirebaseHandler", () => {
 
             const handler = await FirebaseHandler.getInstance(config);
 
-            expect(handler.lockingService).to.exist;
+            expect(handler.lockingProvider).to.exist;
             // Lock path should be production/migrations/_lock
         });
     });
@@ -159,7 +159,7 @@ describe("FirebaseHandler", () => {
 
             const handler = await FirebaseHandler.getInstance(config);
 
-            expect(handler.lockingService).to.exist;
+            expect(handler.lockingProvider).to.exist;
         });
 
         it("should respect locking disabled flag", async () => {
@@ -168,7 +168,7 @@ describe("FirebaseHandler", () => {
 
             const handler = await FirebaseHandler.getInstance(config);
 
-            expect(handler.lockingService).to.be.undefined;
+            expect(handler.lockingProvider).to.be.undefined;
         });
 
         it("should handle locking with undefined shift", async () => {
@@ -178,7 +178,7 @@ describe("FirebaseHandler", () => {
 
             const handler = await FirebaseHandler.getInstance(config);
 
-            expect(handler.lockingService).to.exist;
+            expect(handler.lockingProvider).to.exist;
         });
     });
 });

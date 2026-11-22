@@ -54,13 +54,15 @@ The FirebaseLockingService implements a distributed lock using Firebase Realtime
 Locks are stored at `{shift}/migrations/_lock` with the following data:
 ```json
 {
-  "executorId": "hostname-pid-uuid",
+  "runnerId": "hostname-pid-uuid",
   "lockedAt": 1705324800000,
   "expiresAt": 1705325400000,
   "hostname": "web-server-1",
   "processId": 12345
 }
 ```
+
+The lock record now stores `runnerId`. Active records created by earlier adapter versions continue to block other runners until they expire, although their owner ID may be unknown to the new version. Wait for the configured lock timeout before rollout or let the lock expire before starting migrations with the new version.
 
 ### Automatic Expiration
 
@@ -126,7 +128,7 @@ msr-firebase lock:status
 ```
 🔒 Lock Status: LOCKED
 
-   Executor ID:  web-server-1-12345-a1b2c3d4
+   Runner ID:  web-server-1-12345-a1b2c3d4
    Acquired At:  2024-01-15T10:30:00.000Z
    Expires At:   2024-01-15T10:40:00.000Z
    Process ID:   12345
@@ -175,7 +177,7 @@ Force-release a lock only when:
 **Error message:**
 ```
 Migration lock is currently held by another process.
-Executor: web-server-2-67890-e5f6g7h8
+Runner: web-server-2-67890-e5f6g7h8
 Locked since: 2024-01-15T10:30:00.000Z
 Expires at: 2024-01-15T10:40:00.000Z
 
@@ -266,23 +268,28 @@ appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 const handler = runner.getHandler();
 
-if (handler.lockingService) {
-  const lockStatus = await handler.lockingService.getLockStatus();
+if (handler.lockingProvider) {
+  const lockStatus = await handler.lockingProvider.getLockStatus();
   console.log('Lock status:', lockStatus);
 }
 ```
 
-### 4. Log Lock Acquisition
+### 4. Inspect Lock Status
 
-Enable detailed logging to track lock acquisition:
+Core manages lock acquisition and release while running migrations. Inspect the provider to report the current lock state:
 
 ```javascript
-// In your migration runner
-const lockAcquired = await lockingService.acquireLock(executorId);
-if (lockAcquired) {
-  console.log(`Lock acquired by ${executorId}`);
-} else {
-  console.log('Failed to acquire lock - another process is running migrations');
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
+
+const appConfig = new FirebaseConfig();
+appConfig.databaseUrl = process.env.DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const lockingProvider = runner.getHandler().lockingProvider;
+
+if (lockingProvider) {
+  console.log('Current lock:', await lockingProvider.getLockStatus());
 }
 ```
 
@@ -365,16 +372,33 @@ Locking ensures only one region's deployment runs migrations.
 
 ## Advanced Usage
 
-### Custom Executor ID
+### Custom Runner ID
 
-Generate custom executor IDs for better tracking:
+Generate custom runner IDs for better tracking:
 
 ```javascript
-import { hostname } from 'os';
-import { v4 as uuidv4 } from 'uuid';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
+import { hostname } from 'node:os';
+import { randomUUID } from 'node:crypto';
 
-const executorId = `${hostname()}-${process.pid}-${uuidv4()}`;
-const lockAcquired = await lockingService.acquireLock(executorId);
+const appConfig = new FirebaseConfig();
+appConfig.databaseUrl = process.env.DATABASE_URL;
+appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+const lockingProvider = runner.getHandler().lockingProvider;
+
+if (lockingProvider) {
+  const runnerId = `${hostname()}-${process.pid}-${randomUUID()}`;
+  const lockAcquired = await lockingProvider.acquireLock(runnerId);
+  if (lockAcquired) {
+    try {
+      // Perform a separate operation protected by this lock.
+    } finally {
+      await lockingProvider.releaseLock(runnerId);
+    }
+  }
+}
 ```
 
 ### Lock Status Monitoring
@@ -394,16 +418,16 @@ async function monitorLock() {
   const runner = await FirebaseRunner.getInstance({ config: appConfig });
   const handler = runner.getHandler();
 
-  if (!handler.lockingService) {
+  if (!handler.lockingProvider) {
     console.log('Locking not enabled');
     return;
   }
 
-  const status = await handler.lockingService.getLockStatus();
+  const status = await handler.lockingProvider.getLockStatus();
 
   if (status && status.isLocked) {
     console.log('Migration in progress:', {
-      executor: status.lockedBy,
+      runner: status.lockedBy,
       started: status.lockedAt,
       expires: status.expiresAt,
       duration: Date.now() - status.lockedAt.getTime()
@@ -429,13 +453,13 @@ const runner = await FirebaseRunner.getInstance({ config: appConfig });
 const handler = runner.getHandler();
 
 // Check if locking is enabled
-if (handler.lockingService) {
+if (handler.lockingProvider) {
   // Get current lock status
-  const status = await handler.lockingService.getLockStatus();
+  const status = await handler.lockingProvider.getLockStatus();
 
   // Force release if needed
   if (status && isStuckLock(status)) {
-    await handler.lockingService.forceReleaseLock();
+    await handler.lockingProvider.forceReleaseLock();
   }
 }
 

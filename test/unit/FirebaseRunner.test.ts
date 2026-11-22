@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { MigrationScriptExecutor, Config } from "@migration-script-runner/core";
+import { MigrationScriptRunner, Config } from "@migration-script-runner/core";
 import { FirebaseRunner } from "../../src/FirebaseRunner";
 
 interface TestSnapshot {
@@ -88,8 +88,8 @@ function createTestHandler(
 
 describe("FirebaseRunner", () => {
     describe("inheritance", () => {
-        it("extends MigrationScriptExecutor", () => {
-            expect(FirebaseRunner.prototype).to.be.instanceOf(MigrationScriptExecutor);
+        it("extends MigrationScriptRunner", () => {
+            expect(FirebaseRunner.prototype).to.be.instanceOf(MigrationScriptRunner);
         });
     });
 

@@ -1,6 +1,6 @@
 import {expect} from "chai"
 import type { Database } from 'firebase-admin/database';
-import {MigrationScriptExecutor, SilentLogger} from "@migration-script-runner/core"
+import {MigrationScriptRunner, SilentLogger} from "@migration-script-runner/core"
 
 import {
     BackupService,
@@ -12,11 +12,13 @@ import {
 import {IntegrationTestConfig} from "../IntegrationTestConfig"
 import {TestEntity} from "../TestEntity"
 
+class TestRunner extends MigrationScriptRunner<IFirebaseDB> {}
+
 describe('Firebase Integration Tests', () => {
     let db: Database
     let firebaseDB: IFirebaseDB
     let handler: FirebaseHandler
-    let executor: MigrationScriptExecutor<IFirebaseDB>
+    let runner: TestRunner
     const cfg = new IntegrationTestConfig()
 
     before(async () => {
@@ -25,8 +27,8 @@ describe('Firebase Integration Tests', () => {
         db = handler.db.database
         firebaseDB = handler.db
 
-        // Initialize executor
-        executor = new MigrationScriptExecutor<IFirebaseDB>({
+        // Initialize runner
+        runner = new TestRunner({
             handler,
             logger: new SilentLogger()
         })
@@ -241,7 +243,7 @@ describe('Firebase Integration Tests', () => {
         it('should execute up migration without errors', async () => {
             // Execute migration - may or may not find migrations to run
             try {
-                await executor.up()
+                await runner.up()
                 // If migrations exist and execute, verify schema version table updated
                 const schemaPath = cfg.buildPath(cfg.tableName)
                 const snapshot = await db.ref(schemaPath).once('value')

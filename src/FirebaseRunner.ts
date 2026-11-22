@@ -1,4 +1,4 @@
-import { MigrationScriptExecutor, IMigrationExecutorDependencies, IExecutorOptions } from '@migration-script-runner/core';
+import { MigrationScriptRunner, IRunnerDependencies, IRunnerOptions } from '@migration-script-runner/core';
 import { FirebaseHandler } from './service/FirebaseHandler';
 import { IFirebaseDB } from './interface';
 import { FirebaseConfig } from './model/FirebaseConfig';
@@ -6,7 +6,7 @@ import { FirebaseConfig } from './model/FirebaseConfig';
 /**
  * Firebase Realtime Database Migration Script Runner.
  *
- * Extends MigrationScriptExecutor to provide Firebase-specific migration operations
+ * Extends MigrationScriptRunner to provide Firebase-specific migration operations
  * with built-in support for Firebase Realtime Database features.
  *
  * **Usage:**
@@ -26,8 +26,8 @@ import { FirebaseConfig } from './model/FirebaseConfig';
  * await runner.migrate();
  * ```
  */
-export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler, FirebaseConfig> {
-    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler, FirebaseConfig>) {
+export class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseHandler, FirebaseConfig> {
+    private constructor(dependencies: IRunnerDependencies<IFirebaseDB, FirebaseHandler, FirebaseConfig>) {
         super(dependencies);
     }
 
@@ -80,13 +80,10 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
      * });
      * ```
      */
-    static async getInstance(options: IExecutorOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
-        return MigrationScriptExecutor.createInstance(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            FirebaseRunner as any, // Required: createInstance expects public constructor, but we use private for factory pattern
-            options,
-            (config: FirebaseConfig) => FirebaseHandler.getInstance(config)
-        );
+    static async getInstance(options: IRunnerOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
+        const config = options.config ?? new FirebaseConfig();
+        const handler = await FirebaseHandler.getInstance(config);
+        return new FirebaseRunner({ ...options, config, handler });
     }
 
     /**

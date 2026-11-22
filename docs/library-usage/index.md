@@ -118,8 +118,9 @@ MSR Firebase inherits standard migration functionality from MSR Core:
 
 ### Data Operations
 
-- **`backup()`** - Create database backup
-- **`restore(backupId)`** - Restore from backup
+- **`createBackup()`** - Create a backup file and return its path
+- **`restoreFromBackup(backupPath?)`** - Restore from a backup file
+- **`deleteBackup()`** - Delete the current backup when configured
 
 {: .note }
 > **Full documentation:** For detailed documentation of inherited methods, configuration options, and interfaces, see [MSR Core API Documentation](https://migration-script-runner.github.io/msr-core/api/).
