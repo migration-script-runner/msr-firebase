@@ -64,36 +64,39 @@ describe("MigrationScriptService", () => {
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             const result = await service.getAllExecuted();
 
-            expect(result).to.be.an("array");
-            expect(result.length).eq(2);
+            expect(result.map((migration) => ({
+                name: migration.name,
+                timestamp: migration.timestamp,
+            }))).to.have.deep.members([
+                {name: "migration1", timestamp: 123},
+                {name: "migration2", timestamp: 456},
+            ]);
         });
     });
 
     describe("save", () => {
         it("should save migration info with all details", async () => {
-            const mockRef = {
-                push: sinon.stub().returns({
-                    set: sinon.stub().resolves()
-                })
-            };
+            const mockRef = {push: sinon.stub().returns({key: "generated-key"})};
+            const refStub = sinon.stub().returns(mockRef);
             const mockDatabase = {
-                ref: sinon.stub().returns(mockRef)
+                ref: refStub
             } as unknown as Database;
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
             const details = {
                 name: "test-migration",
-                timestamp: Date.now(),
+                timestamp: 123,
                 executionTime: 100,
                 status: "success",
-                startedAt: Date.now(),
-                finishedAt: Date.now(),
+                startedAt: 100,
+                finishedAt: 200,
                 username: "test-user"
             };
 
             await service.save(details);
 
-            sinon.assert.calledOnce(mockRef.push as sinon.SinonStub);
+            sinon.assert.calledOnceWithExactly(refStub, "/test/migrations");
+            sinon.assert.calledOnceWithMatch(mockRef.push, sinon.match(details));
         });
     });
 
@@ -123,6 +126,7 @@ describe("MigrationScriptService", () => {
             await service.remove(timestamp);
 
             sinon.assert.calledOnce(removeStub);
+            sinon.assert.calledWith(mockDatabase.ref as sinon.SinonStub, "/test/migrations/key1");
         });
 
         it("should not throw error when timestamp not found", async () => {
@@ -141,7 +145,6 @@ describe("MigrationScriptService", () => {
 
             const service = new MigrationScriptService(mockDatabase, "/test/migrations");
 
-            // Should not throw
             await expect(service.remove(timestamp)).to.be.fulfilled;
         });
 
