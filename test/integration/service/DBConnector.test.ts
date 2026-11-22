@@ -12,6 +12,18 @@ describe("DBConnector", () => {
         expect(database).not.undefined
     })
 
+    it("connect: creates distinct Firebase apps for parallel connections", async () => {
+        const cfg = new IntegrationTestConfig()
+
+        const [firstDatabase, secondDatabase] = await Promise.all([
+            DBConnector.connect(cfg),
+            DBConnector.connect(cfg),
+        ])
+
+        expect(firstDatabase).not.to.equal(secondDatabase)
+        expect(firstDatabase.app.name).not.to.equal(secondDatabase.app.name)
+    })
+
     it("connect: no credentials", async () => {
         // having: incorrect config w/o credentials
         const cfg = new IntegrationTestConfig()
@@ -35,7 +47,10 @@ describe("DBConnector", () => {
         const cfg = new IntegrationTestConfig()
         cfg.databaseUrl = "http://localhost/test"
 
-        // when: establish connection we expect an error (either Firebase error or duplicate app error)
-        await expect(DBConnector.connect(cfg)).to.be.rejected;
+        // when: establish connection, Firebase rejects a URL that cannot identify a database
+        await expect(DBConnector.connect(cfg)).to.be.rejectedWith(
+            Error,
+            "Cannot parse Firebase url"
+        );
     })
 })

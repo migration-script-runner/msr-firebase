@@ -23,6 +23,10 @@ Thank you for your interest in contributing. Please use GitHub Issues and pull r
 
 Integration tests use the Firebase Realtime Database Emulator configured by `firebase.json`; never point them at a production Firebase project. `npm test` runs lint, repository-script tests, unit tests, and integration tests. The local pre-commit hook runs lint and unit tests, and builds the documentation when Bundler is installed. CI also runs the build and coverage checks.
 
+## Test coverage policy
+
+`npm run test:coverage` runs unit and Emulator integration tests with nyc. The current `.nycrc` thresholds are 80% for statements, functions, and lines, and 70% for branches; because `check-coverage` is enabled, the coverage command fails below those thresholds. CI runs that command, so it enforces these baseline thresholds. The pre-commit hook does not run coverage. The project aims to improve meaningful coverage toward 100% where practical, but CI does not require a strict 100% gate.
+
 ## Issues and pull requests
 
 - Search existing issues before opening a new one. Describe the expected behavior, actual behavior, and relevant reproduction steps.
