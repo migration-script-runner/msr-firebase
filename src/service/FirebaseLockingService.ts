@@ -108,7 +108,7 @@ export class FirebaseLockingService implements ILockingProvider<IFirebaseDB> {
     async acquireLock(runnerId: string): Promise<boolean> {
         const now = Date.now();
         const expiresAt = now + this.timeout;
-        const coreRunnerId = runnerId.match(/^(.*)-(\d+)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i);
+        const coreRunnerId = /^(.*)-(\d+)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i.exec(runnerId);
         const parts = runnerId.split('-');
         const hostname = coreRunnerId?.[1] ?? parts[0] ?? '';
         const pidStr = coreRunnerId?.[2] ?? parts[1];
