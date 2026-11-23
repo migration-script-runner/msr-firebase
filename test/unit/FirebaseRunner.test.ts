@@ -89,6 +89,26 @@ function createTestHandler(
     };
 }
 
+function createFirebaseHandlerStub(config: FirebaseConfig): FirebaseHandler {
+    const fixture = createTestHandler(createTestDatabase({}), {
+        databaseUrl: config.databaseUrl,
+        shift: config.shift,
+        tableName: config.tableName,
+    });
+    const handler = Object.create(FirebaseHandler.prototype) as FirebaseHandler;
+
+    Object.assign(handler, {
+        cfg: config,
+        db: fixture.db,
+        backup: fixture.backup,
+        schemaVersion: fixture.schemaVersion,
+        getName: fixture.getName,
+        getVersion: () => "test",
+    });
+
+    return handler;
+}
+
 describe("FirebaseRunner", () => {
     describe("inheritance", () => {
         it("extends MigrationScriptRunner", () => {
@@ -97,30 +117,119 @@ describe("FirebaseRunner", () => {
     });
 
     describe("getInstance", () => {
-        it("resolves Firebase configuration through Core before creating the handler", async () => {
-            const phases: string[] = [];
-            const resolvedConfig = new FirebaseConfig();
-            resolvedConfig.databaseUrl = "https://firebase.example.com";
+        it("resolves Core and Firebase environment configuration before creating the handler and runner", async () => {
+            const originalEnvironment = {
+                DATABASE_URL: process.env.DATABASE_URL,
+                GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+                MSR_FOLDER: process.env.MSR_FOLDER,
+                MSR_SHOW_BANNER: process.env.MSR_SHOW_BANNER,
+            };
+            process.env.DATABASE_URL = "https://firebase.example.com";
+            process.env.GOOGLE_APPLICATION_CREDENTIALS = "/path/to/service-account.json";
+            process.env.MSR_FOLDER = "./core-migrations";
+            process.env.MSR_SHOW_BANNER = "false";
+
+            let handlerInstance: FirebaseHandler | undefined;
+            const handlerStub = sinon.stub(FirebaseHandler, "getInstance").callsFake(async (config) => {
+                expect(config).to.be.instanceOf(FirebaseConfig);
+                expect(config.transaction.mode).to.equal(TransactionMode.NONE);
+                expect(config.databaseUrl).to.equal("https://firebase.example.com");
+                expect(config.applicationCredentials).to.equal("/path/to/service-account.json");
+                expect(config.folder).to.equal("./core-migrations");
+                handlerInstance = createFirebaseHandlerStub(config);
+                return handlerInstance;
+            });
+
+            try {
+                const runner = await FirebaseRunner.getInstance({});
+
+                expect(runner.getHandler()).to.equal(handlerInstance);
+            } finally {
+                handlerStub.restore();
+                for (const [name, value] of Object.entries(originalEnvironment)) {
+                    if (value === undefined) {
+                        delete process.env[name];
+                    } else {
+                        process.env[name] = value;
+                    }
+                }
+            }
+        });
+
+        it("uses a custom config loader when no explicit config is supplied", async () => {
+            let loaderCalled = false;
+            let handlerConfig: FirebaseConfig | undefined;
             const configLoader: IConfigLoader<FirebaseConfig> = {
                 load: (_overrides, _options, defaults) => {
+                    loaderCalled = true;
                     expect(defaults).to.be.instanceOf(FirebaseConfig);
                     expect(defaults?.transaction.mode).to.equal(TransactionMode.NONE);
-                    phases.push("config");
-                    return resolvedConfig;
+                    defaults!.databaseUrl = "https://custom-loader.example.com";
+                    defaults!.folder = "./custom-migrations";
+                    defaults!.showBanner = false;
+                    return defaults!;
                 },
                 applyEnvironmentVariables: () => undefined,
             };
             const handlerStub = sinon.stub(FirebaseHandler, "getInstance").callsFake(async (config) => {
-                phases.push("handler");
-                expect(config).to.equal(resolvedConfig);
-                throw new Error("Stop before connecting to Firebase");
+                handlerConfig = config;
+                return createFirebaseHandlerStub(config);
             });
 
             try {
-                await expect(FirebaseRunner.getInstance({ configLoader }))
-                    .to.be.rejectedWith("Stop before connecting to Firebase");
+                const runner = await FirebaseRunner.getInstance({ configLoader });
 
-                expect(phases).to.deep.equal(["config", "handler"]);
+                expect(loaderCalled).to.equal(true);
+                expect(handlerConfig?.databaseUrl).to.equal("https://custom-loader.example.com");
+                expect(handlerConfig?.folder).to.equal("./custom-migrations");
+                expect(runner.getHandler().cfg).to.equal(handlerConfig);
+            } finally {
+                handlerStub.restore();
+            }
+        });
+
+        it("uses an explicit config without invoking a custom config loader", async () => {
+            const config = new FirebaseConfig();
+            config.showBanner = false;
+            let loaderCalled = false;
+            let handlerConfig: FirebaseConfig | undefined;
+            const configLoader: IConfigLoader<FirebaseConfig> = {
+                load: () => {
+                    loaderCalled = true;
+                    throw new Error("Explicit config must skip loading");
+                },
+                applyEnvironmentVariables: () => undefined,
+            };
+            const handlerStub = sinon.stub(FirebaseHandler, "getInstance").callsFake(async (resolvedConfig) => {
+                handlerConfig = resolvedConfig;
+                return createFirebaseHandlerStub(resolvedConfig);
+            });
+
+            try {
+                const runner = await FirebaseRunner.getInstance({ config, configLoader });
+
+                expect(loaderCalled).to.equal(false);
+                expect(handlerConfig).to.equal(config);
+                expect(runner.getHandler().cfg).to.equal(config);
+            } finally {
+                handlerStub.restore();
+            }
+        });
+
+        it("does not create the Firebase handler when config loading fails", async () => {
+            const configLoader: IConfigLoader<FirebaseConfig> = {
+                load: () => {
+                    throw new Error("Configuration could not be loaded");
+                },
+                applyEnvironmentVariables: () => undefined,
+            };
+            const handlerStub = sinon.stub(FirebaseHandler, "getInstance");
+
+            try {
+                await expect(FirebaseRunner.getInstance({ configLoader }))
+                    .to.be.rejectedWith("Configuration could not be loaded");
+
+                sinon.assert.notCalled(handlerStub);
             } finally {
                 handlerStub.restore();
             }

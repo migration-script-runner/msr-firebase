@@ -52,6 +52,21 @@ export class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseH
      *
      * @example
      * ```typescript
+     * // Adapter implementation: Core resolves the config before creating the handler.
+     * static override getInstance(
+     *     options: IRunnerOptions<IFirebaseDB, FirebaseConfig>
+     * ): Promise<FirebaseRunner> {
+     *     return this.createInstance(
+     *         options,
+     *         () => new FirebaseConfig(),
+     *         (config) => FirebaseHandler.getInstance(config),
+     *         (dependencies) => new FirebaseRunner(dependencies)
+     *     );
+     * }
+     * ```
+     *
+     * @example
+     * ```typescript
      * // Minimal usage
      * const runner = await FirebaseRunner.getInstance({
      *     config: appConfig

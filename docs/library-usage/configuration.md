@@ -435,18 +435,30 @@ const runner = await FirebaseRunner.getInstance({
 
 ## Configuration Priority
 
-When `FirebaseRunner.getInstance()` receives an explicit `config`, it uses that `FirebaseConfig` as-is and does not invoke a config loader. If `config` is omitted, Core resolves the configuration before creating the Firebase handler:
+When `FirebaseRunner.getInstance()` receives an explicit `config`, Core uses that `FirebaseConfig` as-is and skips both the custom and default config loaders. If `config` is omitted, Core calls the supplied `configLoader` or its default loader once before creating the Firebase handler. The resolved `FirebaseConfig` is passed to both the handler and runner.
 
-1. `FirebaseConfig` defaults, including `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` read by its constructor.
-2. Core's supported config file, if present.
-3. Core `MSR_*` environment variables.
-
-You can supply `configLoader` in the runner options to use a custom Core-compatible loader. See [FirebaseRunner](../api/FirebaseRunner) for the factory API and [MSR Core ConfigLoader](https://migration-script-runner.github.io/msr-core/api/ConfigLoader) for Core's config file and environment handling.
+The default loader starts with `FirebaseConfig` defaults, including `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` read by its constructor, then merges Core's supported config file and `MSR_*` environment variables. A custom loader is responsible for its own loading and merge behavior while preserving the Firebase-specific fields and defaults it needs.
 
 ```typescript
-// Let Core load the config file and MSR_* values before Firebase connects.
+// Let Core's default loader resolve the config file and MSR_* values before Firebase connects.
 const runner = await FirebaseRunner.getInstance({});
 ```
+
+If your application supplies a custom Core-compatible loader, pass it only when you omit `config`:
+
+```typescript
+import type { IConfigLoader } from '@migration-script-runner/core';
+import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
+
+// Provided by the application; it must return a fully resolved FirebaseConfig.
+declare const firebaseConfigLoader: IConfigLoader<FirebaseConfig>;
+
+const runner = await FirebaseRunner.getInstance({
+  configLoader: firebaseConfigLoader
+});
+```
+
+See [FirebaseRunner](../api/FirebaseRunner) for the factory API and [MSR Core ConfigLoader](https://migration-script-runner.github.io/msr-core/api/ConfigLoader) for Core's default config-file and environment handling.
 
 {: .note }
 > CLI flags have higher priority than programmatic configuration when using the CLI. See [CLI Configuration](../cli-usage/configuration) for details.
