@@ -85,6 +85,26 @@ describe("FirebaseLockingService", () => {
             sinon.assert.calledOnce(mockDatabase.ref as sinon.SinonStub);
         });
 
+        it("should parse hostname and process ID from a Core runner ID with a hyphenated hostname", async () => {
+            const runnerId = "macbook-pro-12345-a1b2c3d4-e5f6-4789-8abc-def012345678";
+            let lockData: Record<string, unknown> | undefined;
+            const mockRef = {
+                transaction: sinon.stub().callsFake(async (updateFn: (currentLock: null) => Record<string, unknown>) => {
+                    lockData = updateFn(null);
+                    return { committed: true, snapshot: { val: () => lockData } };
+                })
+            };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await lockingService.acquireLock(runnerId);
+
+            expect(lockData).to.include({
+                runnerId,
+                hostname: "macbook-pro",
+                processId: 12345
+            });
+        });
+
         it("should not acquire lock when lock already exists", async () => {
             const existingLock = {
                 runnerId: "other-runner",
