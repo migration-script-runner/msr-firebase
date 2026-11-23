@@ -435,22 +435,18 @@ const runner = await FirebaseRunner.getInstance({
 
 ## Configuration Priority
 
-When using multiple configuration sources, the priority is:
+When `FirebaseRunner.getInstance()` receives an explicit `config`, it uses that `FirebaseConfig` as-is and does not invoke a config loader. If `config` is omitted, Core resolves the configuration before creating the Firebase handler:
 
-1. **Programmatic Configuration** (highest priority)
-   ```typescript
-   config.databaseUrl = 'https://my-project.firebaseio.com';
-   ```
+1. `FirebaseConfig` defaults, including `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` read by its constructor.
+2. Core's supported config file, if present.
+3. Core `MSR_*` environment variables.
 
-2. **Environment Variables**
-   ```bash
-   export DATABASE_URL=https://my-project.firebaseio.com
-   ```
+You can supply `configLoader` in the runner options to use a custom Core-compatible loader. See [FirebaseRunner](../api/FirebaseRunner) for the factory API and [MSR Core ConfigLoader](https://migration-script-runner.github.io/msr-core/api/ConfigLoader) for Core's config file and environment handling.
 
-3. **Default Values**
-   ```typescript
-   new FirebaseConfig() // Uses process.env by default
-   ```
+```typescript
+// Let Core load the config file and MSR_* values before Firebase connects.
+const runner = await FirebaseRunner.getInstance({});
+```
 
 {: .note }
 > CLI flags have higher priority than programmatic configuration when using the CLI. See [CLI Configuration](../cli-usage/configuration) for details.

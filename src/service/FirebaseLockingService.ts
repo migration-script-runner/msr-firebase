@@ -1,11 +1,11 @@
-import { ILockingService, ILockStatus, LockingConfig } from '@migration-script-runner/core';
+import { ILockingProvider, ILockStatus, LockingConfig } from '@migration-script-runner/core';
 import { IFirebaseDB } from '../interface';
 
 /**
  * Lock data stored in Firebase Realtime Database.
  */
 interface ILockData {
-    executorId: string;
+    runnerId: string;
     lockedAt: number;
     expiresAt: number;
     hostname?: string;
@@ -19,7 +19,7 @@ interface ILockData {
  * @example
  * ```typescript
  * try {
- *   await lockingService.acquireLock(executorId);
+ *   await lockingService.acquireLock(runnerId);
  * } catch (error) {
  *   if (error instanceof LockOperationError) {
  *     console.error('Lock operation failed:', error.message);
@@ -54,7 +54,7 @@ export class LockOperationError extends Error {
  *
  * **Lock Storage:**
  * - Path: `{shift}/migrations/_lock` (configurable via shift)
- * - Data: `{ executorId, lockedAt, expiresAt, hostname, processId }`
+ * - Data: `{ runnerId, lockedAt, expiresAt, hostname, processId }`
  * - Atomic: Uses Firebase transactions for race-free acquisition
  *
  * @example
@@ -64,17 +64,17 @@ export class LockOperationError extends Error {
  *   { timeout: 600000 } // 10 minutes
  * );
  *
- * const executorId = 'host-123-uuid';
- * const acquired = await lockingService.acquireLock(executorId);
+ * const runnerId = 'host-123-uuid';
+ * const acquired = await lockingService.acquireLock(runnerId);
  * if (acquired) {
- *   const verified = await lockingService.verifyLockOwnership(executorId);
+ *   const verified = await lockingService.verifyLockOwnership(runnerId);
  *   if (verified) {
  *     // Safe to run migrations
  *   }
  * }
  * ```
  */
-export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
+export class FirebaseLockingService implements ILockingProvider<IFirebaseDB> {
     private readonly lockPath: string;
     private readonly timeout: number;
 
@@ -102,15 +102,16 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
      * Only succeeds if no lock exists or existing lock is expired.
      * Expired lock cleanup is handled atomically within the transaction.
      *
-     * @param executorId - Unique identifier (hostname-pid-uuid)
+     * @param runnerId - Unique identifier (hostname-pid-uuid)
      * @returns true if lock acquired, false if already locked
      */
-    async acquireLock(executorId: string): Promise<boolean> {
+    async acquireLock(runnerId: string): Promise<boolean> {
         const now = Date.now();
         const expiresAt = now + this.timeout;
-        const parts = executorId.split('-');
-        const hostname = parts[0] || '';
-        const pidStr = parts[1];
+        const coreRunnerId = /^(.*)-(\d+)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i.exec(runnerId);
+        const parts = runnerId.split('-');
+        const hostname = coreRunnerId?.[1] ?? parts[0] ?? '';
+        const pidStr = coreRunnerId?.[2] ?? parts[1];
         const processId = pidStr ? Number.parseInt(pidStr, 10) : undefined;
 
         const lockRef = this.db.database.ref(this.lockPath);
@@ -120,7 +121,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
                 // If no lock exists, create it
                 if (!currentLock) {
                     return {
-                        executorId,
+                        runnerId,
                         lockedAt: now,
                         expiresAt,
                         hostname,
@@ -131,7 +132,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
                 // If lock exists but is expired, replace it (atomic cleanup)
                 if (currentLock.expiresAt < now) {
                     return {
-                        executorId,
+                        runnerId,
                         lockedAt: now,
                         expiresAt,
                         hostname,
@@ -144,7 +145,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
             });
 
             // Verify both committed and that we own the lock
-            return result.committed && result.snapshot.val()?.executorId === executorId;
+            return result.committed && result.snapshot.val()?.runnerId === runnerId;
         } catch (error) {
             const originalError = error instanceof Error ? error : undefined;
             const message = error instanceof Error ? error.message : String(error);
@@ -153,16 +154,16 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
     }
 
     /**
-     * Verify that this executor still owns the lock.
+     * Verify that this runner still owns the lock.
      *
-     * Confirms the lock exists and belongs to this executor.
+     * Confirms the lock exists and belongs to this runner.
      * Critical safety check before executing migrations.
      * Uses a no-op transaction for atomic read consistency.
      *
-     * @param executorId - Unique identifier to verify
-     * @returns true if lock is still owned by this executor
+     * @param runnerId - Unique identifier to verify
+     * @returns true if lock is still owned by this runner
      */
-    async verifyLockOwnership(executorId: string): Promise<boolean> {
+    async verifyLockOwnership(runnerId: string): Promise<boolean> {
         try {
             const lockRef = this.db.database.ref(this.lockPath);
 
@@ -176,8 +177,8 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
 
             const now = Date.now();
 
-            // Check if lock belongs to this executor and hasn't expired
-            return lockData.executorId === executorId && lockData.expiresAt > now;
+            // Check if the runner still owns the lock and it hasn't expired
+            return lockData.runnerId === runnerId && lockData.expiresAt > now;
         } catch (error) {
             const originalError = error instanceof Error ? error : undefined;
             const message = error instanceof Error ? error.message : String(error);
@@ -188,18 +189,18 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
     /**
      * Release the migration lock.
      *
-     * Only releases if this executor owns the lock.
+     * Only releases if this runner owns the lock.
      * Safe to call even if lock doesn't exist.
      *
-     * @param executorId - Unique identifier of the executor
+     * @param runnerId - Unique identifier of the runner
      */
-    async releaseLock(executorId: string): Promise<void> {
+    async releaseLock(runnerId: string): Promise<void> {
         try {
             const lockRef = this.db.database.ref(this.lockPath);
 
             await lockRef.transaction((currentLock: ILockData | null) => {
-                // Only remove if this executor owns it
-                if (currentLock?.executorId === executorId) {
+                // Only remove the lock if this runner owns it
+                if (currentLock?.runnerId === runnerId) {
                     return null; // null removes the lock
                 }
 
@@ -241,7 +242,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
 
             return {
                 isLocked: true,
-                lockedBy: lockData.executorId,
+                lockedBy: typeof lockData.runnerId === 'string' ? lockData.runnerId : null,
                 lockedAt: new Date(lockData.lockedAt),
                 expiresAt: new Date(lockData.expiresAt),
                 processId: lockData.processId?.toString()
@@ -305,7 +306,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
      * is accessible. Unlike SQL databases, no table creation is needed
      * as Firebase creates paths automatically on first write.
      *
-     * **Note:** This method extends beyond the ILockingService interface.
+     * **Note:** This method extends beyond the ILockingProvider interface.
      * See issue #67 for proposal to add this to MSR Core.
      *
      * @throws Error if lock path is not accessible
@@ -333,7 +334,7 @@ export class FirebaseLockingService implements ILockingService<IFirebaseDB> {
      * can be read and written to. Useful for pre-flight checks before
      * attempting migrations.
      *
-     * **Note:** This method extends beyond the ILockingService interface.
+     * **Note:** This method extends beyond the ILockingProvider interface.
      * See issue #67 for proposal to add this to MSR Core.
      *
      * @returns true if lock storage is accessible, false otherwise

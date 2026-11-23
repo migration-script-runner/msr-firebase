@@ -171,15 +171,15 @@ interface MigrationResult {
 
 ---
 
-## ILockingService
+## ILockingProvider
 
 Service interface for migration locking (from MSR Core).
 
 ```typescript
-interface ILockingService<DB> {
-  acquireLock(executorId: string): Promise<boolean>;
-  verifyLockOwnership(executorId: string): Promise<boolean>;
-  releaseLock(executorId: string): Promise<void>;
+interface ILockingProvider<DB> {
+  acquireLock(runnerId: string): Promise<boolean>;
+  verifyLockOwnership(runnerId: string): Promise<boolean>;
+  releaseLock(runnerId: string): Promise<void>;
   getLockStatus(): Promise<ILockStatus | null>;
   forceReleaseLock(): Promise<void>;
   checkAndReleaseExpiredLock(): Promise<void>;
@@ -189,8 +189,8 @@ interface ILockingService<DB> {
 ### Methods
 
 - **acquireLock**: Attempt to acquire migration lock
-- **verifyLockOwnership**: Verify lock is still owned by this executor
-- **releaseLock**: Release lock owned by this executor
+- **verifyLockOwnership**: Verify lock is still owned by this runner
+- **releaseLock**: Release lock owned by this runner
 - **getLockStatus**: Get current lock status
 - **forceReleaseLock**: Force-release lock (dangerous)
 - **checkAndReleaseExpiredLock**: Clean up expired locks
@@ -209,23 +209,25 @@ appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 const handler = runner.getHandler();
 
-if (handler.lockingService) {
-  const executorId = 'server-1-12345-uuid';
+if (handler.lockingProvider) {
+  const runnerId = 'server-1-12345-uuid';
 
   // Acquire lock
-  const acquired = await handler.lockingService.acquireLock(executorId);
+  const acquired = await handler.lockingProvider.acquireLock(runnerId);
   if (acquired) {
     // Verify ownership
-    const verified = await handler.lockingService.verifyLockOwnership(executorId);
+    const verified = await handler.lockingProvider.verifyLockOwnership(runnerId);
     if (verified) {
-      // Run migrations...
+      // Perform a separate operation protected by this lock.
     }
 
     // Release when done
-    await handler.lockingService.releaseLock(executorId);
+    await handler.lockingProvider.releaseLock(runnerId);
   }
 }
 ```
+
+Core acquires and releases this provider automatically while running migrations. Do not manually acquire the lock before calling a runner migration method, because that method uses the same provider and would contend for the lock.
 
 **See**: [Migration Locking Guide]({% link writing-migrations/migration-locking.md %}) for detailed usage.
 
@@ -248,15 +250,15 @@ interface ILockStatus {
 ### Properties
 
 - **isLocked**: Whether a lock is currently held
-- **lockedBy**: Executor ID holding the lock (null if unlocked)
+- **lockedBy**: Runner ID holding the lock (null if unlocked)
 - **lockedAt**: Timestamp when lock was acquired (null if unlocked)
 - **expiresAt**: Timestamp when lock expires (null if unlocked)
-- **processId** _(optional)_: Process ID of the executor
+- **processId** _(optional)_: Process ID parsed from the runner ID
 
 ### Example
 
 ```typescript
-const status = await handler.lockingService?.getLockStatus();
+const status = await handler.lockingProvider?.getLockStatus();
 
 if (status && status.isLocked) {
   console.log('Lock held by:', status.lockedBy);

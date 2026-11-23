@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createCLI, BackupMode } from '@migration-script-runner/core';
+import { createCLI } from '@migration-script-runner/core';
 import { FirebaseRunner } from './FirebaseRunner';
 import { FirebaseConfig } from './model/FirebaseConfig';
 import { IFirebaseDB } from './interface';
@@ -40,8 +40,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
     addCustomOptions: (program) => {
         program
             .option('--database-url <url>', 'Firebase Realtime Database URL')
-            .option('--credentials <path>', 'Path to service account key file')
-            .option('--backup-mode <mode>', 'Backup mode: full, create_only, restore_only, manual (default: full)');
+            .option('--credentials <path>', 'Path to service account key file');
     },
 
     // Map custom CLI flags to config properties
@@ -53,31 +52,25 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
         if (flags.credentials && typeof flags.credentials === 'string') {
             config.applicationCredentials = flags.credentials;
         }
-        if (flags.backupMode && typeof flags.backupMode === 'string') {
-            const mode = flags.backupMode.toLowerCase();
-            if (mode === 'full' || mode === 'create_only' || mode === 'restore_only' || mode === 'manual') {
-                config.backupMode = mode as BackupMode;
-            }
-        }
     },
 
     // Factory function to create adapter with merged config
-    createExecutor: async (config) => {
+    createRunner: async (config, cliOptions) => {
         // Initialize Firebase runner with merged configuration
         const appConfig = new FirebaseConfig();
         Object.assign(appConfig, config);
 
-        return FirebaseRunner.getInstance({ config: appConfig });
+        return FirebaseRunner.getInstance({ config: appConfig, ...cliOptions });
     },
 
     // Add Firebase-specific custom commands
-    extendCLI: (program, createExecutor) => {
+    extendCLI: (program, createRunner) => {
         program
             .command('firebase:info')
             .description('Show Firebase connection information')
             .action(async () => {
                 try {
-                    const runner = await createExecutor();
+                    const runner = await createRunner();
                     const info = runner.getConnectionInfo();
 
                     console.log('\n📊 Firebase Connection Information:\n');
@@ -98,7 +91,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
             .description('Test Firebase database connection')
             .action(async () => {
                 try {
-                    const runner = await createExecutor();
+                    const runner = await createRunner();
                     const firebaseDb = runner.getHandler().db;
                     const isConnected = await firebaseDb.checkConnection();
 
@@ -122,7 +115,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
             .description('List all root nodes in Firebase database')
             .action(async () => {
                 try {
-                    const runner = await createExecutor();
+                    const runner = await createRunner();
                     const nodes = await runner.listNodes();
 
                     if (nodes.length === 0) {
@@ -149,7 +142,7 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
             .argument('<nodes...>', 'Node paths to backup (e.g., users posts)')
             .action(async (nodes: string[]) => {
                 try {
-                    const runner = await createExecutor();
+                    const runner = await createRunner();
                     const backup = await runner.backupNodes(nodes);
 
                     console.log('\n💾 Node Backup:\n');

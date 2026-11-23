@@ -70,7 +70,7 @@ describe("FirebaseLockingService", () => {
         });
 
         it("should acquire lock when no lock exists", async () => {
-            const executorId = "host-123-uuid";
+            const runnerId = "host-123-uuid";
             const mockRef = {
                 transaction: sinon.stub().callsFake(async (updateFn: any) => {
                     const result = updateFn(null);
@@ -79,15 +79,35 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const acquired = await lockingService.acquireLock(executorId);
+            const acquired = await lockingService.acquireLock(runnerId);
 
             expect(acquired).to.be.true;
             sinon.assert.calledOnce(mockDatabase.ref as sinon.SinonStub);
         });
 
+        it("should parse hostname and process ID from a Core runner ID with a hyphenated hostname", async () => {
+            const runnerId = "macbook-pro-12345-a1b2c3d4-e5f6-4789-8abc-def012345678";
+            let lockData: Record<string, unknown> | undefined;
+            const mockRef = {
+                transaction: sinon.stub().callsFake(async (updateFn: (currentLock: null) => Record<string, unknown>) => {
+                    lockData = updateFn(null);
+                    return { committed: true, snapshot: { val: () => lockData } };
+                })
+            };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await lockingService.acquireLock(runnerId);
+
+            expect(lockData).to.include({
+                runnerId,
+                hostname: "macbook-pro",
+                processId: 12345
+            });
+        });
+
         it("should not acquire lock when lock already exists", async () => {
             const existingLock = {
-                executorId: "other-executor",
+                runnerId: "other-runner",
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000
             };
@@ -100,16 +120,16 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
-            const acquired = await lockingService.acquireLock(executorId);
+            const runnerId = "host-123-uuid";
+            const acquired = await lockingService.acquireLock(runnerId);
 
             expect(acquired).to.be.false;
         });
 
         it("should acquire lock when existing lock is expired", async () => {
-            const executorId = "host-123-uuid";
+            const runnerId = "host-123-uuid";
             const expiredLock = {
-                executorId: "old-executor",
+                runnerId: "old-runner",
                 lockedAt: Date.now() - 120000,
                 expiresAt: Date.now() - 60000 // Expired
             };
@@ -122,7 +142,7 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const acquired = await lockingService.acquireLock(executorId);
+            const acquired = await lockingService.acquireLock(runnerId);
 
             expect(acquired).to.be.true;
         });
@@ -133,10 +153,10 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
+            const runnerId = "host-123-uuid";
 
             try {
-                await lockingService.acquireLock(executorId);
+                await lockingService.acquireLock(runnerId);
                 expect.fail("Should have thrown an error");
             } catch (error: any) {
                 expect(error.message).to.include("Failed to acquire lock");
@@ -168,10 +188,10 @@ describe("FirebaseLockingService", () => {
             lockingService = new FirebaseLockingService(mockFirebaseDB, lockingConfig);
         });
 
-        it("should return true when lock is owned by executor", async () => {
-            const executorId = "host-123-uuid";
+        it("should return true when lock is owned by runner", async () => {
+            const runnerId = "host-123-uuid";
             const lockData = {
-                executorId,
+                runnerId,
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000
             };
@@ -184,7 +204,7 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const owned = await lockingService.verifyLockOwnership(executorId);
+            const owned = await lockingService.verifyLockOwnership(runnerId);
 
             expect(owned).to.be.true;
         });
@@ -198,15 +218,15 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
-            const owned = await lockingService.verifyLockOwnership(executorId);
+            const runnerId = "host-123-uuid";
+            const owned = await lockingService.verifyLockOwnership(runnerId);
 
             expect(owned).to.be.false;
         });
 
-        it("should return false when lock is owned by different executor", async () => {
+        it("should return false when lock is owned by different runner", async () => {
             const lockData = {
-                executorId: "other-executor",
+                runnerId: "other-runner",
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000
             };
@@ -219,16 +239,16 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
-            const owned = await lockingService.verifyLockOwnership(executorId);
+            const runnerId = "host-123-uuid";
+            const owned = await lockingService.verifyLockOwnership(runnerId);
 
             expect(owned).to.be.false;
         });
 
         it("should return false when lock is expired", async () => {
-            const executorId = "host-123-uuid";
+            const runnerId = "host-123-uuid";
             const lockData = {
-                executorId,
+                runnerId,
                 lockedAt: Date.now() - 120000,
                 expiresAt: Date.now() - 60000 // Expired
             };
@@ -241,7 +261,7 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const owned = await lockingService.verifyLockOwnership(executorId);
+            const owned = await lockingService.verifyLockOwnership(runnerId);
 
             expect(owned).to.be.false;
         });
@@ -252,10 +272,10 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
+            const runnerId = "host-123-uuid";
 
             try {
-                await lockingService.verifyLockOwnership(executorId);
+                await lockingService.verifyLockOwnership(runnerId);
                 expect.fail("Should have thrown an error");
             } catch (error: any) {
                 expect(error.message).to.include("Failed to verify lock ownership");
@@ -274,10 +294,10 @@ describe("FirebaseLockingService", () => {
             lockingService = new FirebaseLockingService(mockFirebaseDB, lockingConfig);
         });
 
-        it("should release lock when owned by executor", async () => {
-            const executorId = "host-123-uuid";
+        it("should release lock when owned by runner", async () => {
+            const runnerId = "host-123-uuid";
             const lockData = {
-                executorId,
+                runnerId,
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000
             };
@@ -290,15 +310,15 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            await lockingService.releaseLock(executorId);
+            await lockingService.releaseLock(runnerId);
 
             sinon.assert.calledOnce(mockRef.transaction);
         });
 
-        it("should not release lock owned by different executor", async () => {
-            const executorId = "host-123-uuid";
+        it("should not release lock owned by different runner", async () => {
+            const runnerId = "host-123-uuid";
             const lockData = {
-                executorId: "other-executor",
+                runnerId: "other-runner",
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000
             };
@@ -312,7 +332,7 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            await lockingService.releaseLock(executorId);
+            await lockingService.releaseLock(runnerId);
 
             sinon.assert.calledOnce(mockRef.transaction);
         });
@@ -326,8 +346,8 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
-            await lockingService.releaseLock(executorId);
+            const runnerId = "host-123-uuid";
+            await lockingService.releaseLock(runnerId);
 
             sinon.assert.calledOnce(mockRef.transaction);
         });
@@ -338,10 +358,10 @@ describe("FirebaseLockingService", () => {
             };
             mockDatabase.ref = sinon.stub().returns(mockRef);
 
-            const executorId = "host-123-uuid";
+            const runnerId = "host-123-uuid";
 
             try {
-                await lockingService.releaseLock(executorId);
+                await lockingService.releaseLock(runnerId);
                 expect.fail("Should have thrown an error");
             } catch (error: any) {
                 expect(error.message).to.include("Failed to release lock");
@@ -362,7 +382,7 @@ describe("FirebaseLockingService", () => {
 
         it("should return lock status when lock exists", async () => {
             const lockData = {
-                executorId: "host-123-uuid",
+                runnerId: "host-123-uuid",
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000,
                 processId: 123
@@ -378,8 +398,31 @@ describe("FirebaseLockingService", () => {
 
             expect(status).to.not.be.null;
             expect(status!.isLocked).to.be.true;
-            expect(status!.lockedBy).to.equal(lockData.executorId);
+            expect(status!.lockedBy).to.equal(lockData.runnerId);
             expect(status!.processId).to.equal("123");
+        });
+
+        it("should report an unknown owner for an active legacy lock record", async () => {
+            const lockData = {
+                lockedAt: Date.now(),
+                expiresAt: Date.now() + 60000
+            };
+
+            const mockSnapshot = { val: () => lockData };
+            const mockRef = {
+                once: sinon.stub().resolves(mockSnapshot)
+            };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            const status = await lockingService.getLockStatus();
+
+            expect(status).to.deep.equal({
+                isLocked: true,
+                lockedBy: null,
+                lockedAt: new Date(lockData.lockedAt),
+                expiresAt: new Date(lockData.expiresAt),
+                processId: undefined
+            });
         });
 
         it("should return null when no lock exists", async () => {
@@ -396,7 +439,7 @@ describe("FirebaseLockingService", () => {
 
         it("should return null when lock is expired", async () => {
             const lockData = {
-                executorId: "host-123-uuid",
+                runnerId: "host-123-uuid",
                 lockedAt: Date.now() - 120000,
                 expiresAt: Date.now() - 60000 // Expired
             };
@@ -478,7 +521,7 @@ describe("FirebaseLockingService", () => {
 
         it("should remove expired lock", async () => {
             const expiredLock = {
-                executorId: "old-executor",
+                runnerId: "old-runner",
                 lockedAt: Date.now() - 120000,
                 expiresAt: Date.now() - 60000
             };
@@ -499,7 +542,7 @@ describe("FirebaseLockingService", () => {
 
         it("should not remove active lock", async () => {
             const activeLock = {
-                executorId: "active-executor",
+                runnerId: "active-runner",
                 lockedAt: Date.now(),
                 expiresAt: Date.now() + 60000
             };

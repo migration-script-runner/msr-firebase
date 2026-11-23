@@ -39,7 +39,7 @@ describe("CLI Integration Tests", () => {
             expect(output).to.include("--database-url <url>");
             expect(output).to.include("--credentials <path>");
             expect(output).to.include("--backup-mode <mode>");
-            expect(output).to.match(/full, create_only,\s+restore_only, manual/);
+            expect(output).to.match(/full\|create_only\|restore_only\|manual/);
         });
 
         it("should list all custom Firebase commands", () => {

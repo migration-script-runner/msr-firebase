@@ -1,4 +1,4 @@
-import { MigrationScriptExecutor, IMigrationExecutorDependencies, IExecutorOptions } from '@migration-script-runner/core';
+import { MigrationScriptRunner, IRunnerDependencies, IRunnerOptions } from '@migration-script-runner/core';
 import { FirebaseHandler } from './service/FirebaseHandler';
 import { IFirebaseDB } from './interface';
 import { FirebaseConfig } from './model/FirebaseConfig';
@@ -6,7 +6,7 @@ import { FirebaseConfig } from './model/FirebaseConfig';
 /**
  * Firebase Realtime Database Migration Script Runner.
  *
- * Extends MigrationScriptExecutor to provide Firebase-specific migration operations
+ * Extends MigrationScriptRunner to provide Firebase-specific migration operations
  * with built-in support for Firebase Realtime Database features.
  *
  * **Usage:**
@@ -26,8 +26,8 @@ import { FirebaseConfig } from './model/FirebaseConfig';
  * await runner.migrate();
  * ```
  */
-export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, FirebaseHandler, FirebaseConfig> {
-    private constructor(dependencies: IMigrationExecutorDependencies<IFirebaseDB, FirebaseHandler, FirebaseConfig>) {
+export class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseHandler, FirebaseConfig> {
+    private constructor(dependencies: IRunnerDependencies<IFirebaseDB, FirebaseHandler, FirebaseConfig>) {
         super(dependencies);
     }
 
@@ -36,6 +36,10 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
      *
      * This is the recommended way to create a FirebaseRunner. It handles all Firebase
      * connection setup internally, providing a cleaner API for users.
+     *
+     * When `options.config` is omitted, Core resolves a typed `FirebaseConfig` through
+     * `options.configLoader` or its default loader before opening the Firebase connection.
+     * An explicitly supplied `config` is used as-is and skips config loading.
      *
      * **Benefits:**
      * - Single-step initialization
@@ -80,12 +84,12 @@ export class FirebaseRunner extends MigrationScriptExecutor<IFirebaseDB, Firebas
      * });
      * ```
      */
-    static async getInstance(options: IExecutorOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
-        return MigrationScriptExecutor.createInstance(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            FirebaseRunner as any, // Required: createInstance expects public constructor, but we use private for factory pattern
+    static override getInstance(options: IRunnerOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
+        return this.createInstance(
             options,
-            (config: FirebaseConfig) => FirebaseHandler.getInstance(config)
+            () => new FirebaseConfig(),
+            (config) => FirebaseHandler.getInstance(config),
+            (dependencies) => new FirebaseRunner(dependencies)
         );
     }
 

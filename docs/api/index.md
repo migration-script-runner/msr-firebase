@@ -19,7 +19,7 @@ Main migration runner class for executing Firebase Realtime Database migrations.
 
 - Factory method: `getInstance()`
 - Firebase-specific methods: `getConnectionInfo()`, `getDatabase()`, `listNodes()`, `backupNodes()`
-- Inherits all migration methods from [MSR Core MigrationScriptExecutor](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptexecutor)
+- Inherits all migration methods from [MSR Core MigrationScriptRunner](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner)
 
 ### [FirebaseConfig](FirebaseConfig)
 
@@ -65,7 +65,7 @@ For practical usage examples, see:
 For inherited functionality and core concepts, see:
 
 - [MSR Core API Documentation](https://migration-script-runner.github.io/msr-core/api) - Base classes and interfaces
-- [MSR Core MigrationScriptExecutor](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptexecutor) - Inherited migration methods
+- [MSR Core MigrationScriptRunner](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner) - Inherited migration methods
 - [MSR Core Config](https://migration-script-runner.github.io/msr-core/api/models#config) - Base configuration options
 
 ---
