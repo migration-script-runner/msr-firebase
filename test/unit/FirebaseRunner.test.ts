@@ -1,6 +1,9 @@
 import { expect } from "chai";
-import { MigrationScriptRunner, Config } from "@migration-script-runner/core";
+import sinon from "sinon";
+import { MigrationScriptRunner, Config, IConfigLoader, TransactionMode } from "@migration-script-runner/core";
 import { FirebaseRunner } from "../../src/FirebaseRunner";
+import { FirebaseHandler } from "../../src/service/FirebaseHandler";
+import { FirebaseConfig } from "../../src/model/FirebaseConfig";
 
 interface TestSnapshot {
     exists(): boolean;
@@ -90,6 +93,37 @@ describe("FirebaseRunner", () => {
     describe("inheritance", () => {
         it("extends MigrationScriptRunner", () => {
             expect(FirebaseRunner.prototype).to.be.instanceOf(MigrationScriptRunner);
+        });
+    });
+
+    describe("getInstance", () => {
+        it("resolves Firebase configuration through Core before creating the handler", async () => {
+            const phases: string[] = [];
+            const resolvedConfig = new FirebaseConfig();
+            resolvedConfig.databaseUrl = "https://firebase.example.com";
+            const configLoader: IConfigLoader<FirebaseConfig> = {
+                load: (_overrides, _options, defaults) => {
+                    expect(defaults).to.be.instanceOf(FirebaseConfig);
+                    expect(defaults?.transaction.mode).to.equal(TransactionMode.NONE);
+                    phases.push("config");
+                    return resolvedConfig;
+                },
+                applyEnvironmentVariables: () => undefined,
+            };
+            const handlerStub = sinon.stub(FirebaseHandler, "getInstance").callsFake(async (config) => {
+                phases.push("handler");
+                expect(config).to.equal(resolvedConfig);
+                throw new Error("Stop before connecting to Firebase");
+            });
+
+            try {
+                await expect(FirebaseRunner.getInstance({ configLoader }))
+                    .to.be.rejectedWith("Stop before connecting to Firebase");
+
+                expect(phases).to.deep.equal(["config", "handler"]);
+            } finally {
+                handlerStub.restore();
+            }
         });
     });
 

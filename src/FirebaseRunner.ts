@@ -37,6 +37,10 @@ export class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseH
      * This is the recommended way to create a FirebaseRunner. It handles all Firebase
      * connection setup internally, providing a cleaner API for users.
      *
+     * When `options.config` is omitted, Core resolves a typed `FirebaseConfig` through
+     * `options.configLoader` or its default loader before opening the Firebase connection.
+     * An explicitly supplied `config` is used as-is and skips config loading.
+     *
      * **Benefits:**
      * - Single-step initialization
      * - Handler creation is automatic and internal
@@ -80,10 +84,13 @@ export class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseH
      * });
      * ```
      */
-    static async getInstance(options: IRunnerOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
-        const config = options.config ?? new FirebaseConfig();
-        const handler = await FirebaseHandler.getInstance(config);
-        return new FirebaseRunner({ ...options, config, handler });
+    static override getInstance(options: IRunnerOptions<IFirebaseDB, FirebaseConfig>): Promise<FirebaseRunner> {
+        return this.createInstance(
+            options,
+            () => new FirebaseConfig(),
+            (config) => FirebaseHandler.getInstance(config),
+            (dependencies) => new FirebaseRunner(dependencies)
+        );
     }
 
     /**

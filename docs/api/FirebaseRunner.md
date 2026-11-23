@@ -43,7 +43,7 @@ class FirebaseRunner extends MigrationScriptRunner<IFirebaseDB, FirebaseHandler,
 Creates a new FirebaseRunner instance (recommended method).
 
 ```typescript
-static async getInstance(
+static override getInstance(
   options: IRunnerOptions<IFirebaseDB, FirebaseConfig>
 ): Promise<FirebaseRunner>
 ```
@@ -51,7 +51,10 @@ static async getInstance(
 #### Parameters
 
 **options.config** - `FirebaseConfig` (optional)
-Configuration for Firebase connection and migrations. Defaults to a new `FirebaseConfig` when omitted. See [FirebaseConfig](FirebaseConfig) for details.
+Configuration for Firebase connection and migrations. If omitted, Core starts with Firebase-specific defaults and resolves its config file and `MSR_*` environment variables before connecting. An explicitly supplied config is used as-is and skips config loading. See [FirebaseConfig](FirebaseConfig) for details.
+
+**options.configLoader** - `IConfigLoader<FirebaseConfig>` (optional)
+Custom Core-compatible loader for resolving Firebase configuration before the handler connects. When omitted, Core uses its default loader.
 
 **options.logger** - `ILogger` (optional)
 Custom logger implementation. Defaults to console logger.
@@ -78,6 +81,15 @@ config.folder = './migrations';
 config.tableName = 'schema_version';
 
 const runner = await FirebaseRunner.getInstance({ config });
+await runner.migrate();
+```
+
+#### Example: Load Configuration Before Connecting
+
+When you rely on Core's config file or `MSR_*` variables, omit `config`. `FirebaseConfig` still initializes Firebase fields from `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS`; Core resolves the remaining configuration before creating the Firebase handler.
+
+```typescript
+const runner = await FirebaseRunner.getInstance({});
 await runner.migrate();
 ```
 
