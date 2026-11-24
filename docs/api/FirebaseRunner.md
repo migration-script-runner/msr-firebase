@@ -69,6 +69,23 @@ Array of metrics collectors for tracking migration performance.
 
 `Promise<FirebaseRunner>` - Initialized runner instance ready to execute migrations
 
+#### Adapter Factory Implementation
+
+The adapter overrides the Core factory and delegates config resolution, handler creation, and runner construction to Core's `createInstance()` helper. This resolves configuration once before opening Firebase and passes the same config to both the handler and runner.
+
+```typescript
+static override getInstance(
+  options: IRunnerOptions<IFirebaseDB, FirebaseConfig>
+): Promise<FirebaseRunner> {
+  return this.createInstance(
+    options,
+    () => new FirebaseConfig(),
+    (config) => FirebaseHandler.getInstance(config),
+    (dependencies) => new FirebaseRunner(dependencies)
+  );
+}
+```
+
 #### Example: Basic Usage
 
 ```typescript
