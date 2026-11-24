@@ -1,7 +1,7 @@
 function hasInvalidFirebaseKeyCharacter(segment: string): boolean {
     for (const character of segment) {
-        const code = character.charCodeAt(0);
-        if ('.#$[]'.includes(character) || code <= 0x1f || code === 0x7f) {
+        const codePoint = character.codePointAt(0);
+        if ('.#$[]'.includes(character) || codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f)) {
             return true;
         }
     }
