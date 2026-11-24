@@ -50,9 +50,9 @@ export class FirebaseDataService {
      *
      * @template T - Type of object to retrieve
      * @param path - Firebase path to retrieve from
-     * @returns Promise resolving to object with key mixed in
+     * @returns Promise resolving to the object with key mixed in, or null if the path does not exist
      */
-    public async getObject<T = unknown>(path: string): Promise<T> {
+    public async getObject<T = unknown>(path: string): Promise<T | null> {
         const snapshot = await this.getSnapshot(path)
         return FirebaseDataService.mixKey(snapshot.val(), snapshot.key);
     }
@@ -113,8 +113,11 @@ export class FirebaseDataService {
      * @param key - Firebase key to add
      * @returns Object with key property added (read-only)
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static mixKey(obj:any, key:string|null|undefined): any {
+    public static mixKey<T>(obj: T, key: string): T extends object ? T & { readonly key: string } : T;
+    public static mixKey<T>(obj: T, key: null | undefined): T;
+    public static mixKey(obj: null, key: string | null | undefined): null;
+    public static mixKey(obj: undefined, key: string | null | undefined): undefined;
+    public static mixKey<T>(obj: T | null | undefined, key: string | null | undefined): T | null | undefined {
         if(!obj || !key) return obj;
 
         if (typeof obj === 'object' && obj !== null) {

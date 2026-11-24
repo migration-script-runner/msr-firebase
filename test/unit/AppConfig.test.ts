@@ -13,6 +13,24 @@ describe("FirebaseConfig", () => {
             expect(path).eq("/test-123/users");
         });
 
+        it("should normalize leading and trailing slashes in shift", () => {
+            const config = new FirebaseConfig();
+            config.shift = "/test-123/";
+
+            const path = config.buildPath("users");
+
+            expect(path).eq("/test-123/users");
+        });
+
+        it("should resolve a slash-only shift at the database root", () => {
+            const config = new FirebaseConfig();
+            config.shift = "/";
+
+            const path = config.buildPath("users");
+
+            expect(path).eq("/users");
+        });
+
         it("should handle empty path segment", () => {
             const config = new FirebaseConfig();
             config.shift = "/test-123";
@@ -31,13 +49,13 @@ describe("FirebaseConfig", () => {
             expect(path).eq("/test-123/users/profile");
         });
 
-        it("should work with undefined shift", () => {
+        it("should resolve paths from the database root when shift is undefined", () => {
             const config = new FirebaseConfig();
             config.shift = undefined;
 
             const path = config.buildPath("users");
 
-            expect(path).eq("undefined/users");
+            expect(path).eq("/users");
         });
     });
 
@@ -51,13 +69,13 @@ describe("FirebaseConfig", () => {
             expect(root).eq("/test-123/");
         });
 
-        it("should handle undefined shift", () => {
+        it("should return the database root when shift is undefined", () => {
             const config = new FirebaseConfig();
             config.shift = undefined;
 
             const root = config.getRoot();
 
-            expect(root).eq("undefined/");
+            expect(root).eq("/");
         });
     });
 

@@ -26,6 +26,12 @@ export class FirebaseConfig extends Config {
     }
 
     public buildPath(path: string) {
-        return `${this.shift}/${path}`;
+        if (!this.shift) {
+            return `/${path}`;
+        }
+
+        const shiftPrefix = this.shift.split('/').filter(Boolean).join('/');
+        const leadingSlash = this.shift.startsWith('/') ? '/' : '';
+        return shiftPrefix ? `${leadingSlash}${shiftPrefix}/${path}` : `/${path}`;
     }
 }

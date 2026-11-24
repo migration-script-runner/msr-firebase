@@ -121,9 +121,9 @@ describe("EntityService", () => {
             const result = await service.get('found-key');
 
             sinon.assert.calledWith(mockDatabase.ref, '/test/entities/found-key');
-            expect(result.name).to.equal('Found Entity');
-            expect(result.value).to.equal(100);
-            expect(result.key).to.equal('found-key');
+            expect(result?.name).to.equal('Found Entity');
+            expect(result?.value).to.equal(100);
+            expect(result?.key).to.equal('found-key');
         });
 
         it("should return null for non-existent entity", async () => {
@@ -267,8 +267,7 @@ describe("EntityService", () => {
             await service.removeAll();
 
             sinon.assert.calledWith(mockDatabase.ref, '/test/entities');
-            sinon.assert.calledOnce(mockRef.set);
-            sinon.assert.calledWith(mockRef.set, '');
+            sinon.assert.calledOnce(mockRef.remove);
         });
     });
 

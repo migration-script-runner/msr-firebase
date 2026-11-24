@@ -9,7 +9,7 @@ import { IFirebaseDB } from '../interface';
  * Supports backing up all nodes or specific filtered nodes.
  */
 export class BackupService implements IBackup<IFirebaseDB> {
-    static NODES = {
+    static readonly NODES = {
         ALL: ['/'],
         SELECTED: [
             // FILTERED NODES HERE

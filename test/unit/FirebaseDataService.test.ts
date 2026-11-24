@@ -75,9 +75,9 @@ describe("FirebaseDataService - Instance Methods", () => {
 
             const result = await service.getObject<TestObject>("/test/path");
 
-            expect(result.name).to.equal("test");
-            expect(result.value).to.equal(42);
-            expect(result.key).to.equal("my-key");
+            expect(result?.name).to.equal("test");
+            expect(result?.value).to.equal(42);
+            expect(result?.key).to.equal("my-key");
         });
 
         it("should handle null snapshot", async () => {
@@ -184,7 +184,7 @@ describe("FirebaseDataService - Static Methods", () => {
         });
 
         it("should return object without key when key is null", () => {
-            const result = FirebaseDataService.mixKey({g: 15}, null);
+            const result = FirebaseDataService.mixKey<{g: number; key?: string}>({g: 15}, null);
             expect(result.g).eq(15);
             expect(result.key).is.undefined;
         });
@@ -198,9 +198,8 @@ describe("FirebaseDataService - Static Methods", () => {
         it("should make key property read-only", () => {
             const result = FirebaseDataService.mixKey({g: 15}, 'key1');
 
-            expect(() => {
-                result.key = 'new-key';
-            }).to.throw(TypeError, "Cannot assign to read only property 'key'");
+            expect(() => Object.assign(result, { key: 'new-key' }))
+                .to.throw(TypeError, "Cannot assign to read only property 'key'");
         });
     });
 

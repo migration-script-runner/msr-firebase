@@ -168,15 +168,15 @@ console.log(`Found ${users.length} users`);
 Retrieves all entities as an object with keys as properties.
 
 ```typescript
-getAllAsObject(): Promise<Record<string, T>>
+getAllAsObject(): Promise<Record<string, T> | null>
 ```
 
-**Returns:** Promise resolving to object containing all entities
+**Returns:** Promise resolving to an object containing all entities, or `null` when the collection does not exist.
 
 **Example:**
 ```typescript
 const usersObject = await userService.getAllAsObject();
-const user = usersObject['user-key-123'];
+const user = usersObject?.['user-key-123'];
 ```
 
 #### get()

@@ -3,6 +3,13 @@ import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
 import type { Database } from 'firebase-admin/database';
 
+function requireObject<T>(obj: T | null): T {
+    if (obj === null) {
+        throw new Error('Expected the database object to exist');
+    }
+    return obj;
+}
+
 interface TestData {
     key?: string;
     a?: number | string;
@@ -33,7 +40,7 @@ describe("FirebaseDataService", () => {
         await service.setObject(basePath, {a: 1, b: 2})
 
         // then
-        const obj = await service.getObject<TestData>(basePath)
+        const obj = requireObject(await service.getObject<TestData>(basePath))
         expect(obj).not.undefined
         expect(obj.key).eq('test', 'key should be = test')
         expect(obj.a).eq(1, 'a prop should have provided value = 1')
@@ -42,7 +49,7 @@ describe("FirebaseDataService", () => {
     })
     it("getObject", async () => {
         // when
-        const obj = await service.getObject<TestData>(basePath)
+        const obj = requireObject(await service.getObject<TestData>(basePath))
 
         // then
         expect(obj).not.undefined
@@ -55,7 +62,7 @@ describe("FirebaseDataService", () => {
         await service.updateObject(basePath, {c:3,d:4})
 
         // and
-        const obj = await service.getObject<TestData>(basePath)
+        const obj = requireObject(await service.getObject<TestData>(basePath))
 
         // then
         expect(obj).not.undefined
@@ -153,7 +160,7 @@ describe("FirebaseDataService", () => {
         expect(res2).eq(0, 'Should match provided value if the value in boolean representation is negative result')
 
         // when object provided but key is null
-        const res3 = FirebaseDataService.mixKey({g:15}, null)
+        const res3 = FirebaseDataService.mixKey<{g: number; key?: string}>({g:15}, null)
         expect(res3.g).eq(15)
 
         // when object and key are provided
@@ -161,9 +168,8 @@ describe("FirebaseDataService", () => {
         expect(res4.g).eq(15)
         expect(res4.key).eq('key1')
 
-        expect(() => {
-            res4.key = 'new-key'
-        }).to.throw(TypeError, `Cannot assign to read only property 'key' of object '#<Object>'`);
+        expect(() => Object.assign(res4, { key: 'new-key' }))
+            .to.throw(TypeError, `Cannot assign to read only property 'key' of object '#<Object>'`);
     })
 
     it("getSnapshot", async () => {
