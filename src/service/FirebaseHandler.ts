@@ -11,6 +11,7 @@ import {
     FirebaseLockingService
 } from '../index';
 import { IFirebaseDB } from '../interface';
+import { resolveBackupPaths } from './backupPaths';
 
 /**
  * Firebase Realtime Database migration handler.
@@ -26,10 +27,11 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
 
     private constructor(
         public readonly cfg: FirebaseConfig,
-        firebaseDatabase: FirebaseDB
+        firebaseDatabase: FirebaseDB,
+        backupPaths?: string[]
     ) {
         this.db = firebaseDatabase;
-        this.backup = new BackupService(firebaseDatabase.database);
+        this.backup = new BackupService(firebaseDatabase.database, backupPaths);
         const mss = new MigrationScriptService(firebaseDatabase.database, this.cfg.buildPath(this.cfg.tableName));
         this.schemaVersion = new SchemaVersionService(mss, cfg);
 
@@ -53,9 +55,10 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
      * @returns Promise resolving to configured FirebaseHandler
      */
     public static async getInstance(cfg: FirebaseConfig): Promise<FirebaseHandler> {
+        const backupPaths = resolveBackupPaths(cfg.backupPaths, cfg.shift);
         const database = await DBConnector.connect(cfg);
         const firebaseDb = new FirebaseDB(database);
-        const handler = new FirebaseHandler(cfg, firebaseDb);
+        const handler = new FirebaseHandler(cfg, firebaseDb, backupPaths);
 
         // Initialize lock storage if locking is enabled
         if (handler.lockingProvider) {

@@ -38,6 +38,7 @@ describe("CLI Integration Tests", () => {
 
             expect(output).to.include("--database-url <url>");
             expect(output).to.include("--credentials <path>");
+            expect(output).to.include("--backup-paths <path...>");
             expect(output).to.include("--backup-mode <mode>");
             expect(output).to.match(/full\|create_only\|restore_only\|manual/);
         });
@@ -88,6 +89,17 @@ describe("CLI Integration Tests", () => {
     });
 
     describe("error handling", () => {
+        it("should reject invalid selected backup paths before connecting", () => {
+            const result = spawnSync(
+                "node",
+                [cliPath, "migrate", "--backup-paths", "users", "profile.name"],
+                { encoding: "utf-8" }
+            );
+
+            expect(`${result.stdout}${result.stderr}`).to.include('Firebase path segments contain a forbidden character');
+            expect(`${result.stdout}${result.stderr}`).not.to.include('Application credentials not found');
+        });
+
         it("should handle unknown command", () => {
             const result = spawnSync("node", [cliPath, "definitely-unknown-command"], { encoding: "utf-8" });
 
