@@ -109,6 +109,18 @@ export MSR_BACKUP_MODE=create_only
 
 ---
 
+### --backup-paths
+
+Select one or more relative database paths for automatic migration backups. Each path is resolved under the configured `shift`.
+
+```bash
+npx msr-firebase migrate --backup-paths users settings/theme
+```
+
+The option replaces `backupPaths` from the config file. Omitting it preserves full-database backups. An empty or invalid selection fails instead of falling back to a full backup.
+
+---
+
 ## Standard MSR Flags
 
 MSR Firebase inherits standard flags from MSR Core:

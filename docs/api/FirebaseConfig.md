@@ -91,6 +91,27 @@ config.shift = 'development'; // Data at /development/*
 
 ---
 
+### backupPaths
+
+Relative Firebase database paths included in Core-managed backups, including automatic rollback and `runner.createBackup()`.
+
+```typescript
+backupPaths: string[] | undefined
+```
+
+**Default:** `undefined` (back up the full Realtime Database)
+
+Paths are resolved beneath `shift`. Omit this property to retain full-database backups. An empty list, absolute path, invalid Firebase path segment, duplicate path, or overlapping paths are rejected.
+
+**Example:**
+```typescript
+config.shift = 'production';
+config.backupPaths = ['users', 'settings/theme'];
+// Backs up /production/users and /production/settings/theme
+```
+
+---
+
 ### tableName
 
 Name of the migration tracking node in Firebase.

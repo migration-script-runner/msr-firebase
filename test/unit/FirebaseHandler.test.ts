@@ -89,6 +89,31 @@ describe("FirebaseHandler", () => {
             sinon.assert.calledWith(connectStub, config);
         });
 
+        it("should reject invalid backup paths before connecting", async () => {
+            config.backupPaths = [];
+
+            await expect(FirebaseHandler.getInstance(config))
+                .to.be.rejectedWith(RangeError, 'omit it to back up the full database');
+
+            sinon.assert.notCalled(connectStub);
+        });
+
+        it("should preserve full database backups when no paths are configured", async () => {
+            const handler = await FirebaseHandler.getInstance(config);
+            await handler.backup.backup();
+
+            sinon.assert.calledWith(mockDatabase.ref as sinon.SinonStub, '/');
+        });
+
+        it("should back up selected paths under the configured shift", async () => {
+            config.backupPaths = ['users'];
+
+            const handler = await FirebaseHandler.getInstance(config);
+            await handler.backup.backup();
+
+            sinon.assert.calledWith(mockDatabase.ref as sinon.SinonStub, '/test/users');
+        });
+
         it("should use provided shift for lock path", async () => {
             config.shift = "production";
             config.locking = new LockingConfig();

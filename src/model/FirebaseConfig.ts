@@ -5,6 +5,13 @@ export class FirebaseConfig extends Config {
     databaseUrl: string | undefined = process.env.DATABASE_URL;
 
     shift: string | undefined;
+
+    /**
+     * Relative Firebase database paths included in automatic migration backups.
+     * Omit this option to preserve full-database backup behavior.
+     */
+    backupPaths: string[] | undefined;
+
     tableName: string = 'schema_version';
 
     constructor() {

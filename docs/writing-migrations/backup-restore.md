@@ -89,6 +89,27 @@ const runner = await FirebaseRunner.getInstance({ config: appConfig });
 await runner.migrate();
 ```
 
+## Selective Automatic Backups
+
+By default, Core-managed backups include the full Realtime Database. To back up only selected paths, configure `backupPaths`; this applies to automatic migration rollback and `runner.createBackup()`. Each path is relative to `shift`.
+
+```typescript
+const appConfig = new FirebaseConfig();
+appConfig.shift = 'production';
+appConfig.backupPaths = ['users', 'settings/theme'];
+
+const runner = await FirebaseRunner.getInstance({ config: appConfig });
+await runner.migrate();
+```
+
+The equivalent CLI option accepts one or more paths:
+
+```bash
+msr-firebase migrate --backup-paths users settings/theme
+```
+
+Restore writes only the paths contained in that backup. A selected path that did not exist when the backup was created is removed if a migration created it. Data outside selected paths is left unchanged. Omit `backupPaths` or `--backup-paths` for the existing full-database behavior. Empty, invalid, duplicate, or overlapping path selections fail clearly.
+
 ## Restoring from Backup
 
 ### Using the API
@@ -109,7 +130,7 @@ await runner.restoreFromBackup('./backups/backup-2025-01-22-01-30-45.bkp');
 ```
 
 {: .warning }
-> Restore will overwrite all existing data. Use with extreme caution!
+> A full-database backup restores the full database. A selective backup overwrites only the paths included in that backup. Verify the backup configuration and target before restoring.
 
 ### Using the CLI
 

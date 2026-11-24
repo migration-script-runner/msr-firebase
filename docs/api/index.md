@@ -25,7 +25,7 @@ Main migration runner class for executing Firebase Realtime Database migrations.
 
 Configuration class for Firebase connection and migration settings.
 
-- Firebase properties: `databaseUrl`, `applicationCredentials`, `shift`
+- Firebase properties: `databaseUrl`, `applicationCredentials`, `shift`, `backupPaths`
 - Migration settings: `folder`, `tableName`, `locking`
 - Utility methods: `buildPath()`, `getRoot()`
 

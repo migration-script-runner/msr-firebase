@@ -211,6 +211,23 @@ config.backupMode = 'create_only';
 
 ---
 
+### backupPaths
+
+Choose the Firebase database paths included in Core-managed backups, including automatic migration rollback and `runner.createBackup()`. Paths are relative to `shift` and may contain multiple path segments.
+
+```typescript
+config.backupPaths = ['users', 'settings/theme'];
+config.shift = 'production'; // backs up /production/users and /production/settings/theme
+```
+
+**Type:** `string[] | undefined`
+
+**Default:** `undefined` (the full database is backed up)
+
+An empty array, an absolute path, an invalid Firebase path segment, or overlapping paths are rejected. Omit `backupPaths` to keep full-database backups.
+
+---
+
 ### logLevel
 
 Logging verbosity level.

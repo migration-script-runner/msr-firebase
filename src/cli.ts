@@ -25,6 +25,10 @@ import { version } from '../package.json';
  * msr-firebase list --format table
  * ```
  */
+function isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
 const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
     name: 'msr-firebase',
     description: 'Firebase Realtime Database Migration Runner',
@@ -40,7 +44,8 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
     addCustomOptions: (program) => {
         program
             .option('--database-url <url>', 'Firebase Realtime Database URL')
-            .option('--credentials <path>', 'Path to service account key file');
+            .option('--credentials <path>', 'Path to service account key file')
+            .option('--backup-paths <path...>', 'Relative database paths to include in automatic backups');
     },
 
     // Map custom CLI flags to config properties
@@ -51,6 +56,12 @@ const program = createCLI<IFirebaseDB, FirebaseRunner, FirebaseConfig>({
         }
         if (flags.credentials && typeof flags.credentials === 'string') {
             config.applicationCredentials = flags.credentials;
+        }
+        if (flags.backupPaths !== undefined) {
+            if (!isStringArray(flags.backupPaths)) {
+                throw new TypeError('--backup-paths requires one or more relative database paths');
+            }
+            config.backupPaths = flags.backupPaths;
         }
     },
 
