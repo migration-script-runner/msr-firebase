@@ -36,7 +36,7 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
         this.schemaVersion = new SchemaVersionService(mss, cfg);
 
         // Initialize the locking provider if locking is enabled in config
-        if (cfg.locking?.enabled) {
+        if (cfg.locking.enabled) {
             this.lockingProvider = new FirebaseLockingService(
                 firebaseDatabase,
                 cfg.locking,

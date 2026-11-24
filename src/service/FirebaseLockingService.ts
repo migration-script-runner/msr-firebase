@@ -110,7 +110,7 @@ export class FirebaseLockingService implements ILockingProvider<IFirebaseDB> {
         const expiresAt = now + this.timeout;
         const coreRunnerId = /^(.*)-(\d+)-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i.exec(runnerId);
         const parts = runnerId.split('-');
-        const hostname = coreRunnerId?.[1] ?? parts[0] ?? '';
+        const hostname = coreRunnerId?.[1] ?? parts[0];
         const pidStr = coreRunnerId?.[2] ?? parts[1];
         const processId = pidStr ? Number.parseInt(pidStr, 10) : undefined;
 
