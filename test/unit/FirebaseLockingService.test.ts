@@ -105,6 +105,21 @@ describe("FirebaseLockingService", () => {
             });
         });
 
+        it("should store no process ID when the runner ID has no process segment", async () => {
+            let lockData: Record<string, unknown> | undefined;
+            const mockRef = {
+                transaction: sinon.stub().callsFake(async (updateFn: (currentLock: null) => Record<string, unknown>) => {
+                    lockData = updateFn(null);
+                    return { committed: true, snapshot: { val: () => lockData } };
+                })
+            };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await lockingService.acquireLock("hostname");
+
+            expect(lockData).to.include({ runnerId: "hostname", hostname: "hostname", processId: null });
+        });
+
         it("should not acquire lock when lock already exists", async () => {
             const existingLock = {
                 runnerId: "other-runner",
@@ -122,6 +137,17 @@ describe("FirebaseLockingService", () => {
 
             const runnerId = "host-123-uuid";
             const acquired = await lockingService.acquireLock(runnerId);
+
+            expect(acquired).to.be.false;
+        });
+
+        it("should return false when a committed transaction has no resulting lock", async () => {
+            const mockRef = {
+                transaction: sinon.stub().resolves({ committed: true, snapshot: { val: () => null } })
+            };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            const acquired = await lockingService.acquireLock("hostname-123-uuid");
 
             expect(acquired).to.be.false;
         });
@@ -281,6 +307,15 @@ describe("FirebaseLockingService", () => {
                 expect(error.message).to.include("Failed to verify lock ownership");
             }
         });
+
+        it("should wrap non-Error transaction failures", async () => {
+            const mockRef = { transaction: sinon.stub().callsFake(() => Promise.reject("connection unavailable")) };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await expect(lockingService.verifyLockOwnership("host-123-uuid"))
+                .to.be.rejectedWith(LockOperationError, "Failed to verify lock ownership: connection unavailable");
+        });
+
     });
 
     describe("releaseLock", () => {
@@ -367,6 +402,15 @@ describe("FirebaseLockingService", () => {
                 expect(error.message).to.include("Failed to release lock");
             }
         });
+
+        it("should wrap non-Error transaction failures", async () => {
+            const mockRef = { transaction: sinon.stub().callsFake(() => Promise.reject("connection unavailable")) };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await expect(lockingService.releaseLock("host-123-uuid"))
+                .to.be.rejectedWith(LockOperationError, "Failed to release lock: connection unavailable");
+        });
+
     });
 
     describe("getLockStatus", () => {
@@ -469,6 +513,15 @@ describe("FirebaseLockingService", () => {
                 expect(error.message).to.include("Failed to get lock status");
             }
         });
+
+        it("should wrap non-Error database failures", async () => {
+            const mockRef = { once: sinon.stub().callsFake(() => Promise.reject("connection unavailable")) };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await expect(lockingService.getLockStatus())
+                .to.be.rejectedWith(LockOperationError, "Failed to get lock status: connection unavailable");
+        });
+
     });
 
     describe("forceReleaseLock", () => {
@@ -506,6 +559,15 @@ describe("FirebaseLockingService", () => {
                 expect(error.message).to.include("Failed to force-release lock");
             }
         });
+
+        it("should wrap non-Error removal failures", async () => {
+            const mockRef = { remove: sinon.stub().callsFake(() => Promise.reject("connection unavailable")) };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await expect(lockingService.forceReleaseLock())
+                .to.be.rejectedWith(LockOperationError, "Failed to force-release lock: connection unavailable");
+        });
+
     });
 
     describe("checkAndReleaseExpiredLock", () => {
@@ -589,6 +651,14 @@ describe("FirebaseLockingService", () => {
                 expect(error.message).to.include("Failed to check and release expired lock");
             }
         });
+
+        it("should wrap non-Error transaction failures", async () => {
+            const mockRef = { transaction: sinon.stub().callsFake(() => Promise.reject("connection unavailable")) };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await expect(lockingService.checkAndReleaseExpiredLock())
+                .to.be.rejectedWith(LockOperationError, "Failed to check and release expired lock: connection unavailable");
+        });
     });
 
     describe("initLockStorage", () => {
@@ -631,6 +701,14 @@ describe("FirebaseLockingService", () => {
             } catch (error: any) {
                 expect(error.message).to.include("Failed to initialize lock storage");
             }
+        });
+
+        it("should wrap non-Error read failures", async () => {
+            const mockRef = { once: sinon.stub().callsFake(() => Promise.reject("permission denied")) };
+            mockDatabase.ref = sinon.stub().returns(mockRef);
+
+            await expect(lockingService.initLockStorage())
+                .to.be.rejectedWith(LockOperationError, "Failed to initialize lock storage at migrations/_lock: permission denied");
         });
 
         it("should throw error if transaction fails", async () => {
