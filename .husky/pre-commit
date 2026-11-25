@@ -1,8 +1,8 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Run lint and unit tests
-npm run lint && npm run test:unit
+# Run lint and enforce 100% coverage across unit and integration tests
+npm run lint && npm run test:coverage:strict
 
 # Check if documentation builds (optional - requires Jekyll)
 if command -v bundle >/dev/null 2>&1; then

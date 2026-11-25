@@ -36,18 +36,18 @@ Configuration sources are applied in this order (highest to lowest priority):
 Firebase Realtime Database URL.
 
 ```bash
-npx msr-firebase migrate --database-url https://your-project.firebaseio.com
+npx msr-firebase migrate --database-url https://DATABASE-NAME.REGION.firebasedatabase.app
 ```
 
 **Environment Variable:**
 ```bash
-export DATABASE_URL=https://your-project.firebaseio.com
+export DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 ```
 
 **Config File:**
 ```javascript
 module.exports = {
-  databaseUrl: 'https://your-project.firebaseio.com'
+  databaseUrl: 'https://DATABASE-NAME.REGION.firebasedatabase.app'
 };
 ```
 
@@ -224,7 +224,7 @@ npx msr-firebase migrate --log-level debug
 ### Firebase-Specific
 
 ```bash
-DATABASE_URL=https://your-project.firebaseio.com
+DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 ```
 
@@ -238,7 +238,7 @@ MSR_LOG_LEVEL=info
 ```
 
 {: .note }
-> For complete list of standard environment variables, see [MSR Core Environment Variables](https://migration-script-runner.github.io/msr-core/guides/environment-variables).
+> For the complete list of standard environment variables, see [MSR Core Environment Variables](https://core.migration-script-runner.dev/api/environment-variables/).
 
 ---
 
@@ -307,7 +307,7 @@ Combining all configuration methods:
 
 ```bash
 # .env file
-DATABASE_URL=https://staging.firebaseio.com
+DATABASE_URL=https://STAGING-DATABASE.REGION.firebasedatabase.app
 MSR_FOLDER=./migrations
 
 # Command with overrides

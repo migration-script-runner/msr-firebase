@@ -2,7 +2,7 @@
 layout: default
 title: Migration Locking
 parent: Writing Migrations
-nav_order: 5
+nav_order: 6
 ---
 
 # Migration Locking
@@ -254,56 +254,28 @@ Choose a timeout based on your migration complexity:
 
 ### 3. Monitor Lock Status
 
-Add lock status checks to your health checks:
+Use the runner's public `getLockStatus()` method for application diagnostics. The CLI also provides `lock:status` for operational checks; see [Commands](../cli-usage/commands#lockstatus).
 
-```javascript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-
-const appConfig = new FirebaseConfig();
-appConfig.folder = './migrations';
-appConfig.tableName = 'schema_version';
-appConfig.databaseUrl = process.env.FIREBASE_DATABASE_URL;
-appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
-const runner = await FirebaseRunner.getInstance({ config: appConfig });
-const handler = runner.getHandler();
-
-if (handler.lockingProvider) {
-  const lockStatus = await handler.lockingProvider.getLockStatus();
-  console.log('Lock status:', lockStatus);
+```typescript
+const status = await runner.getLockStatus();
+if (status?.isLocked) {
+  console.log(`Migration lock held by ${status.lockedBy}`);
 }
 ```
 
-### 4. Inspect Lock Status
+### 4. Handle Lock Failures Gracefully
 
-Core manages lock acquisition and release while running migrations. Inspect the provider to report the current lock state:
-
-```javascript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-
-const appConfig = new FirebaseConfig();
-appConfig.databaseUrl = process.env.DATABASE_URL;
-appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
-const runner = await FirebaseRunner.getInstance({ config: appConfig });
-const lockingProvider = runner.getHandler().lockingProvider;
-
-if (lockingProvider) {
-  console.log('Current lock:', await lockingProvider.getLockStatus());
-}
-```
-
-### 5. Handle Lock Failures Gracefully
-
-```javascript
-try {
-  await runner.migrate();
-} catch (error) {
-  if (error.message.includes('lock')) {
-    console.log('Migrations skipped - lock held by another process');
-    process.exit(0);  // Exit gracefully
+```typescript
+async function runMigrations(): Promise<void> {
+  try {
+    await runner.migrate();
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('lock')) {
+      console.log('Migrations skipped - lock held by another process');
+      return;
+    }
+    throw error;
   }
-  throw error;
 }
 ```
 
@@ -371,6 +343,8 @@ jobs:
 Locking ensures only one region's deployment runs migrations.
 
 ## Advanced Usage
+
+The examples in this section use `runner.getHandler().lockingProvider`, a low-level adapter contract. Prefer Core-managed locking and the public `runner.getLockStatus()` method for routine use. Directly acquiring or force-releasing locks can interfere with Core's migration lifecycle; use these methods only when implementing a deliberate custom coordination flow.
 
 ### Custom Runner ID
 

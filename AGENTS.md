@@ -45,11 +45,12 @@ The current package requires Node.js `>=22.13.0`; `.nvmrc` selects Node 22. CI t
 - `npm run test:unit`: unit tests.
 - `npm run test:integration`: integration tests against the Firebase Realtime Database Emulator.
 - `npm test`: lint, repository-script tests, unit tests, then integration tests.
-- `npm run test:coverage`: unit and integration coverage. Current thresholds in `.nycrc` are 80% lines, functions, and statements, and 70% branches. Do not change thresholds as part of unrelated work.
+- `npm run test:coverage`: unit and integration coverage using the standard `.nycrc` thresholds (80% lines, functions, and statements; 70% branches). CI uses this command.
+- `npm run test:coverage:strict`: unit and integration coverage with 100% required for lines, functions, statements, and branches. The pre-commit hook uses this stricter local check; it does not change CI's standard thresholds.
 - `npm run docs:build`: build the Jekyll documentation site.
 - `npm run docs:serve`: serve the documentation locally.
 
-Never run integration tests against a production Firebase project. Use the emulator configured in `firebase.json` (database port 9000). The pre-commit hook runs lint and unit tests, then builds docs if Bundler is installed. CI additionally runs build and coverage.
+Never run integration tests against a production Firebase project. Use the emulator configured in `firebase.json` (database port 9000). The pre-commit hook runs lint and strict unit/integration coverage, then builds docs if Bundler is installed. CI uses the standard coverage thresholds.
 
 ## Change Expectations
 
@@ -92,8 +93,8 @@ Before deciding docs do not need an update, check the README and relevant guides
 - Prefer behavior-focused tests over assertions on private implementation details. Mock only boundaries needed by the test; build complete typed fixtures instead of casting individual properties.
 - Validate the expected error type and useful message for failure cases.
 - Keep unit tests separate from Firebase Emulator integration tests. Never point integration tests at production.
-- The configured coverage thresholds are 80% for lines, functions, and statements and 70% for branches. Preserve them unless a dedicated issue changes the policy; do not claim a 100% threshold.
-- The pre-commit hook runs lint and unit tests and may build docs when Bundler is installed. CI also runs build and coverage; check the current workflow before describing enforcement.
+- The standard `.nycrc` thresholds are 80% for lines, functions, and statements and 70% for branches; preserve these CI thresholds unless a dedicated issue changes the policy. The local pre-commit hook separately enforces 100% across all four metrics through `npm run test:coverage:strict`.
+- The pre-commit hook runs lint, strict unit/integration coverage, and may build docs when Bundler is installed. CI runs build and coverage with the standard `.nycrc` thresholds; check the current workflow before describing enforcement.
 
 ### Documentation standards
 

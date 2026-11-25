@@ -139,19 +139,19 @@ export default class ToggleFeatureFlag implements IRunnableScript<IFirebaseDB> {
 
 Since Firebase doesn't support database-wide transactions, use these strategies for safe migrations:
 
-### 1. Use Backups (Recommended)
+### 1. Use Backups
 
-Always create backups before migrations:
+Use Core's default `backupMode: 'full'` and backup rollback strategy for automatic recovery. For application-managed recovery, set `backupMode: 'manual'` and retain the path from `createBackup()`:
 
 ```bash
 # Manual backup before migration
-npx msr-firebase backup
+npx msr-firebase backup create
 
 # Run migration
 npx msr-firebase migrate
 
 # Restore if something goes wrong
-npx msr-firebase restore backup-2025-01-15-10-30-00.bkp
+npx msr-firebase backup restore ./backups/backup-2025-01-15-10-30-00.bkp
 ```
 
 MSR Firebase automatically creates backups when running migrations programmatically:
@@ -159,12 +159,14 @@ MSR Firebase automatically creates backups when running migrations programmatica
 ```typescript
 const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
-// Automatic backup before migrate
-const result = await runner.migrate();
+// runner was created with config.backupMode = 'manual'.
+const backupPath = await runner.createBackup();
 
-// If migration fails, restore from backup
-if (!result.success) {
-  await runner.restoreFromLastBackup();
+try {
+  await runner.migrate();
+} catch (error) {
+  await runner.restoreFromBackup(backupPath);
+  throw error;
 }
 ```
 

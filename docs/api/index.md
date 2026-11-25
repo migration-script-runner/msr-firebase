@@ -19,7 +19,7 @@ Main migration runner class for executing Firebase Realtime Database migrations.
 
 - Factory method: `getInstance()`
 - Firebase-specific methods: `getConnectionInfo()`, `getDatabase()`, `listNodes()`, `backupNodes()`
-- Inherits all migration methods from [MSR Core MigrationScriptRunner](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner)
+- Inherits all migration methods from [MSR Core MigrationScriptRunner](https://core.migration-script-runner.dev/api/core-classes#migrationscriptrunner)
 
 ### [FirebaseConfig](FirebaseConfig)
 
@@ -31,12 +31,12 @@ Configuration class for Firebase connection and migration settings.
 
 ## Migration Writing API
 
-### [Interfaces](interfaces)
+### [Migration Interfaces](interfaces)
 
 TypeScript interfaces used when writing migrations:
 
 - **IFirebaseDB** - Database interface passed to migration scripts
-- **FirebaseHandler** - Handler interface (accessed via `runner.getHandler()` if needed)
+- **FirebaseHandler** - Handler class passed to migration scripts (available from `runner.getHandler()` when needed)
 
 ### [Services](services)
 
@@ -64,9 +64,9 @@ For practical usage examples, see:
 
 For inherited functionality and core concepts, see:
 
-- [MSR Core API Documentation](https://migration-script-runner.github.io/msr-core/api) - Base classes and interfaces
-- [MSR Core MigrationScriptRunner](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner) - Inherited migration methods
-- [MSR Core Config](https://migration-script-runner.github.io/msr-core/api/models#config) - Base configuration options
+- [MSR Core API Documentation](https://core.migration-script-runner.dev/api) - Base classes and interfaces
+- [MSR Core MigrationScriptRunner](https://core.migration-script-runner.dev/api/core-classes#migrationscriptrunner) - Inherited migration methods
+- [MSR Core Config](https://core.migration-script-runner.dev/api/models#config) - Base configuration options
 
 ---
 

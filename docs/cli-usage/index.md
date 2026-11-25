@@ -11,6 +11,8 @@ has_children: true
 Complete guide for using MSR Firebase from the command line.
 {: .fs-6 .fw-300 }
 
+Use the Realtime Database URL shown in Firebase Console. Its hostname varies by database location; the examples use `DATABASE-NAME.REGION.firebasedatabase.app` as a placeholder.
+
 ## Quick Start
 
 Install and run migrations with a single command:
@@ -21,7 +23,7 @@ npm install @migration-script-runner/firebase
 
 # Run migrations
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./serviceAccountKey.json
 ```
 
@@ -48,11 +50,11 @@ Using MSR Firebase CLI in continuous integration and deployment pipelines.
 ```bash
 # With inline credentials
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./serviceAccountKey.json
 
 # With environment variables
-export DATABASE_URL=https://your-project.firebaseio.com
+export DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 npx msr-firebase migrate
 ```
@@ -70,13 +72,11 @@ npx msr-firebase firebase:info
 npx msr-firebase firebase:test-connection
 ```
 
-### Rollback
+### Roll back to a target version
+
+`down` requires a numeric target version and reverses migrations newer than that target:
 
 ```bash
-# Rollback last migration
-npx msr-firebase down <timestamp>
-
-# Example
 npx msr-firebase down 202501150001
 ```
 
@@ -94,4 +94,4 @@ MSR Firebase inherits standard migration commands from MSR Core:
 - `lock:status` - Check migration lock status
 - `lock:release` - Force release migration lock
 
-For detailed documentation of these commands, see [MSR Core CLI Documentation](https://migration-script-runner.github.io/msr-core/guides/cli-usage).
+For detailed documentation of the standard commands, see the [MSR Core CLI Reference](https://core.migration-script-runner.dev/api/cli-reference).

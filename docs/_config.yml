@@ -28,7 +28,7 @@ aux_links:
   "MSR: Firebase on npm":
     - "https://npmjs.org/package/@migration-script-runner/firebase"
   "MSR Core Docs":
-    - "https://migration-script-runner.github.io/msr-core"
+    - "https://core.migration-script-runner.dev"
 
 # Makes Aux links open in a new tab
 aux_links_new_tab: true
@@ -38,7 +38,7 @@ back_to_top: true
 back_to_top_text: "Back to top"
 
 # Footer content
-footer_content: "Copyright &copy; 2023-2025 Volodymyr Lavrynovych. Part of <a href='https://migration-script-runner.github.io/msr-core'>Migration Script Runner</a> ecosystem. Distributed under the <a href='https://github.com/migration-script-runner/msr-firebase/blob/master/LICENSE'>MIT License</a>."
+footer_content: "Copyright &copy; 2023-2026 Volodymyr Lavrynovych. Part of <a href='https://core.migration-script-runner.dev'>Migration Script Runner</a> ecosystem. Distributed under the <a href='https://github.com/migration-script-runner/msr-firebase/blob/master/LICENSE'>MIT License</a>."
 
 # Footer last edited timestamp
 last_edit_timestamp: true
@@ -99,6 +99,7 @@ plugins:
 
 # Exclude from processing
 exclude:
+  - README.md
   - node_modules/
   - vendor/
   - "*.json"

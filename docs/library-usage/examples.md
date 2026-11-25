@@ -34,6 +34,7 @@ async function runMigrations() {
   config.folder = './migrations';
   config.tableName = 'schema_version';
   config.shift = process.env.NODE_ENV; // dev/staging/production
+  config.backupMode = 'full';
 
   // 2. Create runner
   const runner = await FirebaseRunner.getInstance({ config });
@@ -49,10 +50,7 @@ async function runMigrations() {
     return;
   }
 
-  // 5. Create backup (optional but recommended)
-  await runner.createBackup();
-
-  // 6. Run migrations
+  // 5. Run migrations; Core creates and cleans up the backup according to backupMode.
   const result = await runner.migrate();
   console.log(`Applied ${result.executed.length} migrations`);
 }
@@ -75,25 +73,16 @@ async function safeMigrate() {
   config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   config.folder = './migrations';
 
+  config.backupMode = 'full';
   const runner = await FirebaseRunner.getInstance({ config });
 
   try {
-    // Create backup before migration
-    const backupPath = await runner.createBackup();
-    console.log('Backup created:', backupPath);
-
-    // Run migrations
     const result = await runner.migrate();
-
-    if (result.success) {
-      console.log('✓ Migrations successful');
-    } else {
+    if (!result.success) {
       console.error('✗ Migrations failed:', result.errors);
-
-      // Restore from backup
-      await runner.restoreFromBackup(backupPath);
-      console.log('Restored from backup');
+      return;
     }
+    console.log(`✓ Applied ${result.executed.length} migrations`);
   } catch (error) {
     console.error('Migration error:', error);
     throw error;
@@ -132,7 +121,7 @@ async function productionMigrate() {
     const result = await runner.migrate();
     console.log('Migration result:', result);
   } catch (error) {
-    if (error.message.includes('lock')) {
+    if (error instanceof Error && error.message.includes('lock')) {
       console.error('Another migration is running. Please wait.');
     } else {
       throw error;
@@ -165,7 +154,7 @@ async function startServer() {
     console.log(`✓ Applied ${result.executed.length} migrations`);
   } catch (error) {
     console.error('✗ Migrations failed:', error);
-    process.exit(1);
+    throw error;
   }
 
   // Start server only after successful migrations
@@ -180,7 +169,10 @@ async function startServer() {
   });
 }
 
-startServer();
+startServer().catch((error: unknown) => {
+  console.error('Unable to start the application:', error);
+  process.exitCode = 1;
+});
 ```
 
 ---
@@ -486,4 +478,4 @@ inspectConnection();
 - **[Quick Start](quick-start)** - Basic usage examples
 - **[Configuration](configuration)** - Configuration options
 - **[API Reference](../api/)** - Complete API documentation
-- **[MSR Core Examples](https://migration-script-runner.github.io/msr-core/examples/)** - Additional examples from MSR Core
+- **[MSR Core Examples](https://core.migration-script-runner.dev/guides/)** - Additional examples from MSR Core

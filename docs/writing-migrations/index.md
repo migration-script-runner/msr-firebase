@@ -24,7 +24,10 @@ Learn the fundamentals of writing migration scripts, including file naming conve
 Understand Firebase's single-node transaction limitations and learn safe migration patterns for databases without database-wide transactions.
 
 ### [Backup & Restore](backup-restore)
-Master backup strategies and restore operations to protect your data during migrations, including automatic backups, rollback patterns, and disaster recovery.
+Create and restore backups with MSR Core, configure automatic rollback, and select Firebase paths to include.
+
+### [Backup Storage and Retention](backup-storage)
+Manage local files, retention, cloud uploads, and compression in application-owned operations.
 
 ### [Testing](testing)
 Learn how to test migrations using Firebase Emulator, write unit and integration tests, and set up automated testing in CI/CD pipelines.
@@ -34,6 +37,12 @@ Prevent concurrent migrations in distributed environments like Kubernetes, Docke
 
 ### [Best Practices](best-practices)
 Firebase-specific patterns, performance tips, and advanced techniques for working with Firebase Realtime Database migrations.
+
+### [Using EntityService](using-entityservice)
+Use the type-safe CRUD service for Firebase entities, with setup guidance and practical patterns.
+
+### [EntityService Migration Examples](entityservice-examples)
+Explore complete migrations for common entity creation, updates, queries, and rollback workflows.
 
 ---
 
@@ -114,7 +123,7 @@ async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
   const usersRef = db.database.ref(handler.cfg.buildPath('users'));
   const snapshot = await usersRef.once('value');
 
-  const updates: Record<string, any> = {};
+  const updates: Record<string, unknown> = {};
   snapshot.forEach((child) => {
     updates[`${child.key}/verified`] = false;
   });
@@ -158,4 +167,4 @@ async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
 - **[CLI Usage](../cli-usage/)** - Run migrations from command line
 - **[Library Usage](../library-usage/)** - Programmatic migration execution
 - **[API Reference](../api/)** - Complete API documentation
-- **[MSR Core Documentation](https://migration-script-runner.github.io/msr-core)** - Core migration concepts
+- **[MSR Core Documentation](https://core.migration-script-runner.dev)** - Core migration concepts

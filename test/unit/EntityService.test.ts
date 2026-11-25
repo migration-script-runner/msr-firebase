@@ -147,6 +147,15 @@ describe("EntityService", () => {
             expect(key).to.equal('pushed-key');
         });
 
+        it("should create an entity without specifying a key", async () => {
+            const entity: TestEntity = { name: 'Entity without key' };
+
+            const key = await service.create(entity);
+
+            sinon.assert.calledWith(mockRef.push, entity);
+            expect(key).to.equal('pushed-key');
+        });
+
         it("should handle entity without optional fields", async () => {
             const entity = createTestEntity('Minimal Entity');
 

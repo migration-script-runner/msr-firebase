@@ -27,7 +27,7 @@ Run migrations with inline credentials:
 
 ```bash
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./serviceAccountKey.json
 ```
 
@@ -35,7 +35,7 @@ npx msr-firebase migrate \
 
 ```bash
 # Set environment variables
-export DATABASE_URL=https://your-project.firebaseio.com
+export DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 
 # Run migrations
@@ -53,7 +53,7 @@ Always validate before running migrations:
 ```bash
 # 1. Test connection
 npx msr-firebase firebase:test-connection \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./key.json
 
 # 2. List pending migrations
@@ -64,27 +64,22 @@ npx msr-firebase validate
 
 # 4. Run migrations
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./key.json
 ```
 
 ### Safe Migration with Backup
 
-Create backup before risky migrations:
+Use Core's full backup mode to create a backup before migration and restore it automatically if migration execution fails:
 
 ```bash
-# 1. Create backup
-npx msr-firebase backup
-
-# 2. Run migration with full backup mode
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
-  --credentials ./key.json \
+  --database-url "$DATABASE_URL" \
+  --credentials "$GOOGLE_APPLICATION_CREDENTIALS" \
   --backup-mode full
-
-# 3. If something goes wrong, restore from backup
-npx msr-firebase restore backup-1234567890.json
 ```
+
+For a separate manual backup, run `npx msr-firebase backup create`; the command prints the file path. Review [Backup & Restore](../writing-migrations/backup-restore) before manually restoring data.
 
 ### Dry Run First
 
@@ -93,12 +88,12 @@ Preview changes without applying:
 ```bash
 # Dry run to see what would happen
 npx msr-firebase migrate --dry-run \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./key.json
 
 # If satisfied, run for real
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./key.json
 ```
 
@@ -135,7 +130,7 @@ npx msr-firebase migrate
 ```bash
 # Production with full safety measures
 npx msr-firebase migrate \
-  --database-url https://prod-project.firebaseio.com \
+  --database-url https://PRODUCTION-DATABASE.REGION.firebasedatabase.app \
   --credentials ./prod-key.json \
   --backup-mode full \
   --log-level info
@@ -150,19 +145,19 @@ Using shift paths to namespace environments in a single database:
 ```bash
 # Development environment
 npx msr-firebase migrate \
-  --database-url https://shared-db.firebaseio.com \
+  --database-url https://SHARED-DATABASE.REGION.firebasedatabase.app \
   --credentials ./key.json \
   --shift development
 
 # Staging environment
 npx msr-firebase migrate \
-  --database-url https://shared-db.firebaseio.com \
+  --database-url https://SHARED-DATABASE.REGION.firebasedatabase.app \
   --credentials ./key.json \
   --shift staging
 
 # Production environment
 npx msr-firebase migrate \
-  --database-url https://shared-db.firebaseio.com \
+  --database-url https://SHARED-DATABASE.REGION.firebasedatabase.app \
   --credentials ./key.json \
   --shift production
 ```
@@ -181,85 +176,53 @@ npx msr-firebase migrate \
 
 ## Rollback Scenarios
 
-### Rollback Last Migration
+### Roll Back to a Target Version
+
+The CLI requires a numeric target version. It reverses migrations newer than that version:
 
 ```bash
-# Check current state
-npx msr-firebase list
-
-# Rollback last migration
-npx msr-firebase down
-```
-
-### Rollback to Specific Version
-
-```bash
-# Rollback to specific timestamp
 npx msr-firebase down 202501150001
-
-# Or rollback multiple steps
-npx msr-firebase down --steps 3
 ```
 
-### Rollback with Backup Restore
+To roll back every migration, use the version before the first migration (commonly `0`):
 
 ```bash
-# If down() fails, restore from backup
-npx msr-firebase restore backup-1234567890.json
+npx msr-firebase down 0
 ```
+
+### Restore from a Backup
+
+If migration rollback is not appropriate, restore a backup by its file path:
+
+```bash
+npx msr-firebase backup restore ./backups/backup-file.bkp
+```
+
+See [Backup & Restore](../writing-migrations/backup-restore) for the effects of restoring full and selective backups.
 
 ---
 
 ## Inspection and Debugging
 
-### Check Connection
+### Check Connection and Configuration
 
 ```bash
-# Test database connection
 npx msr-firebase firebase:test-connection \
-  --database-url https://your-project.firebaseio.com \
-  --credentials ./key.json
-```
+  --database-url "$DATABASE_URL" \
+  --credentials "$GOOGLE_APPLICATION_CREDENTIALS"
 
-### View Connection Info
-
-```bash
-# Show current configuration
 npx msr-firebase firebase:info
-```
-
-**Output:**
-```
-📊 Firebase Connection Information:
-
-  Database URL: https://your-project.firebaseio.com
-  Shift Path:   /production
-  Table Name:   schema_version
 ```
 
 ### List Root Nodes
 
 ```bash
-# See all root nodes in database
 npx msr-firebase firebase:nodes
 ```
 
-**Output:**
-```
-📂 Root Nodes:
-
-  1. users
-  2. posts
-  3. schema_version
-  4. settings
-
-  Total: 4 nodes
-```
-
-### Backup Specific Nodes
+### Back Up Selected Nodes
 
 ```bash
-# Backup specific nodes before operation
 npx msr-firebase firebase:backup-nodes users posts settings
 ```
 
@@ -314,7 +277,7 @@ npx msr-firebase lock:release --force
 #!/bin/bash
 
 # Check for pending migrations
-PENDING=$(npx msr-firebase list --format json | jq '[.[] | select(.status == "pending")] | length')
+PENDING=$(npx msr-firebase list --format json | jq -s '[.[] | .pending[]?] | length')
 
 if [ "$PENDING" -gt 0 ]; then
   echo "⚠️  $PENDING pending migrations found"
@@ -334,7 +297,7 @@ echo "🔍 Validating migrations..."
 npx msr-firebase validate
 
 echo "💾 Creating backup..."
-BACKUP=$(npx msr-firebase backup --format json | jq -r '.backupId')
+# Configure backupMode=full on the migration command to create and restore backups automatically.
 
 echo "🚀 Running migrations..."
 if npx msr-firebase migrate \
@@ -343,8 +306,7 @@ if npx msr-firebase migrate \
   --backup-mode full; then
   echo "✓ Migrations successful"
 else
-  echo "✗ Migrations failed, restoring backup..."
-  npx msr-firebase restore "$BACKUP"
+  echo "✗ Migrations failed; Core attempted restoration according to backupMode."
   exit 1
 fi
 ```
@@ -359,7 +321,7 @@ ENVIRONMENTS=("development" "staging")
 for env in "${ENVIRONMENTS[@]}"; do
   echo "Migrating $env..."
   npx msr-firebase migrate \
-    --database-url "https://shared-db.firebaseio.com" \
+    --database-url "https://SHARED-DATABASE.REGION.firebasedatabase.app" \
     --credentials ./key.json \
     --shift "$env" &
 done
@@ -378,15 +340,7 @@ echo "All environments migrated"
 npx msr-firebase list
 ```
 
-**Output:**
-```
-┌─────────────┬──────────────────────┬──────────┬─────────────────────┐
-│ Timestamp   │ Name                 │ Status   │ Applied At          │
-├─────────────┼──────────────────────┼──────────┼─────────────────────┤
-│ 1234567890  │ create-users         │ applied  │ 2024-01-15 10:30:00 │
-│ 1234567891  │ add-email-index      │ pending  │ -                   │
-└─────────────┴──────────────────────┴──────────┴─────────────────────┘
-```
+The renderer prints separate tables for available groups: `Migrated` (timestamp, name, execution time, duration, username, and local-file status), `Pending` (timestamp, name, and path), and `Ignored Scripts` (timestamp, name, and path). Empty groups are omitted.
 
 ### JSON Format
 
@@ -394,167 +348,46 @@ npx msr-firebase list
 npx msr-firebase list --format json
 ```
 
-**Output:**
+The JSON renderer writes separate grouped objects for available categories such as `banner`, `migrated`, `pending`, and `ignored`; it does not return one flat array with status fields. For example, it may write:
+
 ```json
-[
-  {
-    "timestamp": "1234567890",
-    "name": "create-users",
-    "status": "applied",
-    "appliedAt": "2024-01-15T10:30:00.000Z"
-  },
-  {
-    "timestamp": "1234567891",
-    "name": "add-email-index",
-    "status": "pending",
-    "appliedAt": null
-  }
-]
+{
+  "migrated": [
+    {
+      "timestamp": 202501220100,
+      "name": "V202501220100_create_users.ts",
+      "executed": "2025-01-22T10:00:00.000Z",
+      "duration": 2.5,
+      "foundLocally": true
+    }
+  ]
+}
 ```
 
-**Use case:** Parsing output in scripts
+```json
+{
+  "pending": [
+    {
+      "timestamp": 202501220200,
+      "name": "V202501220200_add_email.ts",
+      "path": "./migrations/V202501220200_add_email.ts"
+    }
+  ]
+}
+```
+
+Use `jq -s` to process those separate JSON objects:
+
 ```bash
-# Count pending migrations
-PENDING=$(npx msr-firebase list --format json | jq '[.[] | select(.status == "pending")] | length')
+PENDING=$(npx msr-firebase list --format json | jq -s '[.[] | .pending[]?] | length')
 echo "Pending migrations: $PENDING"
 ```
 
 ---
 
-## Logging Options
+## Configuration Reference
 
-### Debug Logging
-
-```bash
-# Detailed debug output
-npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
-  --credentials ./key.json \
-  --log-level debug
-```
-
-### Log to File
-
-```bash
-# Write logs to file
-npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
-  --credentials ./key.json \
-  --logger file \
-  --log-file ./logs/migration.log
-```
-
-### Silent Mode
-
-```bash
-# No console output (for cron jobs)
-npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
-  --credentials ./key.json \
-  --logger silent
-```
-
----
-
-## Config Files
-
-### Basic Config
-
-Create `msr.config.js`:
-
-```javascript
-module.exports = {
-  databaseUrl: process.env.DATABASE_URL,
-  applicationCredentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-  folder: './migrations',
-  tableName: 'schema_version'
-};
-```
-
-**Usage:**
-```bash
-npx msr-firebase migrate --config-file ./msr.config.js
-```
-
-### Environment-Specific Configs
-
-**Development:**
-```javascript
-// msr.config.dev.js
-module.exports = {
-  databaseUrl: 'http://localhost:9000?ns=my-project-dev',
-  applicationCredentials: './dev-key.json',
-  shift: 'development',
-  backupMode: 'manual'
-};
-```
-
-**Production:**
-```javascript
-// msr.config.prod.js
-module.exports = {
-  databaseUrl: process.env.PROD_DATABASE_URL,
-  applicationCredentials: process.env.PROD_CREDENTIALS,
-  shift: 'production',
-  backupMode: 'full',
-  locking: {
-    enabled: true,
-    timeout: 600000
-  }
-};
-```
-
-**Usage:**
-```bash
-# Development
-npx msr-firebase migrate --config-file ./msr.config.dev.js
-
-# Production
-npx msr-firebase migrate --config-file ./msr.config.prod.js
-```
-
----
-
-## Exit Codes
-
-Use exit codes for CI/CD automation:
-
-```bash
-#!/bin/bash
-
-npx msr-firebase migrate
-EXIT_CODE=$?
-
-case $EXIT_CODE in
-  0)
-    echo "✓ Migrations successful"
-    ;;
-  1)
-    echo "✗ General error"
-    exit 1
-    ;;
-  2)
-    echo "✗ Configuration error"
-    exit 2
-    ;;
-  3)
-    echo "✗ Migration error"
-    exit 3
-    ;;
-  4)
-    echo "✗ Validation error"
-    exit 4
-    ;;
-  7)
-    echo "✗ Database connection error"
-    exit 7
-    ;;
-  *)
-    echo "✗ Unknown error: $EXIT_CODE"
-    exit $EXIT_CODE
-    ;;
-esac
-```
+For logger, log-level, format, and config-file options, see [Configuration](configuration). For complete pipeline examples, see [CI/CD Integration](ci-cd).
 
 ---
 

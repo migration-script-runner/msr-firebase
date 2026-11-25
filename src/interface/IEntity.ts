@@ -1,3 +1,3 @@
 export interface IEntity {
-    key:string|undefined
+    key?: string;
 }

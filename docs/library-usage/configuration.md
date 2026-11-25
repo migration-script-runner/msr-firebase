@@ -37,7 +37,7 @@ MSR Firebase is configured using the `FirebaseConfig` class, which extends MSR C
 Firebase Realtime Database URL.
 
 ```typescript
-config.databaseUrl = 'https://your-project.firebaseio.com';
+config.databaseUrl = 'https://DATABASE-NAME.REGION.firebasedatabase.app';
 ```
 
 **Type:** `string | undefined`
@@ -49,7 +49,7 @@ config.databaseUrl = 'https://your-project.firebaseio.com';
 import { FirebaseConfig } from '@migration-script-runner/firebase';
 
 const config = new FirebaseConfig();
-config.databaseUrl = 'https://my-project.firebaseio.com';
+config.databaseUrl = 'https://DATABASE-NAME.REGION.firebasedatabase.app';
 ```
 
 ---
@@ -264,7 +264,7 @@ config.displayLimit = 100;
 import { FirebaseConfig } from '@migration-script-runner/firebase';
 
 const config = new FirebaseConfig();
-config.databaseUrl = 'https://my-project.firebaseio.com';
+config.databaseUrl = 'https://DATABASE-NAME.REGION.firebasedatabase.app';
 config.applicationCredentials = './key.json';
 ```
 
@@ -350,7 +350,7 @@ import { FirebaseConfig } from '@migration-script-runner/firebase';
 class MultiEnvConfig {
   static create(environment: string): FirebaseConfig {
     const config = new FirebaseConfig();
-    config.databaseUrl = 'https://shared-db.firebaseio.com';
+    config.databaseUrl = 'https://SHARED-DATABASE.REGION.firebasedatabase.app';
     config.applicationCredentials = './serviceAccountKey.json';
     config.shift = environment; // dev/staging/production
 
@@ -416,7 +416,7 @@ config.applicationCredentials = configData.applicationCredentials;
 **Example `.msrrc.json`:**
 ```json
 {
-  "databaseUrl": "https://my-project.firebaseio.com",
+  "databaseUrl": "https://DATABASE-NAME.REGION.firebasedatabase.app",
   "applicationCredentials": "./serviceAccountKey.json",
   "folder": "./migrations",
   "tableName": "schema_version",
@@ -475,7 +475,7 @@ const runner = await FirebaseRunner.getInstance({
 });
 ```
 
-See [FirebaseRunner](../api/FirebaseRunner) for the factory API and [MSR Core ConfigLoader](https://migration-script-runner.github.io/msr-core/api/ConfigLoader) for Core's default config-file and environment handling.
+See [FirebaseRunner](../api/FirebaseRunner) for the factory API and [MSR Core ConfigLoader](https://core.migration-script-runner.dev/api/ConfigLoader) for Core's default config-file and environment handling.
 
 {: .note }
 > CLI flags have higher priority than programmatic configuration when using the CLI. See [CLI Configuration](../cli-usage/configuration) for details.
@@ -491,7 +491,7 @@ See [FirebaseRunner](../api/FirebaseRunner) for the factory API and [MSR Core Co
 config.databaseUrl = process.env.DATABASE_URL;
 
 // ✗ Bad - hardcoded
-config.databaseUrl = 'https://my-project.firebaseio.com';
+config.databaseUrl = 'https://DATABASE-NAME.REGION.firebasedatabase.app';
 ```
 
 ### 2. Different Strategies per Environment
@@ -534,4 +534,4 @@ validateConfig(config);
 
 - **[FirebaseConfig API](../api/FirebaseConfig)** - Complete API documentation
 - **[CLI Configuration](../cli-usage/configuration)** - CLI flags and options
-- **[MSR Core Config](https://migration-script-runner.github.io/msr-core/api/Config)** - Inherited configuration options
+- **[MSR Core Config](https://core.migration-script-runner.dev/api/models#config)** - Inherited configuration options
