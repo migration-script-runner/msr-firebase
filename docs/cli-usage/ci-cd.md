@@ -8,7 +8,7 @@ nav_order: 4
 # CI/CD Integration
 {: .no_toc }
 
-Run MSR Firebase migrations in continuous integration and deployment pipelines.
+Run MSR Firebase migrations in CI and deployment pipelines with credentials kept in your platform's secret store.
 {: .fs-6 .fw-300 }
 
 ## Table of contents
@@ -21,14 +21,13 @@ Run MSR Firebase migrations in continuous integration and deployment pipelines.
 
 ## GitHub Actions
 
-### Using CLI Flags (Recommended)
-
-Store service account key as a secret and use CLI flags:
+Store the service account JSON and database URL as GitHub Actions secrets. The workflow writes the JSON secret to a temporary file, uses the Firebase URL from the console, and removes the file even after a failure.
 
 ```yaml
-name: Run Migrations
+name: Run Firebase migrations
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 
@@ -37,96 +36,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Create service account key file
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}' > key.json
-
+          cache: npm
+      - run: npm ci
+      - name: Write service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > "$RUNNER_TEMP/firebase-key.json"
+      - name: Validate migrations
+        run: npx msr-firebase validate
       - name: Run migrations
-        run: |
-          npx msr-firebase migrate \
-            --database-url ${{ secrets.FIREBASE_DATABASE_URL }} \
-            --credentials ./key.json \
-            --backup-mode full
-
-      - name: Cleanup
+        env:
+          DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
+        run: npx msr-firebase migrate --backup-mode full
+      - name: Remove service account key
         if: always()
-        run: rm -f key.json
+        run: rm -f "$RUNNER_TEMP/firebase-key.json"
 ```
 
-### Using Environment Variables
-
-```yaml
-- name: Run migrations
-  env:
-    DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
-    GOOGLE_APPLICATION_CREDENTIALS: ./key.json
-  run: npx msr-firebase migrate
-```
-
-### With Validation
-
-```yaml
-- name: Validate migrations
-  run: npx msr-firebase validate
-
-- name: Run migrations
-  run: |
-    npx msr-firebase migrate \
-      --database-url ${{ secrets.FIREBASE_DATABASE_URL }} \
-      --credentials ./key.json
-```
-
----
+This example assumes the package is already in the application's dependencies. For keyless authentication, use the identity mechanism supported by your CI platform and Firebase project.
 
 ## GitLab CI
 
-```yaml
-migrate:
-  stage: deploy
-  image: node:20-alpine
-  before_script:
-    - npm ci
-    - echo "$FIREBASE_SERVICE_ACCOUNT_KEY" > key.json
-  script:
-    - npx msr-firebase migrate
-        --database-url $FIREBASE_DATABASE_URL
-        --credentials ./key.json
-        --backup-mode full
-  after_script:
-    - rm -f key.json
-  only:
-    - main
-```
-
-### With Manual Approval
+Set `FIREBASE_DATABASE_URL` and `FIREBASE_SERVICE_ACCOUNT_KEY` as protected, masked CI/CD variables. Keep the service account variable as the raw JSON content.
 
 ```yaml
 migrate:
   stage: deploy
-  image: node:20-alpine
+  image: node:22
   before_script:
     - npm ci
-    - echo "$FIREBASE_SERVICE_ACCOUNT_KEY" > key.json
+    - printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > "$CI_PROJECT_DIR/firebase-key.json"
   script:
-    - npx msr-firebase migrate --database-url $FIREBASE_DATABASE_URL --credentials ./key.json
+    - npx msr-firebase validate
+    - >-
+      npx msr-firebase migrate
+      --database-url "$FIREBASE_DATABASE_URL"
+      --credentials "$CI_PROJECT_DIR/firebase-key.json"
+      --backup-mode full
   after_script:
-    - rm -f key.json
-  when: manual  # Requires manual trigger
-  only:
-    - main
+    - rm -f "$CI_PROJECT_DIR/firebase-key.json"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
 ```
-
----
 
 ## CircleCI
+
+Store the database URL and raw service account JSON as project environment variables.
 
 ```yaml
 version: 2.1
@@ -134,28 +94,30 @@ version: 2.1
 jobs:
   migrate:
     docker:
-      - image: cimg/node:20.10
+      - image: cimg/node:22.15
     steps:
       - checkout
       - run:
           name: Install dependencies
           command: npm ci
       - run:
-          name: Create credentials file
-          command: echo $FIREBASE_SERVICE_ACCOUNT_KEY | base64 -d > key.json
+          name: Write service account key
+          command: printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > /tmp/firebase-key.json
+      - run:
+          name: Validate migrations
+          command: npx msr-firebase validate
       - run:
           name: Run migrations
-          command: |
-            npx msr-firebase migrate \
-              --database-url $FIREBASE_DATABASE_URL \
-              --credentials ./key.json
+          command: npx msr-firebase migrate --backup-mode full
+          environment:
+            DATABASE_URL: $FIREBASE_DATABASE_URL
+            GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
       - run:
-          name: Cleanup
-          command: rm -f key.json
+          name: Remove service account key
+          command: rm -f /tmp/firebase-key.json
           when: always
 
 workflows:
-  version: 2
   deploy:
     jobs:
       - migrate:
@@ -164,63 +126,31 @@ workflows:
               only: main
 ```
 
----
-
 ## Docker
 
-### Using CLI Flags
+The container receives the database URL and a read-only mounted credential file at runtime. Do not bake service account keys into the image.
 
 ```dockerfile
-FROM node:20-alpine
-
+FROM node:22-alpine
 WORKDIR /app
-
 COPY package*.json ./
-RUN npm ci
-
+RUN npm ci --omit=dev
 COPY migrations ./migrations
-COPY serviceAccountKey.json ./key.json
-
-CMD ["npx", "msr-firebase", "migrate", \
-     "--database-url", "${DATABASE_URL}", \
-     "--credentials", "./key.json"]
+CMD ["sh", "-c", "npx msr-firebase migrate --backup-mode full"]
 ```
 
-**Run:**
 ```bash
 docker build -t msr-firebase-migrations .
-docker run --env DATABASE_URL=https://your-project.firebaseio.com msr-firebase-migrations
-```
-
-### Using Environment Variables
-
-```dockerfile
-FROM node:20-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY migrations ./migrations
-
-CMD ["npx", "msr-firebase", "migrate"]
-```
-
-**Run:**
-```bash
-docker run \
-  --env DATABASE_URL=https://your-project.firebaseio.com \
-  --env GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
-  --volume $(pwd)/key.json:/app/key.json:ro \
+docker run --rm \
+  --env DATABASE_URL="$FIREBASE_DATABASE_URL" \
+  --env GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase.json \
+  --volume "$PWD/firebase-key.json:/run/secrets/firebase.json:ro" \
   msr-firebase-migrations
 ```
 
----
-
 ## Kubernetes
 
-### Job for One-Time Migrations
+Create the service account key as a Kubernetes Secret and provide its mounted file path to the job. Set the database URL to the exact Realtime Database URL shown in Firebase Console; URL formats depend on the database's region.
 
 ```yaml
 apiVersion: batch/v1
@@ -228,151 +158,40 @@ kind: Job
 metadata:
   name: firebase-migrations
 spec:
+  backoffLimit: 1
   template:
     spec:
-      containers:
-      - name: migrations
-        image: your-registry/msr-firebase-migrations:latest
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: firebase-secrets
-              key: database-url
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /secrets/firebase-key.json
-        volumeMounts:
-        - name: firebase-credentials
-          mountPath: /secrets
-          readOnly: true
-      volumes:
-      - name: firebase-credentials
-        secret:
-          secretName: firebase-service-account
       restartPolicy: Never
-  backoffLimit: 3
-```
-
-### Init Container for Application Pods
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  template:
-    spec:
-      initContainers:
-      - name: run-migrations
-        image: your-registry/msr-firebase-migrations:latest
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: firebase-secrets
-              key: database-url
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /secrets/firebase-key.json
-        volumeMounts:
-        - name: firebase-credentials
-          mountPath: /secrets
-          readOnly: true
       containers:
-      - name: app
-        image: your-app:latest
+        - name: migrations
+          image: your-registry/msr-firebase-migrations:latest
+          command: ["npx", "msr-firebase", "migrate", "--backup-mode", "full"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: firebase-secrets
+                  key: database-url
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-key.json
+          volumeMounts:
+            - name: firebase-credentials
+              mountPath: /secrets
+              readOnly: true
       volumes:
-      - name: firebase-credentials
-        secret:
-          secretName: firebase-service-account
+        - name: firebase-credentials
+          secret:
+            secretName: firebase-service-account
+            items:
+              - key: service-account.json
+                path: firebase-key.json
 ```
 
----
+## Deployment Notes
 
-## Best Practices
-
-### Security
-
-**Store Credentials Securely:**
-- Use CI/CD secrets management
-- Never commit service account keys to git
-- Use short-lived credentials when possible
-- Clean up credential files after use
-
-**Example Cleanup:**
-```yaml
-- name: Cleanup
-  if: always()
-  run: rm -f key.json
-```
-
-### Validation
-
-**Always validate before deploying:**
-```bash
-npx msr-firebase validate
-npx msr-firebase migrate --dry-run
-npx msr-firebase migrate
-```
-
-### Backup Strategy
-
-**Use appropriate backup mode:**
-```bash
-# Production: full backup and restore
-npx msr-firebase migrate --backup-mode full
-
-# Development: no backup needed
-npx msr-firebase migrate --backup-mode manual
-```
-
-### Environment Separation
-
-**Use different databases:**
-```yaml
-# Development
-DATABASE_URL: https://dev-project.firebaseio.com
-
-# Staging
-DATABASE_URL: https://staging-project.firebaseio.com
-
-# Production
-DATABASE_URL: https://prod-project.firebaseio.com
-```
-
-**Or use shift paths:**
-```bash
-# Shared database with namespacing
-npx msr-firebase migrate --shift development
-npx msr-firebase migrate --shift staging
-npx msr-firebase migrate --shift production
-```
-
-### Error Handling
-
-**Exit codes:**
-- `0` - Success
-- `1` - General error
-- `7` - Database connection error
-
-**Example with error handling:**
-```yaml
-- name: Run migrations
-  run: npx msr-firebase migrate --credentials ./key.json || exit 1
-
-- name: Notify on failure
-  if: failure()
-  run: curl -X POST $SLACK_WEBHOOK -d '{"text":"Migration failed"}'
-```
-
-### Monitoring
-
-**Log output:**
-```bash
-npx msr-firebase migrate --log-level debug --logger console
-```
-
-**JSON output for parsing:**
-```bash
-npx msr-firebase list --format json > migration-status.json
-```
+- Run `validate` before applying migrations.
+- Prefer a single migration job per deployment and configure Core locking when concurrent deployments are possible.
+- Keep development, staging, and production Firebase projects separate where possible.
+- Use `shift` only when intentionally sharing one database between isolated environments.
+- Read [Backup & Restore](../writing-migrations/backup-restore) before choosing backup modes or recovering data.
+- Never print credentials or commit service account files.

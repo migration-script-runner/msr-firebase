@@ -2,13 +2,13 @@
 layout: default
 title: Best Practices
 parent: Writing Migrations
-nav_order: 6
+nav_order: 7
 ---
 
 # Best Practices
 {: .no_toc }
 
-Firebase Realtime Database-specific patterns and features for migrations.
+Practical patterns for safe, maintainable Firebase Realtime Database migrations.
 {: .fs-6 .fw-300 }
 
 ## Table of contents
@@ -19,271 +19,125 @@ Firebase Realtime Database-specific patterns and features for migrations.
 
 ---
 
-## Server Timestamps
+## Use Firebase Server Timestamps
 
-Use Firebase server timestamps for consistent timing:
+Server timestamps avoid relying on clocks from the machine running a migration.
 
 ```typescript
-import type { Database } from 'firebase-admin/database';
+import { IMigrationInfo, IRunnableScript } from '@migration-script-runner/core';
+import { FirebaseHandler, IFirebaseDB } from '@migration-script-runner/firebase';
 import { ServerValue } from 'firebase-admin/database';
 
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  await db.ref('posts/post1').set({
-    title: 'Hello World',
-    createdAt: ServerValue.TIMESTAMP
-  });
-};
+export default class AddCreatedAt implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler): Promise<string> {
+    await db.database.ref(handler.cfg.buildPath('posts/post-1')).update({
+      createdAt: ServerValue.TIMESTAMP
+    });
+    return 'Added server timestamp';
+  }
+}
 ```
 
-## Transactions
+## Use Single-Node Transactions for Read-Modify-Write
 
-{: .warning }
-**Important:** Firebase Realtime Database only supports **single-node** atomic transactions via `ref.transaction()`. Database-wide or multi-document transactions are NOT supported. See the [Transactions Guide](transactions) for details and safe migration patterns.
-
-Use single-node transactions for atomic read-modify-write operations:
+Firebase supports atomic transactions at one database path, not across unrelated paths. See [Transactions](transactions) for the platform limitation and examples.
 
 ```typescript
-import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
-import { IFirebaseDB, FirebaseHandler } from '@migration-script-runner/firebase';
-
 export default class IncrementCounter implements IRunnableScript<IFirebaseDB> {
-  async up(
-    db: IFirebaseDB,
-    info: IMigrationInfo,
-    handler: FirebaseHandler
-  ): Promise<string> {
-    const counterRef = db.database.ref(handler.cfg.buildPath('counters/posts'));
-
-    await counterRef.transaction((current) => {
-      return (current || 0) + 1;
-    });
-
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler): Promise<string> {
+    const counter = db.database.ref(handler.cfg.buildPath('counters/posts'));
+    await counter.transaction((current) => (current ?? 0) + 1);
     return 'Incremented post counter';
   }
 }
 ```
 
-For most migrations, use direct operations (`set()`, `update()`) without transactions. See [Multi-Path Updates](#multi-path-updates) below for atomic multi-path operations.
+## Batch Independent Path Updates
 
-## Multi-Path Updates
-
-Update multiple paths atomically:
+Use one multi-path update when changes should be written together. Keep every key relative to the root reference and account for the configured `shift` when building paths.
 
 ```typescript
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  const updates: Record<string, any> = {};
-
-  updates['users/user1/name'] = 'John Doe';
-  updates['usernames/johndoe'] = 'user1';
-  updates['meta/lastUpdate'] = ServerValue.TIMESTAMP;
-
-  await db.ref().update(updates);
-};
+export default class UpdateStatuses implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler): Promise<string> {
+    const root = db.database.ref(handler.cfg.getRoot());
+    const updates: Record<string, unknown> = {
+      'users/user-1/status': 'active',
+      'users/user-2/status': 'active',
+      'meta/lastUpdated': Date.now()
+    };
+    await root.update(updates);
+    return 'Updated user statuses';
+  }
+}
 ```
 
-## Priority
+## Handle Data as Untrusted Input
 
-Set priorities for ordering:
-
-```typescript
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  await db.ref('items/item1').setWithPriority({
-    name: 'Item 1'
-  }, 1);
-
-  await db.ref('items/item2').setWithPriority({
-    name: 'Item 2'
-  }, 2);
-};
-```
-
-## Queries
-
-Work with ordered data:
+A migration should tolerate missing or unexpected data. Narrow values before reading properties, and avoid assuming every child has a key or object value.
 
 ```typescript
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  // Get last 10 items by timestamp
-  const snapshot = await db.ref('items')
-    .orderByChild('timestamp')
-    .limitToLast(10)
-    .once('value');
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object'
+    ? value as Record<string, unknown>
+    : {};
+}
 
-  // Process results
-  const items: any[] = [];
-  snapshot.forEach((child) => {
-    items.push({ id: child.key, ...child.val() });
-  });
-
-  // Migrate items...
-};
-```
-
-## Security Rules Considerations
-
-{: .warning }
-> Migrations run with admin privileges, but remember to update security rules for client access.
-
-```typescript
-// Migration creates new structure
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  await db.ref('publicData').set({
-    config: { theme: 'light' }
-  });
-};
-
-// Don't forget to update rules.json:
-// {
-//   "rules": {
-//     "publicData": {
-//       ".read": true,
-//       ".write": false
-//     }
-//   }
-// }
-```
-
-## Working with JSON Data
-
-Import/export JSON structures:
-
-```typescript
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  const data = {
-    users: {
-      user1: { name: 'John' },
-      user2: { name: 'Jane' }
-    },
-    posts: {
-      post1: { title: 'First Post', author: 'user1' }
-    }
-  };
-
-  await db.ref().set(data);
-};
-```
-
-## Handling Large Datasets
-
-Process large datasets in batches:
-
-```typescript
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  const BATCH_SIZE = 100;
-  let lastKey: string | null = null;
-
-  while (true) {
-    let query = db.ref('users').orderByKey().limitToFirst(BATCH_SIZE);
-
-    if (lastKey) {
-      query = query.startAt(lastKey);
-    }
-
-    const snapshot = await query.once('value');
-
-    if (!snapshot.hasChildren()) {
-      break;
-    }
-
-    const updates: Record<string, any> = {};
-    let count = 0;
+export default class AddVerifiedFlag implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler): Promise<string> {
+    const users = db.database.ref(handler.cfg.buildPath('users'));
+    const snapshot = await users.once('value');
+    const updates: Record<string, unknown> = {};
 
     snapshot.forEach((child) => {
-      if (child.key !== lastKey) {
-        updates[`users/${child.key}/processed`] = true;
-        lastKey = child.key;
-        count++;
+      if (child.key !== null) {
+        updates[`${child.key}/verified`] = Boolean(asRecord(child.val()).verified);
       }
     });
 
-    if (count > 0) {
-      await db.ref().update(updates);
-    }
-
-    if (count < BATCH_SIZE - 1) {
-      break;
-    }
+    await users.update(updates);
+    return `Updated ${snapshot.numChildren()} users`;
   }
-};
+}
 ```
 
-## Data Validation
+## Process Large Datasets in Batches
 
-Validate data structure before migration:
+Paginate rather than loading and rewriting a large database subtree at once. Use a stable ordering key and verify the boundary logic with representative data before production.
 
 ```typescript
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  const snapshot = await db.ref('users').once('value');
-  const users = snapshot.val();
+const batchSize = 100;
+let cursor: string | undefined;
 
-  // Validate each user
-  Object.entries(users || {}).forEach(([key, user]: [string, any]) => {
-    if (!user.email || !user.name) {
-      throw new Error(`Invalid user data for ${key}`);
+while (true) {
+  let query = db.database.ref(handler.cfg.buildPath('users'))
+    .orderByKey()
+    .limitToFirst(batchSize);
+  if (cursor !== undefined) query = query.startAt(cursor);
+
+  const snapshot = await query.once('value');
+  if (!snapshot.hasChildren()) break;
+
+  const updates: Record<string, unknown> = {};
+  let lastKey: string | undefined;
+  snapshot.forEach((child) => {
+    if (child.key !== null && child.key !== cursor) {
+      updates[`${child.key}/processed`] = true;
+      lastKey = child.key;
     }
   });
 
-  // Proceed with migration...
-};
-```
-
-## Firebase Emulator
-
-Test migrations with Firebase emulator:
-
-```bash
-# Start emulator
-firebase emulators:start --only database
-
-# Run migrations against emulator
-export FIREBASE_DATABASE_URL=http://localhost:9000
-npx msr-firebase migrate
-```
-
-## Performance Tips
-
-### 1. Use Multi-Path Updates
-
-Instead of:
-```typescript
-await db.ref('users/user1/name').set('John');
-await db.ref('users/user1/email').set('john@example.com');
-```
-
-Use:
-```typescript
-await db.ref().update({
-  'users/user1/name': 'John',
-  'users/user1/email': 'john@example.com'
-});
-```
-
-### 2. Batch Read Operations
-
-Read related data in one query:
-```typescript
-const snapshot = await db.ref('users').once('value');
-// Process all users from one snapshot
-```
-
-### 3. Avoid Deep Queries
-
-Design data structures to minimize deep queries:
-```typescript
-// Good: Flat structure
-{
-  "users": { "user1": {...} },
-  "posts": { "post1": {...} }
-}
-
-// Avoid: Deeply nested
-{
-  "users": {
-    "user1": {
-      "posts": {
-        "post1": {...}
-      }
-    }
-  }
+  if (Object.keys(updates).length > 0) await snapshot.ref.update(updates);
+  if (lastKey === undefined || snapshot.numChildren() < batchSize) break;
+  cursor = lastKey;
 }
 ```
+
+## Plan Rollback Before Running
+
+- Prefer idempotent `up()` implementations.
+- Implement `down()` when reversing the change is reliable.
+- Use a tested backup strategy for changes that cannot be safely reversed with `down()`.
+- Test against the Firebase Emulator or an isolated non-production project first.
+- Keep service-account credentials out of source control and logs.
+
+See [Backup & Restore](backup-restore), [Testing](testing), and [Migration Scripts](migration-scripts) for the complete workflows.

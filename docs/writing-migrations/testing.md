@@ -2,13 +2,13 @@
 layout: default
 title: Testing
 parent: Writing Migrations
-nav_order: 4
+nav_order: 5
 ---
 
-# Testing
+# Testing Migrations
 {: .no_toc }
 
-How to test your migrations with Firebase emulator and testing frameworks.
+Test migration logic and Firebase database behavior before deploying changes.
 {: .fs-6 .fw-300 }
 
 ## Table of contents
@@ -19,458 +19,237 @@ How to test your migrations with Firebase emulator and testing frameworks.
 
 ---
 
-## Firebase Emulator Setup
+## Use the Firebase Realtime Database Emulator
 
-### Install Firebase Tools
+The emulator lets integration tests exercise Firebase behavior without connecting to a production project.
 
-```bash
-npm install -g firebase-tools
-```
-
-### Initialize Firebase Emulator
+The repository already includes Firebase Tools and emulator settings in its development dependencies and `firebase.json`. In another application, install Firebase Tools and initialize the Realtime Database Emulator:
 
 ```bash
+npm install --save-dev firebase-tools
 firebase init emulators
 ```
 
-Select:
-- ✓ Realtime Database
+Choose Realtime Database and ensure its port matches your test configuration. This repository uses port `9000`.
 
-### Configure Emulator
-
-Edit `firebase.json`:
-
-```json
-{
-  "emulators": {
-    "database": {
-      "port": 9000
-    },
-    "ui": {
-      "enabled": true,
-      "port": 4000
-    }
-  }
-}
-```
-
-### Start Emulator
+Start the emulator manually with:
 
 ```bash
-firebase emulators:start --only database
+npm run emulator:start
 ```
 
-**Output:**
-```
-✔  database: Emulator started at http://localhost:9000
-✔  All emulators ready!
-
-View Emulator UI at http://localhost:4000
-```
-
-## Testing Migrations with Emulator
-
-### Configure for Emulator
-
-```typescript
-// test-config.ts
-import { initializeApp } from 'firebase-admin/app';
-import { getDatabase } from 'firebase-admin/database';
-
-export function initializeTestDatabase() {
-  // Use emulator
-  process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-
-  const app = initializeApp({
-    projectId: 'test-project',
-    databaseURL: 'http://localhost:9000?ns=test-project'
-  });
-
-  return getDatabase(app);
-}
-```
-
-### Run Migrations Against Emulator
-
-```typescript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-
-async function testMigrations() {
-  const appConfig = new FirebaseConfig();
-  appConfig.folder = './migrations';
-  appConfig.tableName = 'schema_version';
-  appConfig.databaseUrl = 'http://localhost:9000';  // Emulator
-  appConfig.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
-  const runner = await FirebaseRunner.getInstance({ config: appConfig });
-
-  // Run migrations
-  const result = await runner.migrate();
-  console.log('Migrations applied:', result.executed.length);
-
-  // Verify data
-  const db = runner.getDatabase();
-  const snapshot = await db.ref('users').once('value');
-  console.log('Users created:', snapshot.numChildren());
-}
-
-testMigrations();
-```
-
-## Unit Testing Migrations
-
-### Setup with Mocha/Chai
+Or run the integration test script; it starts and stops the configured emulator for the test command:
 
 ```bash
-npm install --save-dev mocha chai @types/mocha @types/chai
+npm run test:integration
 ```
 
-### Test Structure
+## Configure a Test Runner
+
+Use an isolated project namespace and a unique `shift` so test data does not overlap. For local emulator runs, the Admin SDK still needs valid credentials; the repository uses a test-only service account fixture.
 
 ```typescript
-// test/migrations/001-create-users.test.ts
+import { FirebaseConfig, FirebaseRunner } from '@migration-script-runner/firebase';
+
+const config = new FirebaseConfig();
+config.databaseUrl = 'http://localhost:9000?ns=test-project';
+config.applicationCredentials = './test/resources/fake-service-account.json';
+config.folder = './test/integration/migrations';
+config.shift = `/test-${Date.now()}`;
+
+const runner = await FirebaseRunner.getInstance({ config });
+```
+
+Use a disposable project ID and credentials that cannot access production. Do not put real production credentials or data in test fixtures.
+
+## Unit Test Pure Migration Logic
+
+Keep transformations that do not require Firebase in pure functions. Test those with the same Mocha and Chai setup used by the repository:
+
+```typescript
 import { expect } from 'chai';
-import { deleteApp, initializeApp, type App } from 'firebase-admin/app';
-import { getDatabase, type Database } from 'firebase-admin/database';
-import { up, down } from '../../migrations/001-create-users';
 
-describe('Migration 001: Create Users', () => {
-  let app: App;
-  let db: Database;
+interface User {
+  name: string;
+  verified?: boolean;
+}
 
-  before(() => {
-    process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-    app = initializeApp({
-      projectId: 'test-project',
-      databaseURL: 'http://localhost:9000?ns=test-project'
+function addVerifiedFlag(user: User): User {
+  return { ...user, verified: user.verified ?? false };
+}
+
+describe('addVerifiedFlag', () => {
+  it('preserves existing values and adds the default when missing', () => {
+    expect(addVerifiedFlag({ name: 'Ada' })).to.deep.equal({
+      name: 'Ada',
+      verified: false
     });
-    db = getDatabase(app);
-  });
-
-  afterEach(async () => {
-    // Clean up after each test
-    await db.ref().set(null);
-  });
-
-  after(async () => {
-    await deleteApp(app);
-  });
-
-  describe('up()', () => {
-    it('should create users node', async () => {
-      await up(db);
-
-      const snapshot = await db.ref('users').once('value');
-      expect(snapshot.exists()).to.be.true;
-    });
-
-    it('should create user1', async () => {
-      await up(db);
-
-      const snapshot = await db.ref('users/user1').once('value');
-      const user = snapshot.val();
-
-      expect(user).to.exist;
-      expect(user.name).to.equal('John Doe');
-      expect(user.email).to.equal('john@example.com');
-    });
-  });
-
-  describe('down()', () => {
-    it('should remove users node', async () => {
-      await up(db);
-      await down(db);
-
-      const snapshot = await db.ref('users').once('value');
-      expect(snapshot.exists()).to.be.false;
-    });
+    expect(addVerifiedFlag({ name: 'Grace', verified: true }).verified).to.equal(true);
   });
 });
 ```
 
-### Run Tests
+Use emulator integration tests for code that reads or writes Firebase paths.
 
-```bash
-# Start emulator
-firebase emulators:start --only database
+## Integration Test a Migration
 
-# Run tests (in another terminal)
-npm test
-```
-
-## Integration Testing
-
-### Full Migration Flow Test
+The repository's migrations are default-exported classes implementing `IRunnableScript<IFirebaseDB>`. Run them through `FirebaseRunner` so the test also covers discovery, validation, execution, and migration records.
 
 ```typescript
-// test/integration/migration-flow.test.ts
 import { expect } from 'chai';
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-import { deleteApp, initializeApp, type App } from 'firebase-admin/app';
-import { getDatabase, type Database } from 'firebase-admin/database';
+import { FirebaseConfig, FirebaseRunner } from '@migration-script-runner/firebase';
 
-describe('Migration Flow', () => {
-  let app: App;
+describe('Create users migration', () => {
+  const shift = `/migration-test-${Date.now()}`;
+  let config: FirebaseConfig;
   let runner: FirebaseRunner;
-  let db: Database;
 
   before(async () => {
-    process.env.FIREBASE_DATABASE_EMULATOR_HOST = 'localhost:9000';
-    app = initializeApp({
-      projectId: 'test-project',
-      databaseURL: 'http://localhost:9000?ns=test-project'
-    });
-
-    const appConfig = new FirebaseConfig();
-    appConfig.folder = './migrations';
-    appConfig.tableName = 'schema_version';
-    appConfig.databaseUrl = 'http://localhost:9000?ns=test-project';
-
-    runner = await FirebaseRunner.getInstance({ config: appConfig });
-    db = runner.getDatabase();
-  });
-
-  afterEach(async () => {
-    // Reset database
-    await db.ref().set(null);
-
-    // Reset migrations
-    await runner.down({ to: 0 });
+    config = new FirebaseConfig();
+    config.databaseUrl = 'http://localhost:9000?ns=test-project';
+    config.applicationCredentials = './test/resources/fake-service-account.json';
+    config.folder = './test/integration/migrations';
+    config.shift = shift;
+    runner = await FirebaseRunner.getInstance({ config });
   });
 
   after(async () => {
-    await deleteApp(app);
+    await runner.getDatabase().ref(shift).remove();
   });
 
-  it('should apply all migrations', async () => {
-    const result = await runner.migrate();
+  it('runs migrations and writes the expected data', async () => {
+    const result = await runner.up(202501010001);
+    expect(result.success).to.equal(true);
+    expect(result.executed).to.have.lengthOf(1);
 
-    expect(result.status).to.equal('success');
-    expect(result.appliedMigrations.length).to.be.greaterThan(0);
-  });
-
-  it('should rollback migrations', async () => {
-    await runner.migrate();
-
-    const result = await runner.down();
-
-    expect(result.status).to.equal('success');
-  });
-
-  it('should list migration status', async () => {
-    await runner.migrate();
-
-    const statuses = await runner.list();
-
-    expect(statuses).to.be.an('array');
-    expect(statuses.every(s => s.status === 'applied')).to.be.true;
+    const users = await runner.getDatabase()
+      .ref(config.buildPath('users'))
+      .once('value');
+    expect(users.child('user1').val().name).to.equal('Alice');
   });
 });
 ```
 
-## Testing Best Practices
+Use the actual migration timestamp and test migration directory from your project. For tests that modify shared emulator state, give each test or suite a separate `shift` and remove that path during cleanup.
 
-### 1. Use Fresh Database for Each Test
+## Repository Test Commands
 
-```typescript
-afterEach(async () => {
-  await db.ref().set(null);
-});
-```
+These are the current scripts in this repository's `package.json`:
 
-### 2. Test Both Up and Down
+| Command | What it runs |
+|---|---|
+| `npm run test:scripts` | Repository automation script tests. |
+| `npm run test:unit` | Unit tests from `.mocharc.json`. |
+| `npm run test:integration` | Firebase Emulator integration tests from `.mocharc.integration.json`. |
+| `npm test` | Lint, script tests, unit tests, and integration tests. |
+| `npm run test:coverage` | Unit and integration tests with coverage reporting. |
 
-```typescript
-describe('Migration', () => {
-  it('should apply migration', async () => {
-    await up(db);
-    // Assertions...
-  });
+Run the complete local suite with:
 
-  it('should rollback migration', async () => {
-    await up(db);
-    await down(db);
-    // Verify rollback...
-  });
-});
-```
-
-### 3. Test Edge Cases
-
-```typescript
-it('should handle empty database', async () => {
-  await up(db);
-  // Migration should handle missing data gracefully
-});
-
-it('should be idempotent', async () => {
-  await up(db);
-  await up(db); // Run twice
-
-  // Should produce same result
-  const snapshot = await db.ref('users').once('value');
-  expect(snapshot.numChildren()).to.equal(1);
-});
-```
-
-### 4. Verify Data Integrity
-
-```typescript
-it('should maintain data relationships', async () => {
-  await up(db);
-
-  const user = await db.ref('users/user1').once('value');
-  const postAuthor = await db.ref('posts/post1/authorId').once('value');
-
-  expect(postAuthor.val()).to.equal('user1');
-});
-```
-
-## Automated Testing with npm Scripts
-
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "test": "firebase emulators:exec --only database 'npm run test:mocha'",
-    "test:mocha": "mocha --require ts-node/register 'test/**/*.test.ts'",
-    "test:watch": "mocha --require ts-node/register --watch 'test/**/*.test.ts'"
-  }
-}
-```
-
-Run tests:
 ```bash
 npm test
 ```
 
-## CI/CD Integration
+For coverage:
 
-### GitHub Actions
+```bash
+npm run test:coverage
+```
+
+## CI Example
+
+The repository's authoritative workflow is [`.github/workflows/test.yml`](https://github.com/migration-script-runner/msr-firebase/blob/master/.github/workflows/test.yml). It tests Node.js 22 and 26, installs Java 21 for Firebase Emulator, builds, runs script tests and lint, and generates unit/integration coverage.
+
+A smaller workflow for another project can run the existing `npm test` script:
 
 ```yaml
-name: Test Migrations
+name: Test migrations
 
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Firebase Tools
-        run: npm install -g firebase-tools
-
-      - name: Run tests
-        run: npm test
+          cache: npm
+      - run: npm ci
+      - run: npm test
 ```
 
-## Testing with Real Data
+## Rehearse Migrations Against a Snapshot
 
-### Create Test Fixtures
+An empty emulator is useful for integration tests, but it may not represent the data shape found in an existing database. For a small, representative database, restore a sanitized Realtime Database JSON snapshot into a fresh emulator and run the migrations against it before deployment.
 
-```typescript
-// test/fixtures/users.json
+Save the snapshot as `test-data/rtdb-snapshot.json`. For example:
+
+```json
 {
-  "user1": {
-    "name": "John Doe",
-    "email": "john@example.com"
-  },
-  "user2": {
-    "name": "Jane Smith",
-    "email": "jane@example.com"
+  "users": {
+    "user1": { "name": "Ada", "email": "ada@example.com" },
+    "user2": { "name": "Grace", "email": "grace@example.com" }
   }
 }
 ```
 
-### Load Fixtures
+Add this step to a CI job after installing Node.js, Java, Firebase Tools, and the application dependencies:
 
-```typescript
-import { readFileSync } from 'fs';
-
-beforeEach(async () => {
-  const fixtures = JSON.parse(
-    readFileSync('./test/fixtures/users.json', 'utf-8')
-  );
-
-  await db.ref('users').set(fixtures);
-});
+```yaml
+- name: Rehearse migrations against the snapshot
+  run: |
+    firebase emulators:exec \
+      --project demo-msr-firebase \
+      --only database \
+      'curl --fail-with-body --silent --show-error \
+         --request PUT \
+         --header "Content-Type: application/json" \
+         --data-binary @test-data/rtdb-snapshot.json \
+         "http://127.0.0.1:9000/.json?ns=demo-msr-firebase&print=silent" && \
+       npx msr-firebase validate && \
+       npx msr-firebase migrate \
+         --database-url "http://127.0.0.1:9000?ns=demo-msr-firebase" \
+         --credentials ./test/resources/fake-service-account.json'
 ```
 
-## Performance Testing
+`firebase emulators:exec` starts the Realtime Database Emulator, runs the command, and stops the emulator. The `PUT` restores the JSON file at the database root; it replaces the emulator's current data. The project ID and the `ns` in the emulator URL must match. Use credentials that cannot access production; the repository's `test/resources/fake-service-account.json` is a test-only fixture.
 
-### Measure Migration Time
+The snapshot's MSR migration-history node must represent the starting release you want to test. MSR applies pending migrations, so a snapshot marked as already migrated will not run those scripts again. This rehearsal checks that the pending migrations can run against this baseline; it does not prove behavior for every possible database state.
 
-```typescript
-it('should complete migration within 5 seconds', async function() {
-  this.timeout(5000);
+Use only generated or sanitized snapshots. Do not commit customer data or expose it in CI logs or artifacts. If you already have a snapshot exported by Firebase Emulator Suite, you can restore that export directory with the CLI's `--import` option instead of writing a JSON fixture; see [Firebase Emulator data import and export](https://firebase.google.com/docs/emulator-suite/install_and_configure).
 
-  const start = Date.now();
-  await runner.migrate();
-  const duration = Date.now() - start;
+## Use Representative Data
 
-  expect(duration).to.be.lessThan(5000);
-});
+Use generated fixtures or sanitized data in the emulator or an isolated non-production project. Never point these examples at production.
+
+```json
+{
+  "user1": { "name": "Ada", "email": "ada@example.com" },
+  "user2": { "name": "Grace", "email": "grace@example.com" }
+}
 ```
 
-### Test Large Datasets
+## Performance Checks
+
+For large migrations, use a representative dataset in the emulator or an isolated test project and measure the full runner workflow. Avoid making a test depend on a strict timing threshold that varies across machines; use performance tests to detect substantial regressions.
+
+## Debugging
+
+Enable a verbose logger when creating the runner:
 
 ```typescript
-it('should handle 10000 records', async function() {
-  this.timeout(30000);
-
-  // Create large dataset
-  const updates: Record<string, any> = {};
-  for (let i = 0; i < 10000; i++) {
-    updates[`users/user${i}`] = { name: `User ${i}` };
-  }
-  await db.ref().update(updates);
-
-  // Run migration
-  await up(db);
-
-  // Verify
-  const snapshot = await db.ref('users').once('value');
-  expect(snapshot.numChildren()).to.equal(10000);
-});
-```
-
-## Debugging Tests
-
-### Enable Verbose Logging
-
-```typescript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 import { ConsoleLogger } from '@migration-script-runner/core';
 
-const appConfig = new FirebaseConfig();
-appConfig.folder = './migrations';
-appConfig.tableName = 'schema_version';
-appConfig.databaseUrl = 'http://localhost:9000';
-
 const runner = await FirebaseRunner.getInstance({
-  config: appConfig,
+  config,
   logger: new ConsoleLogger({ level: 'debug' })
 });
 ```
 
-### Inspect Database State
-
-```typescript
-afterEach(async () => {
-  // Dump database state for debugging
-  const snapshot = await db.ref().once('value');
-  console.log('Database state:', JSON.stringify(snapshot.val(), null, 2));
-});
-```
+For migration execution options and result handling, see [Library Usage](../library-usage/) and the [MSR Core API](https://core.migration-script-runner.dev/api/).

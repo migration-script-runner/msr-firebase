@@ -93,9 +93,11 @@ export default class AddVerifiedField implements IRunnableScript<IFirebaseDB> {
     const usersRef = db.database.ref(handler.cfg.buildPath('users'));
     const snapshot = await usersRef.once('value');
 
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     snapshot.forEach((child) => {
-      updates[`${child.key}/verified`] = false;
+      if (child.key !== null) {
+        updates[`${child.key}/verified`] = false;
+      }
     });
 
     await usersRef.update(updates);
@@ -114,13 +116,15 @@ export default class MigrateUserData implements IRunnableScript<IFirebaseDB> {
     const oldData = await oldRef.once('value');
 
     // Transform data
-    const newData: Record<string, any> = {};
+    const newData: Record<string, unknown> = {};
     oldData.forEach((child) => {
-      const value = child.val();
-      newData[child.key!] = {
-        ...value,
-        migratedAt: Date.now()
-      };
+      const value: unknown = child.val();
+      const record = value !== null && typeof value === 'object'
+        ? value as Record<string, unknown>
+        : {};
+      if (child.key !== null) {
+        newData[child.key] = { ...record, migratedAt: Date.now() };
+      }
     });
 
     // Write to new structure
@@ -181,7 +185,7 @@ Use multi-path updates for better performance:
 ```typescript
 export default class UpdateMultiplePaths implements IRunnableScript<IFirebaseDB> {
   async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     updates[handler.cfg.buildPath('users/user1/status')] = 'active';
     updates[handler.cfg.buildPath('users/user2/status')] = 'active';
     updates[handler.cfg.buildPath('meta/lastUpdated')] = Date.now();
@@ -243,10 +247,12 @@ export default class ValidatedMigration implements IRunnableScript<IFirebaseDB> 
 export default class AddEmailField implements IRunnableScript<IFirebaseDB> {
   async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
     const snapshot = await db.database.ref(handler.cfg.buildPath('users')).once('value');
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
 
     snapshot.forEach((child) => {
-      updates[`users/${child.key}/email`] = '';
+      if (child.key !== null) {
+        updates[`users/${child.key}/email`] = '';
+      }
     });
 
     await db.database.ref(handler.cfg.buildPath('')).update(updates);
@@ -261,19 +267,19 @@ export default class AddEmailField implements IRunnableScript<IFirebaseDB> {
 export default class RestructureUsers implements IRunnableScript<IFirebaseDB> {
   async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
     const oldSnapshot = await db.database.ref(handler.cfg.buildPath('users')).once('value');
-    const newStructure: Record<string, any> = {};
+    const newStructure: Record<string, unknown> = {};
 
     oldSnapshot.forEach((child) => {
-      const user = child.val();
-      newStructure[child.key!] = {
-        profile: {
-          name: user.name,
-          email: user.email
-        },
-        settings: {
-          notifications: user.notifications || true
-        }
-      };
+      const value: unknown = child.val();
+      const user = value !== null && typeof value === 'object'
+        ? value as Record<string, unknown>
+        : {};
+      if (child.key !== null) {
+        newStructure[child.key] = {
+          profile: { name: user.name, email: user.email },
+          settings: { notifications: user.notifications ?? true }
+        };
+      }
     });
 
     await db.database.ref(handler.cfg.buildPath('users')).set(newStructure);
@@ -305,142 +311,9 @@ export default class CreateEmailIndex implements IRunnableScript<IFirebaseDB> {
 }
 ```
 
-## Using EntityService for Type-Safe Operations
+## EntityService
 
-For working with collections of entities, EntityService provides a cleaner, type-safe alternative to raw Firebase API calls.
-
-### Why Use EntityService?
-
-- ✅ **Type Safety** - Full TypeScript support with generics
-- ✅ **Clean API** - Simple CRUD methods instead of raw Firebase references
-- ✅ **Batch Operations** - Built-in `updateAll()` for updating multiple entities
-- ✅ **Query Support** - Find entities by property values with `findAllBy()`
-- ✅ **Less Code** - Reduce boilerplate in your migrations
-
-### Quick Example
-
-**Without EntityService (Raw Firebase API):**
-```typescript
-export default class AddEmailField implements IRunnableScript<IFirebaseDB> {
-  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
-    const snapshot = await db.database.ref(handler.cfg.buildPath('users')).once('value');
-    const updates: Record<string, any> = {};
-
-    snapshot.forEach((child) => {
-      updates[`users/${child.key}/email`] = '';
-    });
-
-    await db.database.ref(handler.cfg.buildPath('')).update(updates);
-    return `Added email field to ${snapshot.numChildren()} users`;
-  }
-}
-```
-
-**With EntityService (Recommended):**
-```typescript
-import { EntityService, IEntity } from '@migration-script-runner/firebase';
-
-interface User extends IEntity {
-  name: string;
-  email?: string;
-}
-
-export default class AddEmailField implements IRunnableScript<IFirebaseDB> {
-  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
-    const userService = new EntityService<User>(
-      db.database,
-      handler.cfg.buildPath('users')
-    );
-
-    const results = await userService.updateAll((user) => {
-      if (user.email !== undefined) return false;
-      user.email = '';
-      return true;
-    });
-
-    return `Added email field to ${results.updated.length} users`;
-  }
-}
-```
-
-### Common EntityService Patterns
-
-#### Creating Initial Data
-
-```typescript
-import { EntityService, IEntity } from '@migration-script-runner/firebase';
-
-interface User extends IEntity {
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-}
-
-export default class CreateInitialUsers implements IRunnableScript<IFirebaseDB> {
-  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
-    const userService = new EntityService<User>(
-      db.database,
-      handler.cfg.buildPath('users')
-    );
-
-    const users = [
-      { name: 'Admin', email: 'admin@example.com', role: 'admin' },
-      { name: 'User', email: 'user@example.com', role: 'user' }
-    ];
-
-    const keys = await Promise.all(users.map(u => userService.create(u)));
-    return `Created ${keys.length} users`;
-  }
-}
-```
-
-#### Adding Fields to All Entities
-
-```typescript
-export default class AddVerifiedField implements IRunnableScript<IFirebaseDB> {
-  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
-    const userService = new EntityService<User>(
-      db.database,
-      handler.cfg.buildPath('users')
-    );
-
-    const results = await userService.updateAll((user) => {
-      if (user.verified !== undefined) return false; // Skip if exists
-      user.verified = false;
-      return true; // Modified
-    });
-
-    return `Added verified field to ${results.updated.length} users`;
-  }
-}
-```
-
-#### Querying and Transforming
-
-```typescript
-export default class UpgradeAdminUsers implements IRunnableScript<IFirebaseDB> {
-  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler) {
-    const userService = new EntityService<User>(
-      db.database,
-      handler.cfg.buildPath('users')
-    );
-
-    // Find all admin users
-    const admins = await userService.findAllBy('role', 'admin');
-
-    // Add permissions
-    const updatePromises = admins.map(admin =>
-      userService.update(admin.key!, { permissions: ['read', 'write', 'delete'] })
-    );
-
-    await Promise.all(updatePromises);
-    return `Updated ${admins.length} admin users`;
-  }
-}
-```
-
-{: .tip }
-> **Complete Guide:** See **[Using EntityService](using-entityservice)** for comprehensive documentation with 5+ complete examples, best practices, and API reference.
+For typed CRUD operations on Firebase collections, use [`EntityService`](using-entityservice). The separate guide covers its setup, methods, and complete migration patterns.
 
 ---
 

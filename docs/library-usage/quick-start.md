@@ -37,7 +37,7 @@ import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebas
 async function main() {
   // Configure
   const config = new FirebaseConfig();
-  config.databaseUrl = 'https://your-project.firebaseio.com';
+  config.databaseUrl = 'https://DATABASE-NAME.REGION.firebasedatabase.app';
   config.applicationCredentials = './serviceAccountKey.json';
   config.folder = './migrations';
 
@@ -81,10 +81,10 @@ async function runMigrations() {
       console.log(`  - ${m.name}`);
     });
 
-    process.exit(0);
+    process.exitCode = 0;
   } catch (error) {
     console.error('Migration failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 
@@ -98,7 +98,7 @@ runMigrations();
 Create a `.env` file:
 
 ```bash
-DATABASE_URL=https://your-project.firebaseio.com
+DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 NODE_ENV=development
 ```
@@ -113,32 +113,34 @@ import 'dotenv/config';
 
 ## Your First Migration
 
-Create a migration file in `./migrations/`:
+Create a class migration in `./migrations/`. Firebase migrations implement Core's `IRunnableScript<IFirebaseDB>` contract:
 
 ```typescript
-// migrations/202501200001-create-users.ts
-import { IMigrationScript } from '@migration-script-runner/core';
-import type { Database } from 'firebase-admin/database';
+// migrations/V202501200001_create_users.ts
+import { IMigrationInfo, IRunnableScript } from '@migration-script-runner/core';
+import { FirebaseHandler, IFirebaseDB } from '@migration-script-runner/firebase';
 import { ServerValue } from 'firebase-admin/database';
 
-export const up: IMigrationScript<Database>['up'] = async (db) => {
-  await db.ref('users').set({
-    user1: {
-      name: 'John Doe',
-      email: 'john@example.com',
-      createdAt: ServerValue.TIMESTAMP
-    }
-  });
+export default class CreateUsers implements IRunnableScript<IFirebaseDB> {
+  async up(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler): Promise<string> {
+    await db.database.ref(handler.cfg.buildPath('users')).set({
+      user1: {
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        createdAt: ServerValue.TIMESTAMP
+      }
+    });
+    return 'Created users';
+  }
 
-  console.log('✓ Created users');
-};
-
-export const down: IMigrationScript<Database>['down'] = async (db) => {
-  await db.ref('users').remove();
-  console.log('✓ Removed users');
-};
+  async down(db: IFirebaseDB, info: IMigrationInfo, handler: FirebaseHandler): Promise<string> {
+    await db.database.ref(handler.cfg.buildPath('users')).remove();
+    return 'Removed users';
+  }
+}
 ```
 
+See [Writing Migration Scripts](../writing-migrations/migration-scripts) for naming rules and patterns.
 ---
 
 ## List Migrations
@@ -180,33 +182,22 @@ listMigrations();
 
 ## Rollback Migrations
 
-Roll back the last migration:
+`down(targetVersion)` rolls back migrations newer than a numeric target version:
 
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-async function rollback() {
-  const config = new FirebaseConfig();
-  config.databaseUrl = process.env.DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  config.folder = './migrations';
+const config = new FirebaseConfig();
+config.databaseUrl = process.env.DATABASE_URL;
+config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+config.folder = './migrations';
 
-  const runner = await FirebaseRunner.getInstance({ config });
-
-  try {
-    console.log('Rolling back last migration...');
-    const result = await runner.down();
-
-    console.log(`✓ Rolled back ${result.executed.length} migrations`);
-    process.exit(0);
-  } catch (error) {
-    console.error('Rollback failed:', error);
-    process.exit(1);
-  }
-}
-
-rollback();
+const runner = await FirebaseRunner.getInstance({ config });
+const result = await runner.down(202501150001);
+console.log(`Rolled back ${result.executed.length} migrations`);
 ```
+
+Choose the target version that should remain applied. To remove all migrations, use a target before the first migration (commonly `0`).
 
 ---
 
@@ -287,7 +278,7 @@ async function startServer() {
     console.log('✓ Migrations complete');
   } catch (error) {
     console.error('✗ Migrations failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
   }
 
   // Start server
@@ -310,4 +301,4 @@ startServer();
 - **[Writing Migrations](../writing-migrations/)** - Learn how to write migration scripts
 
 {: .note }
-> For inherited methods from MSR Core (like `migrate()`, `down()`, `list()`), see [MSR Core API Documentation](https://migration-script-runner.github.io/msr-core/api/).
+> For inherited methods from MSR Core (like `migrate()`, `down()`, `list()`), see [MSR Core API Documentation](https://core.migration-script-runner.dev/api/).

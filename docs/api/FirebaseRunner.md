@@ -23,10 +23,10 @@ Main migration runner class for Firebase Realtime Database migrations.
 
 `FirebaseRunner` is the primary class for executing migrations in Firebase Realtime Database. It extends MSR Core's `MigrationScriptRunner` and provides Firebase-specific functionality.
 
-**Inheritance:** Extends [`MigrationScriptRunner`](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner) from MSR Core
+**Inheritance:** Extends [`MigrationScriptRunner`](https://core.migration-script-runner.dev/api/core-classes#migrationscriptrunner) from MSR Core
 
 {: .note }
-> For inherited methods like `migrate()`, `down()`, `list()`, `validate()`, see the [MSR Core MigrationScriptRunner API](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner)
+> For inherited methods like `migrate()`, `down()`, `list()`, `validate()`, see the [MSR Core MigrationScriptRunner API](https://core.migration-script-runner.dev/api/core-classes#migrationscriptrunner)
 
 ## Class Signature
 
@@ -242,13 +242,12 @@ Array of node paths to backup (relative to shift path)
 #### Example
 
 ```typescript
-// Backup specific nodes before risky operations
+// The returned object maps each requested path to its current value.
 const backup = await runner.backupNodes(['users', 'posts']);
 console.log('Backed up users:', backup.users);
 
-// Later, restore if needed
-const db = runner.getDatabase();
-await db.ref('users').set(backup.users);
+// For managed backup and restore, use createBackup()/restoreFromBackup().
+// See the Backup & Restore guide before restoring production data.
 ```
 
 ---
@@ -271,112 +270,13 @@ FirebaseRunner inherits all standard migration methods from MSR Core's `Migratio
 - **`deleteBackup()`** - Delete the current backup when configured
 
 {: .note }
-> **Full documentation:** See [MSR Core MigrationScriptRunner API](https://migration-script-runner.github.io/msr-core/api/core-classes#migrationscriptrunner) for detailed documentation of inherited methods.
+> **Full documentation:** See [MSR Core MigrationScriptRunner API](https://core.migration-script-runner.dev/api/core-classes#migrationscriptrunner) for detailed documentation of inherited methods.
 
 ---
 
-## Usage Examples
+## See Also
 
-### Complete Migration Workflow
-
-```typescript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-
-async function runMigrations() {
-  // 1. Setup configuration
-  const config = new FirebaseConfig();
-  config.databaseUrl = process.env.DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  config.folder = './migrations';
-  config.tableName = 'schema_version';
-  config.shift = process.env.NODE_ENV; // dev/staging/production
-
-  // 2. Create runner
-  const runner = await FirebaseRunner.getInstance({ config });
-
-  // 3. List current state
-  const migrations = await runner.list();
-  console.log(`Found ${migrations.length} migrations`);
-
-  // 4. Validate before running
-  const validation = await runner.validate();
-  if (!validation.valid) {
-    console.error('Validation failed:', validation.errors);
-    return;
-  }
-
-  // 5. Create backup (optional but recommended)
-  await runner.createBackup();
-
-  // 6. Run migrations
-  const result = await runner.migrate();
-  console.log(`Applied ${result.executed.length} migrations`);
-}
-
-runMigrations().catch(console.error);
-```
-
-### With Error Handling
-
-```typescript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-
-async function safeMigrate() {
-  const config = new FirebaseConfig();
-  config.databaseUrl = process.env.DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  config.folder = './migrations';
-
-  const runner = await FirebaseRunner.getInstance({ config });
-
-  try {
-    // Create backup before migration
-    const backupPath = await runner.createBackup();
-    console.log('Backup created:', backupPath);
-
-    // Run migrations
-    const result = await runner.migrate();
-
-    if (result.success) {
-      console.log('✓ Migrations successful');
-    } else {
-      console.error('✗ Migrations failed:', result.errors);
-
-      // Restore from backup
-      await runner.restoreFromBackup(backupPath);
-      console.log('Restored from backup');
-    }
-  } catch (error) {
-    console.error('Migration error:', error);
-    throw error;
-  }
-}
-
-safeMigrate();
-```
-
-### Production Setup with Locking
-
-```typescript
-import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-
-async function productionMigrate() {
-  const config = new FirebaseConfig();
-  config.databaseUrl = process.env.DATABASE_URL;
-  config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  config.folder = './migrations';
-
-  // Enable locking for distributed environments
-  config.locking = {
-    enabled: true,
-    timeout: 600000 // 10 minutes
-  };
-
-  const runner = await FirebaseRunner.getInstance({ config });
-
-  // Locking is handled automatically
-  const result = await runner.migrate();
-  console.log('Migration result:', result);
-}
-```
-
+- [Library Quick Start](../library-usage/quick-start) — initialize a runner and run migrations.
+- [Library Examples](../library-usage/examples) — application integration patterns.
+- [Backup & Restore](../writing-migrations/backup-restore) — backup methods and recovery.
+- [MSR Core MigrationScriptRunner API](https://core.migration-script-runner.dev/api/core-classes#migrationscriptrunner) — inherited methods and behavior.

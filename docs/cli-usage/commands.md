@@ -31,7 +31,7 @@ npx msr-firebase firebase:info
 ```
 📊 Firebase Connection Information:
 
-  Database URL: https://your-project.firebaseio.com
+  Database URL: https://DATABASE-NAME.REGION.firebasedatabase.app
   Shift Path:   /production
   Table Name:   schema_version
 ```
@@ -49,14 +49,14 @@ Test Firebase database connection.
 
 ```bash
 npx msr-firebase firebase:test-connection \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./serviceAccountKey.json
 ```
 
 **Output:**
 ```
 ✅ Firebase connection successful!
-   Connected to: https://your-project.firebaseio.com
+   Connected to: https://DATABASE-NAME.REGION.firebasedatabase.app
 ```
 
 **Use Cases:**
@@ -183,8 +183,10 @@ npx msr-firebase migrate [targetVersion] [options]
 Roll back migrations.
 
 ```bash
-npx msr-firebase down <targetVersion>
+npx msr-firebase down "<targetVersion>"
 ```
+
+`targetVersion` is a numeric migration version. Migrations newer than that target are rolled back.
 
 ### list
 
@@ -204,19 +206,14 @@ npx msr-firebase validate
 
 ### backup
 
-Create database backup.
+Create, restore, or delete a backup using the Core CLI subcommands.
 
 ```bash
-npx msr-firebase backup
+npx msr-firebase backup create
+npx msr-firebase backup restore "<backupPath>"
 ```
 
-### restore
-
-Restore from backup (not yet implemented in Firebase adapter).
-
-```bash
-npx msr-firebase restore <backupPath>
-```
+Use the file path printed by `backup create` with `backup restore`. The CLI starts a new runner process for each command, so it cannot infer the previous command's in-memory backup path when the argument is omitted. The Core CLI also exposes `backup delete`, but that command has no path argument and a fresh runner has no current backup file; manage retained files through your own storage and retention process instead. Review [Backup & Restore](../writing-migrations/backup-restore) before restoring production data.
 
 ### lock:status
 
@@ -235,4 +232,4 @@ npx msr-firebase lock:release [options]
 ```
 
 {: .note }
-> **Full Documentation:** For detailed documentation of standard migration commands, see [MSR Core CLI Documentation](https://migration-script-runner.github.io/msr-core/guides/cli-usage).
+> **Full Documentation:** For detailed documentation of standard migration commands, see the [MSR Core CLI Reference](https://core.migration-script-runner.dev/api/cli-reference).

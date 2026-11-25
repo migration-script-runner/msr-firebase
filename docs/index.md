@@ -22,24 +22,21 @@ Database migrations for Firebase Realtime Database with full TypeScript support.
     <img src="https://github.com/migration-script-runner.png" alt="MSR" style="width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;">
     <div style="flex: 1;">
       <h3 style="color: #3f51b5; font-size: 24px; font-weight: 600; margin: 0 0 8px 0;">Part of the MSR Ecosystem</h3>
-      <p style="color: #7e57c2; font-size: 14px; font-weight: 500; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Powered by MSR Core v0.8.1</p>
+      <p style="color: #7e57c2; font-size: 14px; font-weight: 500; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Powered by MSR Core v1.0.0-beta.2</p>
       <p style="color: #5f6368; line-height: 1.7; margin: 0 0 20px 0; font-size: 15px;">
         MSR Firebase is part of the <strong>Migration Script Runner family</strong> - a suite of database-specific migration tools built on a proven, battle-tested core. Inherits enterprise features like <strong>migration locking</strong> for distributed deployments, <strong>checksum validation</strong>, <strong>multiple rollback strategies</strong>, and comprehensive logging. Firebase-specific features and optimizations added on top.
       </p>
-      <a href="https://migration-script-runner.github.io/msr-core" style="display: inline-block; background: #5c6bc0; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px; transition: background 0.2s;">
-        Learn about MSR Core →
+      <a href="https://migration-script-runner.dev/ecosystem" style="display: inline-block; background: #5c6bc0; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 14px; transition: background 0.2s;">
+        Explore the MSR Ecosystem →
       </a>
     </div>
   </div>
 </div>
 
-{: .warning }
-**⚠️ Unstable Version:** Version v0.2.0 is currently unstable and **not recommended for production use**. The project is under active development and may receive significant updates. Please use with caution and test thoroughly before deploying to production environments.
-
-
 ---
 
-MSR Firebase provides a complete migration solution for Firebase Realtime Database, built on top of [Migration Script Runner Core](https://migration-script-runner.github.io/msr-core).
+MSR Firebase provides a complete migration solution for Firebase Realtime Database, built on top of [Migration Script Runner Core](https://core.migration-script-runner.dev).
+{: .warning }
 
 ### Quick Installation
 
@@ -138,14 +135,14 @@ You can provide Firebase credentials in two ways:
 **Option A: CLI Flags (Recommended for quick start)**
 ```bash
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./serviceAccountKey.json
 ```
 
 **Option B: Environment Variables**
 ```bash
 # .env
-DATABASE_URL=https://your-project.firebaseio.com
+DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 ```
 
@@ -196,9 +193,9 @@ export default class CreateUsers implements IRunnableScript<IFirebaseDB> {
 // migrations/V202501010002_add_posts.ts
 import { IRunnableScript, IMigrationInfo } from '@migration-script-runner/core';
 import { IFirebaseDB, FirebaseHandler, EntityService } from '@migration-script-runner/firebase';
+import type { IEntity } from '@migration-script-runner/firebase';
 
-interface Post {
-  key?: string;
+interface Post extends IEntity {
   title: string;
   author: string;
   createdAt: number;
@@ -257,8 +254,8 @@ const runner = await FirebaseRunner.getInstance({ config: appConfig });
 const result = await runner.migrate();
 console.log(`Applied ${result.executed.length} migrations`);
 
-// Rollback if needed
-await runner.down();
+// Roll back migrations newer than the chosen numeric target version
+await runner.down(202501010001)
 ```
 
 **With CLI:**
@@ -266,14 +263,14 @@ await runner.down();
 ```bash
 # Run with inline credentials (easiest)
 npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
   --credentials ./serviceAccountKey.json
 
 # Or use environment variables
 npx msr-firebase migrate
 
-# Rollback last migration
-npx msr-firebase down
+# Roll back to the chosen target version
+npx msr-firebase down 202501010001
 
 # Check status
 npx msr-firebase list --format table
@@ -349,7 +346,7 @@ See the [LICENSE](https://github.com/migration-script-runner/msr-firebase/blob/m
 
 - [GitHub Repository](https://github.com/migration-script-runner/msr-firebase)
 - [npm Package](https://www.npmjs.com/package/@migration-script-runner/firebase)
-- [MSR Core Documentation](https://migration-script-runner.github.io/msr-core)
+- [MSR Core Documentation](https://core.migration-script-runner.dev)
 - [Report Issues](https://github.com/migration-script-runner/msr-firebase/issues)
 
 ---

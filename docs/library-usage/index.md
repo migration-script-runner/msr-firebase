@@ -53,7 +53,7 @@ Real-world usage patterns and advanced scenarios.
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
 const config = new FirebaseConfig();
-config.databaseUrl = 'https://your-project.firebaseio.com';
+config.databaseUrl = 'https://DATABASE-NAME.REGION.firebasedatabase.app';
 config.applicationCredentials = './serviceAccountKey.json';
 config.folder = './migrations';
 
@@ -77,11 +77,8 @@ migrations.forEach(m => {
 
 ```typescript
 // Rollback to specific version
-await runner.down('202501150001');
-
-// Or rollback one migration
-const result = await runner.down();
-console.log(`Rolled back: ${result.executed[0].name}`);
+const result = await runner.down(202501150001);
+console.log(`Rolled back ${result.executed.length} migrations`);
 ```
 
 ---
@@ -123,7 +120,7 @@ MSR Firebase inherits standard migration functionality from MSR Core:
 - **`deleteBackup()`** - Delete the current backup when configured
 
 {: .note }
-> **Full documentation:** For detailed documentation of inherited methods, configuration options, and interfaces, see [MSR Core API Documentation](https://migration-script-runner.github.io/msr-core/api/).
+> **Full documentation:** For detailed documentation of inherited methods, configuration options, and interfaces, see [MSR Core API Documentation](https://core.migration-script-runner.dev/api/).
 
 ---
 

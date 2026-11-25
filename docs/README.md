@@ -6,8 +6,8 @@ This directory contains the Jekyll-based documentation site for MSR: Firebase, h
 
 ### Prerequisites
 
-- Ruby 3.1 or higher
-- Bundler
+- Ruby 2.6 or higher
+- Bundler 1.17.2 or a compatible newer version
 
 ### Quick Start with npm Scripts
 
@@ -24,7 +24,7 @@ npm run docs:serve
 npm run docs:build
 ```
 
-The site will be available at `http://localhost:4000/msr-firebase/`
+The site will be available at `http://localhost:4000/`. The configured `baseurl` is empty.
 
 ### Manual Commands (without npm)
 
@@ -47,39 +47,45 @@ The built site will be in `docs/_site/`
 ```
 docs/
 ├── _config.yml                  # Jekyll configuration
+├── CNAME                        # Custom Pages domain
 ├── Gemfile                      # Ruby dependencies
 ├── .gitignore                   # Ignore Jekyll build files
 ├── index.md                     # Home page (nav_order: 1)
 ├── getting-started.md           # Getting Started (nav_order: 2)
-├── cli-usage/                   # CLI Usage (nav_order: 3, has_children: true)
+├── features.md                  # Features (nav_order: 3)
+├── cli-usage/                   # CLI Usage (nav_order: 4, has_children: true)
 │   ├── index.md
 │   ├── commands.md
 │   ├── configuration.md
 │   ├── examples.md
 │   └── ci-cd.md
-├── library-usage/               # Library Usage (nav_order: 4, has_children: true)
+├── library-usage/               # Library Usage (nav_order: 5, has_children: true)
 │   ├── index.md
 │   ├── quick-start.md
 │   ├── configuration.md
 │   └── examples.md
-├── api/                         # API Reference (nav_order: 5, has_children: true)
+├── api/                         # API Reference (nav_order: 6, has_children: true)
 │   ├── index.md
 │   ├── FirebaseRunner.md
 │   ├── FirebaseConfig.md
 │   ├── interfaces.md
 │   ├── services.md
 │   └── types.md
-├── writing-migrations/          # Writing Migrations (nav_order: 6, has_children: true)
+├── writing-migrations/          # Writing Migrations (nav_order: 7, has_children: true)
 │   ├── index.md
 │   ├── migration-scripts.md
 │   ├── transactions.md
 │   ├── backup-restore.md
+│   ├── backup-storage.md
 │   ├── testing.md
 │   ├── migration-locking.md
-│   └── best-practices.md
-├── version-migration/           # Version Migration (nav_order: 7, has_children: true)
+│   ├── best-practices.md
+│   ├── using-entityservice.md
+│   └── entityservice-examples.md
+├── version-migration/           # Version Migration (nav_order: 8, has_children: true)
 │   ├── index.md
 │   └── v0.1-to-v0.2.md
+├── _includes/                   # Custom Just the Docs includes
 └── assets/
     └── css/
         └── custom.css (optional)
@@ -129,9 +135,9 @@ nav_order: 1
 
 ## Deployment
 
-Documentation is automatically deployed to GitHub Pages when changes are pushed to the `master` branch via GitHub Actions workflow (`.github/workflows/jekyll.yml`).
+The site uses the custom domain configured in [`CNAME`](CNAME) and [`_config.yml`](_config.yml): <https://firebase.migration-script-runner.dev/>. The [`docs.yml` workflow](../.github/workflows/docs.yml) builds the Jekyll site and checks internal links on pushes and pull requests to `master`, `develop`, and `release/*`; it is a validation workflow, not the Pages deployment mechanism.
 
-**Live Site**: https://migration-script-runner.github.io/msr-firebase/
+For local development, the empty `baseurl` in `_config.yml` means the site is served at the root path (`http://localhost:4000/`).
 
 ## Theme
 
@@ -142,11 +148,12 @@ Uses [Just the Docs](https://just-the-docs.github.io/just-the-docs/) theme for c
 The documentation is organized by **user intent**:
 
 1. **Getting Started** - Installation and quick start for new users
-2. **CLI Usage** - Complete command-line interface documentation
-3. **Library Usage** - Programmatic API usage and integration
-4. **API Reference** - Detailed API documentation
-5. **Writing Migrations** - Guides for writing and managing migrations
-6. **Version Migration** - Upgrade guides between versions
+2. **Features** - Overview of Firebase-specific capabilities
+3. **CLI Usage** - Complete command-line interface documentation
+4. **Library Usage** - Programmatic API usage and integration
+5. **API Reference** - Detailed API documentation
+6. **Writing Migrations** - Guides for writing and managing migrations
+7. **Version Migration** - Upgrade guides between versions
 
 ### Focus on Firebase-Specific Content
 
@@ -154,7 +161,7 @@ Each page documents **only Firebase-specific features**:
 - Firebase-specific CLI flags (`--database-url`, `--credentials`, `--backup-mode`)
 - Firebase-specific commands (`firebase:info`, `firebase:test-connection`, `firebase:nodes`)
 - Firebase limitations (transaction limitations, single-node atomicity)
-- Links to [MSR Core docs](https://migration-script-runner.github.io/msr-core) for inherited functionality
+- Links to [MSR Core docs](https://core.migration-script-runner.dev) for inherited functionality
 
 ## Contributing
 
