@@ -57,10 +57,10 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * @example
      * ```typescript
      * const usersObject = await userService.getAllAsObject();
-     * const user = usersObject['user-key-123'];
+     * const user = usersObject?.['user-key-123'];
      * ```
      */
-    getAllAsObject(): Promise<Record<string, T>> {
+    getAllAsObject(): Promise<Record<string, T> | null> {
         return this.getObject<Record<string, T>>(this.root);
     }
 
@@ -78,7 +78,7 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * }
      * ```
      */
-    get(key:string):Promise<T> {
+    get(key:string):Promise<T | null> {
         return this.getObject<T>(`${this.root}/${key}`);
     }
 
@@ -261,7 +261,7 @@ export class EntityService<T extends IEntity> extends FirebaseDataService {
      * ```
      */
     async removeAll() {
-        await this.setObject(this.root, '')
+        await this.db.ref(this.root).remove();
     }
 
     /**

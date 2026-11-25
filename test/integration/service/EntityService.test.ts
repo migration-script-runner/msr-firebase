@@ -4,6 +4,13 @@ import {IntegrationTestConfig} from "../../IntegrationTestConfig";
 import {expect} from "chai";
 import type { Database } from 'firebase-admin/database';
 
+function requireEntity<T>(entity: T | null): T {
+    if (entity === null) {
+        throw new Error('Expected the entity to exist');
+    }
+    return entity;
+}
+
 describe('EntityService', () => {
 
     let entityService:EntityService<TestEntity>
@@ -45,7 +52,8 @@ describe('EntityService', () => {
         const res = await entityService.getAllAsObject();
 
         // then
-        expect(res).is.not.undefined
+        expect(res).is.not.null
+        if (!res) return;
         expect(res.hasOwnProperty(seedKey)).is.true
         expect(res[seedKey]['test']).eq('123', "The value should be equal to '123'")
     })
@@ -55,7 +63,8 @@ describe('EntityService', () => {
         const res = await entityService.get(seedKey);
 
         // then
-        expect(res).is.not.undefined
+        expect(res).is.not.null
+        if (!res) return;
         expect(res.hasOwnProperty('test')).is.true
         expect(res.test).eq('123', "The value should be equal to '123'")
     })
@@ -69,7 +78,7 @@ describe('EntityService', () => {
         expect(key).is.not.undefined
 
         // and
-        const e2 = await entityService.get(key);
+        const e2 = requireEntity(await entityService.get(key));
 
         // then
         expect(e2.key).eq(key, "The received key and entity key should be equal")
@@ -83,7 +92,7 @@ describe('EntityService', () => {
         expect(key2).eq(key, 'The key should remain the same')
 
         // when: get last version
-        const e3 = await entityService.get(key2);
+        const e3 = requireEntity(await entityService.get(key2));
 
         // then
         expect(e3.key).eq(e2.key, "The received key and entity key should be equal")
@@ -99,7 +108,7 @@ describe('EntityService', () => {
         expect(key).is.not.undefined
 
         // and
-        const e2 = await entityService.get(key);
+        const e2 = requireEntity(await entityService.get(key));
         expect(e2.key).eq(key, "The received key and entity key should be equal")
         expect(e2.test).eq(e.test, "The value should be equal to '-'")
     })
@@ -148,7 +157,7 @@ describe('EntityService', () => {
         expect(key).eq(e.key, 'The key should remain the same')
 
         // when: get last version
-        const e2 = await entityService.get(key);
+        const e2 = requireEntity(await entityService.get(key));
 
         // then
         expect(e2.key).eq(e.key, "The received key and entity key should be equal")
@@ -174,7 +183,7 @@ describe('EntityService', () => {
         expect(key).eq(customKey, 'Keys should be equal')
 
         // when
-        const e = await entityService.get(key);
+        const e = requireEntity(await entityService.get(key));
 
         // then
         expect(e).is.not.undefined
@@ -228,5 +237,7 @@ describe('EntityService', () => {
         // then
         const after = (await entityService.getAll()).length
         expect(after).eq(0, 'Should be 0 records')
+        const snapshot = await db.ref(cfg.buildPath('some-entity')).once('value')
+        expect(snapshot.val()).to.be.null
     })
 })
