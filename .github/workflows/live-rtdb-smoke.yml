@@ -1,0 +1,97 @@
+name: Live Firebase RTDB smoke test
+
+on:
+  pull_request_target:
+    branches:
+      - master
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+  workflow_dispatch:
+    inputs:
+      shift:
+        description: Short run label; the workflow adds a protected namespace, run ID, and attempt
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'pull_request_target' && github.event.pull_request.base.ref == 'master')
+    name: Smoke test live Firebase RTDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out trusted master branch code
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Validate inputs and write service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MANUAL_SHIFT: ${{ inputs.shift }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$FIREBASE_SERVICE_ACCOUNT_KEY" ]]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT_KEY is not configured."
+            exit 1
+          fi
+          if [[ -z "$FIREBASE_DATABASE_URL" ]]; then
+            echo "::error::FIREBASE_DATABASE_URL is not configured."
+            exit 1
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request_target" ]]; then
+            if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "::error::The pull request number is invalid."
+              exit 1
+            fi
+            timestamp="$(date -u '+%Y%m%dt%H%M%S')"
+            MSR_LIVE_TEST_SHIFT="pr-${PR_NUMBER}-${timestamp}"
+          else
+            MSR_LIVE_TEST_SHIFT="$MANUAL_SHIFT"
+          fi
+
+          if [[ ! "$MSR_LIVE_TEST_SHIFT" =~ ^[a-z0-9][a-z0-9_-]{0,39}$ ]]; then
+            echo "::error::Shift must be 1-40 lowercase letters, digits, underscores, or hyphens."
+            exit 1
+          fi
+
+          credential_file="$RUNNER_TEMP/firebase-service-account-$GITHUB_RUN_ID.json"
+          umask 077
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > "$credential_file"
+          printf 'GOOGLE_APPLICATION_CREDENTIALS=%s\n' "$credential_file" >> "$GITHUB_ENV"
+          printf 'MSR_LIVE_TEST_SHIFT=%s\n' "$MSR_LIVE_TEST_SHIFT" >> "$GITHUB_ENV"
+          unset FIREBASE_SERVICE_ACCOUNT_KEY
+
+      - name: Run and verify live RTDB migration
+        env:
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+        run: node .github/scripts/live-rtdb-smoke.mjs
+
+      - name: Remove service account key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-service-account-$GITHUB_RUN_ID.json"
