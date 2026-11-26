@@ -290,7 +290,7 @@ describe('Firebase Integration Tests', () => {
 
             // Attempt connection (will timeout or fail)
             try {
-                const invalidDb = await DBConnector.connect(invalidCfg)
+                const invalidDb = DBConnector.connect(invalidCfg)
                 const connected = await invalidDb.ref('.info/connected').once('value')
                 // If we get here, connection might have succeeded to a different service
                 expect(connected).not.undefined

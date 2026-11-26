@@ -40,7 +40,7 @@ describe('Selective automatic backup integration', () => {
         config.rollbackStrategy = RollbackStrategy.BACKUP;
         config.backupMode = BackupMode.FULL;
 
-        database = await DBConnector.connect(config);
+        database = DBConnector.connect(config);
         const selectedPath = config.buildPath(`${testRoot}/selected`);
         const missingPath = config.buildPath(`${testRoot}/missing`);
         const outsidePath = config.buildPath(`${testRoot}/outside`);

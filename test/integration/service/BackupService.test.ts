@@ -10,7 +10,7 @@ describe('BackupService', () => {
     const cfg = new IntegrationTestConfig()
 
     before(async () => {
-        db = await DBConnector.connect(cfg)
+        db = DBConnector.connect(cfg)
         dataService = new EntityService<TestEntity>(db, cfg.buildPath("data"))
     })
 

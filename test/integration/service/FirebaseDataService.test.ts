@@ -27,7 +27,7 @@ describe("FirebaseDataService", () => {
     let db:Database
 
     before(async () => {
-        db = await DBConnector.connect(cfg)
+        db = DBConnector.connect(cfg)
         service = new FirebaseDataService(db)
     })
 

@@ -6,14 +6,13 @@ import {FirebaseConfig} from "../model";
 
 export class DBConnector {
 
-    public static async connect(cfg:FirebaseConfig): Promise<Database> {
+    public static connect(cfg:FirebaseConfig): Database {
         const filePath = cfg.applicationCredentials
         if(!filePath) throw new TypeError("Application credentials not found in configuration")
 
-        const serviceAccount = await import(filePath)
         const name = randomUUID()
         const options: AppOptions = {
-            credential: cert(serviceAccount),
+            credential: cert(filePath),
             databaseURL: cfg.databaseUrl,
         }
 

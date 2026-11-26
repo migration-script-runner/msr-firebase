@@ -28,7 +28,7 @@ describe('EntityService', () => {
     }
 
     before(async () => {
-        db = await DBConnector.connect(cfg)
+        db = DBConnector.connect(cfg)
         entityService = new EntityService<TestEntity>(db, cfg.buildPath("some-entity"))
         seedData()
     })
