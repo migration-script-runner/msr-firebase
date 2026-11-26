@@ -26,6 +26,7 @@ MSR Firebase v1.0.0 adopts the MSR Core v1 runner API and updates the adapter fo
 - **Selective migration backups:** configure `backupPaths` or pass `--backup-paths`; omit it to keep full-database backups ([#87](https://github.com/migration-script-runner/msr-firebase/issues/87)).
 - **Simpler entity creation:** `IEntity.key` is optional ([#80](https://github.com/migration-script-runner/msr-firebase/issues/80)).
 - **Runtime and data fixes:** Node.js `>=22.13.0` is required, with fixes for Firebase paths and entity behavior ([#76](https://github.com/migration-script-runner/msr-firebase/issues/76), [#84](https://github.com/migration-script-runner/msr-firebase/issues/84), [#102](https://github.com/migration-script-runner/msr-firebase/issues/102)).
+- **Reliable credentials and live validation:** service-account file paths initialize Firebase Admin correctly ([#108](https://github.com/migration-script-runner/msr-firebase/issues/108)); the repository also runs a live RTDB smoke check with trusted `master` code and isolated per-run data ([#109](https://github.com/migration-script-runner/msr-firebase/issues/109), [CI/CD guide](https://firebase.migration-script-runner.dev/cli-usage/ci-cd.html)).
 
 See the [v0.2.x to v1.0.0 migration guide](https://firebase.migration-script-runner.dev/version-migration/v0.2-to-v1.0.html) and the [complete changelog](CHANGELOG.md).
 

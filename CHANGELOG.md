@@ -8,6 +8,7 @@ Notable changes to MSR Firebase are recorded here. This project follows [Keep a 
 
 - Selective automatic migration backups through `FirebaseConfig.backupPaths` and the `--backup-paths` CLI option. Omitting the option keeps full-database backups ([#87](https://github.com/migration-script-runner/msr-firebase/issues/87)).
 - Core configuration loading before Firebase handler creation when `FirebaseRunner.getInstance()` receives no explicit `config` ([#95](https://github.com/migration-script-runner/msr-firebase/issues/95)).
+- A live Firebase Realtime Database smoke workflow for pull requests and manual runs. It executes trusted `master` code against a dedicated test database and cleans up its isolated run data ([#109](https://github.com/migration-script-runner/msr-firebase/issues/109)).
 
 ### Changed
 
@@ -20,6 +21,7 @@ Notable changes to MSR Firebase are recorded here. This project follows [Keep a 
 
 ### Fixed
 
+- Corrected Firebase Admin initialization from a service-account credential file path, preserving the existing path-based configuration API ([#108](https://github.com/migration-script-runner/msr-firebase/issues/108)).
 - Corrected database-root and shifted-path handling, and aligned entity deletion and nullable read types with Firebase Realtime Database behavior ([#84](https://github.com/migration-script-runner/msr-firebase/issues/84)).
 
 ## [0.2.0] - 2025-12-21

@@ -12,7 +12,7 @@ Follow [AGENTS.md](../../../AGENTS.md) and the policy in `docs/version-migration
 - Issue [#82](https://github.com/migration-script-runner/msr-firebase/issues/82) owns creating the root `CHANGELOG.md` and the v0.2.x → v1.0.0 migration guide. Do not duplicate that work under another issue.
 - Before editing, verify the target package version, published release state, and merged changes included in the release.
 - Summarize only traceable changes. Do not invent dates, breaking changes, compatibility claims, or issue links.
-- The repository currently has no root `CHANGELOG.md`; do not describe an unreleased version as published.
+- Maintain the root `CHANGELOG.md` as the release history. Do not describe an unpublished version as published, even when a draft release exists.
 
 ## Maintain migration navigation
 
