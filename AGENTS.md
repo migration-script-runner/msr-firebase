@@ -140,4 +140,5 @@ Use the local procedures when their descriptions match the task:
 - [GitHub issues and PRs](.agents/skills/msr-github-pr/SKILL.md)
 - [GitHub Release notes](.agents/skills/msr-github-release-notes/SKILL.md)
 - [CHANGELOG and migration guides](.agents/skills/msr-release-changelog/SKILL.md)
+- [Documentation maintenance](.agents/skills/msr-docs-maintenance/SKILL.md)
 - [SonarCloud reports](.agents/skills/msr-sonar-report/SKILL.md)
