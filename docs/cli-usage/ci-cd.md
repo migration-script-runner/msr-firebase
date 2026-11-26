@@ -62,6 +62,19 @@ jobs:
 
 This example assumes the package is already in the application's dependencies. The current adapter requires a service-account JSON key file; the CLI does not support keyless Application Default Credentials.
 
+### Live RTDB smoke test
+
+The **Live Firebase RTDB smoke test** workflow runs when a pull request targeting `master` is opened, updated, or reopened. It also supports manual dispatch from `master` with a short label using lowercase letters, digits, underscores, or hyphens. For pull request events, it checks out and runs the trusted `master` branch code; it does not execute the pull request's code. A UTC timestamp and the GitHub run ID and attempt create a separate shift for each run.
+
+Before the first run, add these repository Actions secrets:
+
+- `FIREBASE_SERVICE_ACCOUNT_KEY`: the complete service-account JSON.
+- `FIREBASE_DATABASE_URL`: the dedicated test Realtime Database URL.
+
+Each run writes only beneath `__msr_live_smoke__/<label>/<run-id>/<attempt>`. Including the attempt keeps a workflow re-run isolated from any data left by an earlier attempt. The workflow refuses to proceed if that generated shift already contains data. It runs one marker migration with Core's manual backup mode, checks the marker and schema-version record, then removes the run-specific shift. The service-account file is created with owner-only permissions and removed by an `always()` cleanup step. The workflow uses read-only repository permissions and does not upload credentials, database values, or artifacts.
+
+Use this only with the dedicated test database. The normal unit and Emulator suites do not need these secrets and never connect to this live database.
+
 ## GitLab CI
 
 Set `FIREBASE_DATABASE_URL` and `FIREBASE_SERVICE_ACCOUNT_KEY` as protected, masked CI/CD variables. Keep the service account variable as the raw JSON content.
