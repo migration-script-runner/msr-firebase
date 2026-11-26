@@ -58,7 +58,7 @@ main().catch(console.error);
 
 ## Complete Example
 
-Full example with error handling. Set `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` in the application's process environment; this example does not load `.env` files.
+Full example with error handling. Set `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` in the application's process environment. Because this example passes an explicit `FirebaseConfig`, it does not invoke Core's config loader; load `.env` before starting Node if you use one.
 
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
@@ -110,7 +110,7 @@ GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 NODE_ENV=development
 ```
 
-Load the file with Node.js or a dotenv package; MSR Firebase does not load `.env` files itself:
+For this explicit-config example, load the file with Node.js or a dotenv package before the application starts:
 
 ```bash
 node --env-file=.env app.js

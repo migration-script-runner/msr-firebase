@@ -91,7 +91,7 @@ migrate:
 
 ## CircleCI
 
-Store the database URL and raw service account JSON as project environment variables.
+Store `DATABASE_URL` and `FIREBASE_SERVICE_ACCOUNT_KEY` as CircleCI project or context environment variables. CircleCI provides `DATABASE_URL` directly to each step; the service-account JSON is written to a temporary file, and `environment` sets the path the adapter reads.
 
 ```yaml
 version: 2.1
@@ -110,16 +110,14 @@ jobs:
           command: printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > /tmp/firebase-key.json
       - run:
           name: Validate migrations
-          command: >-
-            export DATABASE_URL="$FIREBASE_DATABASE_URL"
-            GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-key.json
-            && npx msr-firebase validate
+          command: npx msr-firebase validate
+          environment:
+            GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
       - run:
           name: Run migrations
-          command: >-
-            export DATABASE_URL="$FIREBASE_DATABASE_URL"
-            GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-key.json
-            && npx msr-firebase migrate --backup-mode full
+          command: npx msr-firebase migrate --backup-mode full
+          environment:
+            GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
       - run:
           name: Remove service account key
           command: rm -f /tmp/firebase-key.json
