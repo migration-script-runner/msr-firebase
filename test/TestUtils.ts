@@ -9,13 +9,13 @@ export class TestUtils {
     private static db:Database
 
     public static async clean() {
-        const database = await this.getDB();
+        const database = this.getDB();
         if(!this.cleaner) this.cleaner = new TestDataCleaner(database)
         await this.cleaner.clean()
     }
 
-    public static async getDB() {
-        if(!this.db) this.db = await DBConnector.connect(new TestConfig())
+    public static getDB(): Database {
+        if(!this.db) this.db = DBConnector.connect(new TestConfig())
         return this.db
     }
 }

@@ -23,7 +23,7 @@ describe("FirebaseHandler", () => {
         } as unknown as Database;
 
         // Stub DBConnector.connect
-        connectStub = sinon.stub(DBConnector, "connect").resolves(mockDatabase);
+        connectStub = sinon.stub(DBConnector, "connect").returns(mockDatabase);
 
         // Create config
         config = new FirebaseConfig();

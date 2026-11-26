@@ -56,7 +56,7 @@ export class FirebaseHandler implements IDatabaseMigrationHandler<IFirebaseDB> {
      */
     public static async getInstance(cfg: FirebaseConfig): Promise<FirebaseHandler> {
         const backupPaths = resolveBackupPaths(cfg.backupPaths, cfg.shift);
-        const database = await DBConnector.connect(cfg);
+        const database = DBConnector.connect(cfg);
         const firebaseDb = new FirebaseDB(database);
         const handler = new FirebaseHandler(cfg, firebaseDb, backupPaths);
 
