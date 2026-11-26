@@ -51,10 +51,12 @@ npx msr-firebase migrate
 Always validate before running migrations:
 
 ```bash
+# Set these once so each CLI process can connect to the same database.
+export DATABASE_URL="https://DATABASE-NAME.REGION.firebasedatabase.app"
+export GOOGLE_APPLICATION_CREDENTIALS="./key.json"
+
 # 1. Test connection
-npx msr-firebase firebase:test-connection \
-  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
-  --credentials ./key.json
+npx msr-firebase firebase:test-connection
 
 # 2. List pending migrations
 npx msr-firebase list
@@ -64,8 +66,7 @@ npx msr-firebase validate
 
 # 4. Run migrations
 npx msr-firebase migrate \
-  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
-  --credentials ./key.json
+  --backup-mode full
 ```
 
 ### Safe Migration with Backup
@@ -116,13 +117,22 @@ npx msr-firebase migrate \
 
 ### Staging
 
-```bash
-# Using config file
-npx msr-firebase migrate --config-file ./msr.config.staging.js
+Core can load an ordered list of environment files. The first file takes precedence when the same variable appears more than once. Set `envFileSources` in the config file passed to the CLI:
 
-# Or with environment-specific .env
-export $(cat .env.staging | xargs)
-npx msr-firebase migrate
+```javascript
+// msr.config.staging.js
+module.exports = {
+  envFileSources: ['.env.staging.local', '.env.staging', '.env']
+};
+```
+
+Core loads its standard `MSR_*` settings from these files. Provide Firebase-specific values using CLI flags or process environment variables:
+
+```bash
+npx msr-firebase migrate \
+  --config-file ./msr.config.staging.js \
+  --database-url "$FIREBASE_DATABASE_URL" \
+  --credentials "$GOOGLE_APPLICATION_CREDENTIALS"
 ```
 
 ### Production
@@ -275,6 +285,7 @@ npx msr-firebase lock:release --force
 
 ```bash
 #!/bin/bash
+# Requires DATABASE_URL and GOOGLE_APPLICATION_CREDENTIALS in the environment.
 
 # Check for pending migrations
 PENDING=$(npx msr-firebase list --format json | jq -s '[.[] | .pending[]?] | length')
@@ -293,6 +304,10 @@ fi
 #!/bin/bash
 set -e
 
+# Provide these through the deployment environment or export them here.
+export DATABASE_URL="$PROD_DATABASE_URL"
+export GOOGLE_APPLICATION_CREDENTIALS="./prod-key.json"
+
 echo "🔍 Validating migrations..."
 npx msr-firebase validate
 
@@ -301,8 +316,6 @@ echo "💾 Creating backup..."
 
 echo "🚀 Running migrations..."
 if npx msr-firebase migrate \
-  --database-url "$PROD_DATABASE_URL" \
-  --credentials ./prod-key.json \
   --backup-mode full; then
   echo "✓ Migrations successful"
 else

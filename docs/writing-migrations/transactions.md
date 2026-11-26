@@ -144,11 +144,15 @@ Since Firebase doesn't support database-wide transactions, use these strategies 
 Use Core's default `backupMode: 'full'` and backup rollback strategy for automatic recovery. For application-managed recovery, set `backupMode: 'manual'` and retain the path from `createBackup()`:
 
 ```bash
+# Export DATABASE_URL and GOOGLE_APPLICATION_CREDENTIALS before these commands.
+export DATABASE_URL="https://DATABASE-NAME.REGION.firebasedatabase.app"
+export GOOGLE_APPLICATION_CREDENTIALS="./serviceAccountKey.json"
+
 # Manual backup before migration
 npx msr-firebase backup create
 
 # Run migration
-npx msr-firebase migrate
+npx msr-firebase migrate --backup-mode manual
 
 # Restore if something goes wrong
 npx msr-firebase backup restore ./backups/backup-2025-01-15-10-30-00.bkp
@@ -162,11 +166,10 @@ const runner = await FirebaseRunner.getInstance({ config: appConfig });
 // runner was created with config.backupMode = 'manual'.
 const backupPath = await runner.createBackup();
 
-try {
-  await runner.migrate();
-} catch (error) {
+const result = await runner.migrate();
+if (!result.success) {
   await runner.restoreFromBackup(backupPath);
-  throw error;
+  throw result.errors?.[0] ?? new Error('Migration failed');
 }
 ```
 

@@ -11,7 +11,7 @@ import type { Database } from 'firebase-admin/database';
  * Firebase Realtime Database does NOT support database-wide transactions like SQL databases.
  * Instead, Firebase provides single-node atomic operations via `ref.transaction()`.
  *
- * See [Firebase Transactions Guide](https://migration-script-runner.github.io/msr-firebase/guides/transactions)
+ * See [Firebase Transactions Guide](https://firebase.migration-script-runner.dev/writing-migrations/transactions.html)
  * for proper usage patterns and examples.
  *
  * @example

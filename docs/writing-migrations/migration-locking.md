@@ -72,7 +72,7 @@ Locks automatically expire after the configured timeout (default: 10 minutes). E
 
 ### Basic Configuration
 
-Enable locking by adding the `locking` configuration:
+MSR Core enables locking by default. Configure the timeout if needed; set `enabled: false` only when you deliberately want migrations to run without the lock.
 
 ```javascript
 // msr.config.js
@@ -80,9 +80,7 @@ module.exports = {
   folder: './migrations',
   tableName: 'schema_version',
 
-  // Enable migration locking
   locking: {
-    enabled: true,
     timeout: 600000  // 10 minutes in milliseconds
   }
 };
@@ -92,7 +90,7 @@ module.exports = {
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `enabled` | boolean | `false` | Enable/disable migration locking |
+| `enabled` | boolean | `true` | Enable/disable migration locking |
 | `timeout` | number | `600000` | Lock timeout in milliseconds (10 minutes) |
 
 ### Environment-Specific Configuration
@@ -216,24 +214,11 @@ Failed to initialize lock storage at migrations/_lock: PERMISSION_DENIED
 ```
 
 **Solution:**
-Ensure your Firebase security rules allow read/write access to the lock path:
-
-```json
-{
-  "rules": {
-    "migrations": {
-      "_lock": {
-        ".read": "auth != null",
-        ".write": "auth != null"
-      }
-    }
-  }
-}
-```
+MSR Firebase uses the Firebase Admin SDK. With administrative credentials, it bypasses Realtime Database Security Rules, so changing those rules will not fix this error. Check that the configured database URL points to the intended instance, the service account has the required Firebase/Google Cloud access, the credentials are valid, and the process can reach Firebase. If you deliberately initialized the Admin SDK with limited privileges, check that service's `databaseAuthVariableOverride` and the matching rules. See the [Firebase Admin SDK access levels](https://firebase.google.com/docs/database/admin/start#authenticate_with_limited_privileges).
 
 ## Best Practices
 
-### 1. Always Enable Locking in Production
+### 1. Keep Locking Enabled in Production
 
 ```javascript
 // msr.config.js
@@ -281,58 +266,81 @@ async function runMigrations(): Promise<void> {
 
 ## Deployment Examples
 
-### Kubernetes Deployment
+Run one migration job per release before starting or updating application replicas. Do not run `msr-firebase migrate` in every pod's startup command: locking prevents overlap, but competing runners fail fast by default rather than waiting.
+
+### Kubernetes Job
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: my-app
+  name: my-app-migrations
 spec:
-  replicas: 3
+  backoffLimit: 1
   template:
     spec:
-      initContainers:
-      - name: migrations
-        image: my-app:latest
-        command: ["msr-firebase", "migrate"]
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: firebase-secrets
-              key: database-url
+      restartPolicy: Never
+      containers:
+        - name: migrations
+          image: my-app:latest
+          command: ["msr-firebase", "migrate"]
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: firebase-secrets
+                  key: database-url
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-key.json
+          volumeMounts:
+            - name: firebase-credentials
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: firebase-credentials
+          secret:
+            secretName: firebase-service-account
+            items:
+              - key: service-account.json
+                path: firebase-key.json
 ```
 
-With locking enabled, only one pod will successfully run migrations. Others will wait or skip gracefully.
+Wait for the Job to complete successfully before rolling out application replicas.
 
 ### Docker Compose
 
+Run a one-shot migration service before starting or updating the application:
+
 ```yaml
-version: '3.8'
 services:
+  migrations:
+    image: my-app:latest
+    command: ["msr-firebase", "migrate"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-key.json
+    volumes:
+      - ./firebase-key.json:/secrets/firebase-key.json:ro
+
   app:
     image: my-app:latest
-    deploy:
-      replicas: 3
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-    command: sh -c "msr-firebase migrate && npm start"
+    command: ["npm", "start"]
 ```
 
+Run `docker compose run --rm migrations` and wait for it to succeed before `docker compose up -d app`.
+
 ### CI/CD Pipeline
+
+Provide `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` to the job, and write the service-account secret to the referenced file before running the command. For a complete credentials setup, see [CI/CD Integration](../cli-usage/ci-cd).
 
 ```yaml
 # .github/workflows/deploy.yml
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        region: [us-east, us-west, eu-west]
     steps:
       - name: Run Migrations
         run: msr-firebase migrate
@@ -340,7 +348,7 @@ jobs:
           NODE_ENV: production
 ```
 
-Locking ensures only one region's deployment runs migrations.
+With the default zero retries, at most one region's job acquires the lock; competing jobs fail fast with a lock error. Prefer a single migration job in the deployment pipeline. Configure Core's retry options only if concurrent jobs are intentional and should wait for the lock.
 
 ## Advanced Usage
 

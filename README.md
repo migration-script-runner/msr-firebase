@@ -59,7 +59,7 @@ MSR Core is the shared migration engine behind the MSR family. MSR Firebase conn
 
 ### Firebase integration and developer experience
 
-- 🔑 **Firebase Admin authentication:** use a service-account key or Application Default Credentials.
+- 🔑 **Firebase Admin authentication:** connect with a service-account JSON key file.
 - 🌐 **Environment path shifting:** run against separate data paths for development, staging, and production.
 - ⚙️ **Flexible configuration:** use environment variables, config files, or CLI flags, including Core-managed configuration loading.
 - 🔌 **Firebase CLI tools:** inspect connection details, test connectivity, and work with Firebase nodes.

@@ -43,7 +43,10 @@ async function main() {
 
   // Create runner and execute migrations
   const runner = await FirebaseRunner.getInstance({ config });
-  await runner.migrate();
+  const result = await runner.migrate();
+  if (!result.success) {
+    throw result.errors?.[0] ?? new Error('Migration failed');
+  }
 
   console.log('Migrations completed successfully!');
 }
@@ -55,11 +58,10 @@ main().catch(console.error);
 
 ## Complete Example
 
-Full example with error handling:
+Full example with error handling. Set `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` in the application's process environment. Because this example passes an explicit `FirebaseConfig`, it does not invoke Core's config loader; load `.env` before starting Node if you use one.
 
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-import 'dotenv/config';
 
 async function runMigrations() {
   // Configure
@@ -75,6 +77,11 @@ async function runMigrations() {
 
     console.log('Running migrations...');
     const result = await runner.migrate();
+    if (!result.success) {
+      console.error('Migration failed:', result.errors);
+      process.exitCode = 1;
+      return;
+    }
 
     console.log(`✓ Applied ${result.executed.length} migrations`);
     result.executed.forEach(m => {
@@ -103,10 +110,10 @@ GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
 NODE_ENV=development
 ```
 
-Load environment variables:
+For this explicit-config example, load the file with Node.js or a dotenv package before the application starts:
 
-```typescript
-import 'dotenv/config';
+```bash
+node --env-file=.env app.js
 ```
 
 ---
@@ -143,9 +150,9 @@ export default class CreateUsers implements IRunnableScript<IFirebaseDB> {
 See [Writing Migration Scripts](../writing-migrations/migration-scripts) for naming rules and patterns.
 ---
 
-## List Migrations
+## Display Migration Status
 
-Check migration status programmatically:
+Display migration status using the configured renderer:
 
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
@@ -157,22 +164,7 @@ async function listMigrations() {
   config.folder = './migrations';
 
   const runner = await FirebaseRunner.getInstance({ config });
-  const migrations = await runner.list();
-
-  console.log('Migration Status:');
-  console.log('─'.repeat(60));
-
-  migrations.forEach(m => {
-    const icon = m.status === 'executed' ? '✓' : '○';
-    const date = m.executedAt
-      ? new Date(m.executedAt).toISOString()
-      : 'Not applied';
-
-    console.log(`${icon} ${m.name}`);
-    console.log(`  Status: ${m.status}`);
-    console.log(`  Applied: ${date}`);
-    console.log();
-  });
+  await runner.list();
 }
 
 listMigrations();
@@ -194,7 +186,11 @@ config.folder = './migrations';
 
 const runner = await FirebaseRunner.getInstance({ config });
 const result = await runner.down(202501150001);
-console.log(`Rolled back ${result.executed.length} migrations`);
+if (!result.success) {
+  console.error('Rollback failed:', result.errors);
+} else {
+  console.log(`Rolled back ${result.executed.length} migrations`);
+}
 ```
 
 Choose the target version that should remain applied. To remove all migrations, use a target before the first migration (commonly `0`).
@@ -239,11 +235,11 @@ config.folder = './migrations';
 const runner = await FirebaseRunner.getInstance({
   config,
   hooks: {
-    beforeMigrate: async (info) => {
-      console.log(`Starting migration: ${info.name}`);
+    onBeforeMigrate: async (script) => {
+      console.log(`Starting migration: ${script.name}`);
     },
-    afterMigrate: async (info, result) => {
-      console.log(`Completed: ${result}`);
+    onAfterMigrate: async (script, result) => {
+      console.log(`Completed ${script.name}: ${result}`);
     },
     onError: async (error) => {
       console.error('Migration error:', error);
@@ -274,11 +270,17 @@ async function startServer() {
   try {
     console.log('Running migrations...');
     const runner = await FirebaseRunner.getInstance({ config });
-    await runner.migrate();
+    const result = await runner.migrate();
+    if (!result.success) {
+      console.error('✗ Migrations failed:', result.errors);
+      process.exitCode = 1;
+      return;
+    }
     console.log('✓ Migrations complete');
   } catch (error) {
     console.error('✗ Migrations failed:', error);
     process.exitCode = 1;
+    return;
   }
 
   // Start server

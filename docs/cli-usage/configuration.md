@@ -24,7 +24,7 @@ Configure MSR Firebase CLI through flags, environment variables, and config file
 Configuration sources are applied in this order (highest to lowest priority):
 
 1. **CLI Flags** - Command-line arguments
-2. **Environment Variables** - `.env` file or shell exports
+2. **Environment Variables** - process environment values. Core loads its standard `MSR_*` settings from configured `.env` sources (by default `.env.local`, `.env`, and `env`). The current Firebase CLI reads Firebase-specific settings from `process.env`; expose those values to the process or provide them through CLI flags or a config file.
 3. **Config File** - `msr.config.js` or via `--config-file`
 
 ---
@@ -223,6 +223,8 @@ npx msr-firebase migrate --log-level debug
 
 ### Firebase-Specific
 
+`FirebaseConfig` reads the Firebase-specific names below from `process.env`. Core loads its standard `MSR_*` settings from configured `.env` sources, but the current Firebase CLI does not map these Firebase-specific names from `.env`. Export them into the process environment, or provide them using CLI flags or a config file.
+
 ```bash
 DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
@@ -306,9 +308,15 @@ npx msr-firebase migrate --config-file ./msr.config.prod.js
 Combining all configuration methods:
 
 ```bash
-# .env file
+# .env
 DATABASE_URL=https://STAGING-DATABASE.REGION.firebasedatabase.app
-MSR_FOLDER=./migrations
+GOOGLE_APPLICATION_CREDENTIALS=./staging-key.json
+MSR_BACKUP_MODE=full
+
+# Export Firebase-specific values for the CLI process.
+set -a
+. ./.env
+set +a
 
 # Command with overrides
 npx msr-firebase migrate \
@@ -318,7 +326,7 @@ npx msr-firebase migrate \
 ```
 
 **Priority Resolution:**
-1. `--credentials ./staging-key.json` (CLI flag - highest)
-2. `DATABASE_URL` from `.env` (environment variable)
-3. `MSR_FOLDER` from `.env` (environment variable)
+1. CLI flags such as `--credentials` and `--backup-mode` (highest)
+2. `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` from the process environment
+3. `MSR_BACKUP_MODE` loaded by Core from its `.env` sources
 4. Other defaults from MSR Core

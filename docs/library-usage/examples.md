@@ -40,18 +40,20 @@ async function runMigrations() {
   const runner = await FirebaseRunner.getInstance({ config });
 
   // 3. List current state
-  const migrations = await runner.list();
-  console.log(`Found ${migrations.length} migrations`);
+  await runner.list(); // Prints the current migration status through the configured renderer.
 
   // 4. Validate before running
   const validation = await runner.validate();
-  if (!validation.valid) {
-    console.error('Validation failed:', validation.errors);
-    return;
-  }
+  console.log(
+    `Validated ${validation.pending.length} pending migrations; found ${validation.migrated.length} integrity issues in migrated files`
+  );
 
   // 5. Run migrations; Core creates and cleans up the backup according to backupMode.
   const result = await runner.migrate();
+  if (!result.success) {
+    console.error('Migration failed:', result.errors);
+    return;
+  }
   console.log(`Applied ${result.executed.length} migrations`);
 }
 
@@ -109,10 +111,8 @@ async function productionMigrate() {
   config.backupMode = 'full';
 
   // Enable locking for distributed environments
-  config.locking = {
-    enabled: true,
-    timeout: 600000 // 10 minutes
-  };
+  config.locking.enabled = true;
+  config.locking.timeout = 600000; // 10 minutes
 
   const runner = await FirebaseRunner.getInstance({ config });
 
@@ -151,6 +151,9 @@ async function startServer() {
     console.log('Running migrations...');
     const runner = await FirebaseRunner.getInstance({ config });
     const result = await runner.migrate();
+    if (!result.success) {
+      throw result.errors?.[0] ?? new Error('Migration failed');
+    }
     console.log(`✓ Applied ${result.executed.length} migrations`);
   } catch (error) {
     console.error('✗ Migrations failed:', error);
@@ -222,6 +225,7 @@ async function backupBeforeOperation() {
   const config = new FirebaseConfig();
   config.databaseUrl = process.env.DATABASE_URL;
   config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  config.backupMode = 'manual'; // Use this selective snapshot instead of a Core-managed full backup.
 
   const runner = await FirebaseRunner.getInstance({ config });
 
@@ -231,15 +235,22 @@ async function backupBeforeOperation() {
 
   try {
     // Run migrations
-    await runner.migrate();
-  } catch (error) {
-    console.error('Migration failed:', error);
+    const result = await runner.migrate();
+    if (result.success) {
+      return;
+    }
+
+    console.error('Migration failed:', result.errors);
 
     // Restore specific nodes from backup
     const db = runner.getDatabase();
-    await db.ref('users').set(backup.users);
-    await db.ref('posts').set(backup.posts);
+    for (const [node, data] of Object.entries(backup)) {
+      await db.ref(config.buildPath(node)).set(data);
+    }
     console.log('Restored from backup');
+  } catch (error) {
+    console.error('Migration or restore operation failed:', error);
+    throw error;
   }
 }
 
@@ -263,12 +274,12 @@ config.folder = './migrations';
 const runner = await FirebaseRunner.getInstance({
   config,
   hooks: {
-    beforeMigrate: async (info) => {
-      console.log(`📝 Starting migration: ${info.name}`);
+    onBeforeMigrate: async (script) => {
+      console.log(`📝 Starting migration: ${script.name}`);
       // Send notification, update status, etc.
     },
-    afterMigrate: async (info, result) => {
-      console.log(`✅ Completed: ${info.name} - ${result}`);
+    onAfterMigrate: async (script, result) => {
+      console.log(`✅ Completed: ${script.name} - ${result}`);
       // Log to monitoring system
     },
     onError: async (error) => {
@@ -289,16 +300,16 @@ Track migration performance:
 
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
-import { IMetricsCollector } from '@migration-script-runner/core';
+import { IDB, IMetricsCollector, IMigrationResult } from '@migration-script-runner/core';
 
 class CustomMetricsCollector implements IMetricsCollector {
-  async recordMigration(name: string, duration: number, success: boolean): Promise<void> {
-    console.log(`Migration ${name}: ${duration}ms (${success ? 'success' : 'failure'})`);
+  async recordMigrationComplete(result: IMigrationResult<IDB>, duration: number): Promise<void> {
+    console.log(`Migration run: ${duration}ms (${result.success ? 'success' : 'failure'})`);
     // Send to monitoring service (Datadog, Prometheus, etc.)
   }
 
-  async recordError(name: string, error: Error): Promise<void> {
-    console.error(`Migration ${name} failed:`, error);
+  async recordError(error: Error): Promise<void> {
+    console.error('Migration run failed:', error);
     // Send to error tracking service (Sentry, etc.)
   }
 }
@@ -325,7 +336,7 @@ Run migrations to a specific version:
 ```typescript
 import { FirebaseRunner, FirebaseConfig } from '@migration-script-runner/firebase';
 
-async function migrateToVersion(targetVersion: string) {
+async function migrateToVersion(targetVersion: number) {
   const config = new FirebaseConfig();
   config.databaseUrl = process.env.DATABASE_URL;
   config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -333,20 +344,20 @@ async function migrateToVersion(targetVersion: string) {
 
   const runner = await FirebaseRunner.getInstance({ config });
 
-  // List migrations to see available versions
-  const migrations = await runner.list();
-  console.log('Available migrations:');
-  migrations.forEach(m => {
-    console.log(`  ${m.name} - ${m.status}`);
-  });
+  // Print migration status before selecting the target version.
+  await runner.list();
 
   // Run migrations up to target version
   const result = await runner.migrate(targetVersion);
+  if (!result.success) {
+    console.error('Migration failed:', result.errors);
+    return;
+  }
   console.log(`Migrated to version ${targetVersion}`);
   console.log(`Executed: ${result.executed.map(m => m.name).join(', ')}`);
 }
 
-migrateToVersion('202501200003');
+migrateToVersion(202501200003);
 ```
 
 ---
@@ -370,6 +381,10 @@ async function dryRunMigrations() {
   console.log('🔍 Running in DRY RUN mode (no changes will be applied)');
 
   const result = await runner.migrate();
+  if (!result.success) {
+    console.error('Dry run failed:', result.errors);
+    return;
+  }
   console.log('Would execute migrations:');
   result.executed.forEach(m => {
     console.log(`  - ${m.name}`);
@@ -408,6 +423,10 @@ async function migrateAllEnvironments(environments: Environment[]) {
     try {
       const runner = await FirebaseRunner.getInstance({ config });
       const result = await runner.migrate();
+      if (!result.success) {
+        console.error(`✗ ${env.name} migration failed:`, result.errors);
+        continue;
+      }
       console.log(`✓ ${env.name}: Applied ${result.executed.length} migrations`);
     } catch (error) {
       console.error(`✗ ${env.name} failed:`, error);

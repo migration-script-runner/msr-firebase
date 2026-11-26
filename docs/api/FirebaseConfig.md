@@ -32,7 +32,7 @@ class FirebaseConfig extends Config
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `databaseUrl` | <code>string &#124; undefined</code> | `process.env.DATABASE_URL` | Firebase Realtime Database URL. Copy the URL for the selected database from Firebase Console; its host depends on the database location. |
-| `applicationCredentials` | <code>string &#124; undefined</code> | `process.env.GOOGLE_APPLICATION_CREDENTIALS` | Path to a service account JSON file. May be omitted when Application Default Credentials are configured. |
+| `applicationCredentials` | <code>string &#124; undefined</code> | `process.env.GOOGLE_APPLICATION_CREDENTIALS` | Path to a service-account JSON key file. Required by the current Firebase adapter when connecting. |
 | `shift` | <code>string &#124; undefined</code> | `undefined` | Optional root path prefix for namespacing data in a shared database. |
 | `backupPaths` | <code>string[] &#124; undefined</code> | `undefined` | Relative database paths included in Core-managed backups. Unset means back up the full database. |
 | `tableName` | `string` | `'schema_version'` | Firebase path used to store migration records. |
@@ -48,7 +48,7 @@ Builds an absolute Firebase path, applying `shift` when configured.
 ```typescript
 const config = new FirebaseConfig();
 config.shift = 'production';
-config.buildPath('users'); // /production/users
+config.buildPath('users'); // production/users
 ```
 
 ### `getRoot(): string`
@@ -58,7 +58,7 @@ Returns the root path after applying `shift`.
 ```typescript
 const config = new FirebaseConfig();
 config.shift = 'production';
-config.getRoot(); // /production/
+config.getRoot(); // production/
 ```
 
 ## Inherited Configuration

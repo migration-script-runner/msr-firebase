@@ -12,6 +12,7 @@ Notable changes to MSR Firebase are recorded here. This project follows [Keep a 
 ### Changed
 
 - Migrated the adapter to the MSR Core v1 runner API. Core integrations use `MigrationScriptRunner`, `IRunnerOptions`, and `IRunnerDependencies`; custom CLI adapters use `createRunner` ([#75](https://github.com/migration-script-runner/msr-firebase/issues/75)).
+- Declared `firebase-admin` as a runtime dependency, so installing the adapter also installs the Firebase SDK it requires ([#81](https://github.com/migration-script-runner/msr-firebase/issues/81)).
 - Lock records now store `runnerId` instead of `executorId`. Runner ID parsing also preserves hostnames containing hyphens ([#75](https://github.com/migration-script-runner/msr-firebase/issues/75)).
 - Set the supported Node.js version to `>=22.13.0` and refreshed the runtime and development toolchain ([#76](https://github.com/migration-script-runner/msr-firebase/issues/76), [#102](https://github.com/migration-script-runner/msr-firebase/issues/102)).
 - Made `IEntity.key` optional, so entities without a Firebase key no longer need `key: undefined` ([#80](https://github.com/migration-script-runner/msr-firebase/issues/80)).

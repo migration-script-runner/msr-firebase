@@ -153,17 +153,15 @@ config.folder = './db/migrations';
 Migration locking configuration for distributed environments.
 
 ```typescript
-config.locking = {
-  enabled: true,
-  timeout: 600000  // 10 minutes
-};
+config.locking.enabled = true;
+config.locking.timeout = 600000; // 10 minutes
 ```
 
-**Type:** `{ enabled: boolean; timeout: number }`
+**Type:** `LockingConfig` from MSR Core
 
-**Default:** `{ enabled: false, timeout: 600000 }`
+**Default:** Core enables locking by default; the lock timeout is `600000` milliseconds (10 minutes).
 
-**When to enable:**
+**Configuration guidance:**
 - Kubernetes deployments with multiple pods
 - Docker Swarm with multiple replicas
 - Auto-scaling environments
@@ -171,11 +169,11 @@ config.locking = {
 
 **Example:**
 ```typescript
-config.locking = {
-  enabled: process.env.NODE_ENV === 'production',
-  timeout: 600000  // 10 minutes
-};
+config.locking.enabled = process.env.NODE_ENV === 'production';
+config.locking.timeout = 600000; // 10 minutes
 ```
+
+Core's `LockingConfig` is inherited from MSR Core. Locking is already enabled unless you explicitly set `enabled: false`; see the [MSR Core configuration reference](https://core.migration-script-runner.dev/api/models#lockingconfig) for its other options.
 
 ---
 
@@ -290,10 +288,8 @@ config.shift = process.env.NODE_ENV; // dev/staging/production
 config.backupMode = 'full';
 
 // Locking (production only)
-config.locking = {
-  enabled: process.env.NODE_ENV === 'production',
-  timeout: 600000
-};
+config.locking.enabled = process.env.NODE_ENV === 'production';
+config.locking.timeout = 600000;
 
 // Display settings
 config.displayLimit = 50;
@@ -319,10 +315,8 @@ function createConfig(env: 'development' | 'staging' | 'production'): FirebaseCo
     config.databaseUrl = process.env.PROD_DATABASE_URL;
     config.applicationCredentials = process.env.PROD_CREDENTIALS;
     config.backupMode = 'full';
-    config.locking = {
-      enabled: true,
-      timeout: 600000
-    };
+    config.locking.enabled = true;
+    config.locking.timeout = 600000;
   } else {
     // Dev/Staging: shared database with shift
     config.databaseUrl = process.env.DEV_DATABASE_URL;
@@ -372,9 +366,10 @@ const prodConfig = MultiEnvConfig.create('production');
 
 ### Configuration from Environment
 
+`FirebaseConfig` reads these values from `process.env`; load `.env` files separately if you use them.
+
 ```typescript
 import { FirebaseConfig } from '@migration-script-runner/firebase';
-import 'dotenv/config';
 
 const config = new FirebaseConfig();
 
@@ -507,10 +502,8 @@ config.backupMode = 'full';
 ### 3. Enable Locking in Production
 
 ```typescript
-config.locking = {
-  enabled: process.env.NODE_ENV === 'production',
-  timeout: 600000
-};
+config.locking.enabled = process.env.NODE_ENV === 'production';
+config.locking.timeout = 600000;
 ```
 
 ### 4. Validate Configuration at Startup
