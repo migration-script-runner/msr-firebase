@@ -3,6 +3,7 @@ layout: default
 title: Library Usage
 nav_order: 5
 has_children: true
+has_toc: false
 ---
 
 # Library Usage
@@ -10,6 +11,26 @@ has_children: true
 
 Complete guide for using MSR Firebase programmatically in your Node.js applications.
 {: .fs-6 .fw-300 }
+
+## Table of contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
+
+### [Quick Start](quick-start)
+Basic programmatic usage examples to get started quickly.
+
+### [Configuration](configuration)
+Programmatic configuration using FirebaseConfig class and options.
+
+### [API Reference](../api/)
+Complete API documentation for Firebase-specific classes and methods.
+
+### [Examples](examples)
+Real-world usage patterns and advanced scenarios.
+
+---
 
 ## Quick Start
 
@@ -28,22 +49,6 @@ config.folder = './migrations';
 const runner = await FirebaseRunner.getInstance({ config });
 await runner.migrate();
 ```
-
-## Library Sections
-
-### [Quick Start](quick-start)
-Basic programmatic usage examples to get started quickly.
-
-### [Configuration](configuration)
-Programmatic configuration using FirebaseConfig class and options.
-
-### [API Reference](../api/)
-Complete API documentation for Firebase-specific classes and methods.
-
-### [Examples](examples)
-Real-world usage patterns and advanced scenarios.
-
----
 
 ## Common Operations
 

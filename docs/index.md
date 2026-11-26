@@ -22,7 +22,7 @@ Database migrations for Firebase Realtime Database with full TypeScript support.
     <img src="https://github.com/migration-script-runner.png" alt="MSR" style="width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0;">
     <div style="flex: 1;">
       <h3 style="color: #3f51b5; font-size: 24px; font-weight: 600; margin: 0 0 8px 0;">Part of the MSR Ecosystem</h3>
-      <p style="color: #7e57c2; font-size: 14px; font-weight: 500; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Powered by MSR Core v1.0.0-beta.2</p>
+      <p style="color: #7e57c2; font-size: 14px; font-weight: 500; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">Powered by MSR Core</p>
       <p style="color: #5f6368; line-height: 1.7; margin: 0 0 20px 0; font-size: 15px;">
         MSR Firebase is part of the <strong>Migration Script Runner family</strong> - a suite of database-specific migration tools built on a proven, battle-tested core. Inherits enterprise features like <strong>migration locking</strong> for distributed deployments, <strong>checksum validation</strong>, <strong>multiple rollback strategies</strong>, and comprehensive logging. Firebase-specific features and optimizations added on top.
       </p>
@@ -275,79 +275,6 @@ npx msr-firebase down 202501010001
 # Check status
 npx msr-firebase list --format table
 ```
-
----
-
-## Documentation
-
-### Getting Started
-- **[Getting Started](getting-started)** - Installation and quick start guide
-- **[Features](features)** - Complete feature list and comparison
-
-### Using MSR Firebase
-
-#### [CLI Usage](cli-usage/)
-Complete command-line interface documentation:
-- [Commands](cli-usage/commands) - Firebase-specific and inherited commands
-- [Configuration](cli-usage/configuration) - CLI flags and options
-- [Examples](cli-usage/examples) - Real-world CLI workflows
-- [CI/CD Integration](cli-usage/ci-cd) - Pipeline integration
-
-#### [Library Usage](library-usage/)
-Programmatic API documentation:
-- [Quick Start](library-usage/quick-start) - Get started with the API
-- [Configuration](library-usage/configuration) - Programmatic configuration
-- [Examples](library-usage/examples) - Advanced usage patterns
-
-#### [API Reference](api/)
-Complete API documentation:
-- [FirebaseRunner](api/FirebaseRunner) - Main migration runner
-- [FirebaseConfig](api/FirebaseConfig) - Configuration class
-- [Services](api/services) - Helper services
-- [Interfaces](api/interfaces) - TypeScript interfaces
-
-### Writing Migrations
-
-#### [Writing Migrations](writing-migrations/)
-Complete guide to writing migration scripts:
-- [Migration Scripts](writing-migrations/migration-scripts) - File structure and patterns
-- [Transactions](writing-migrations/transactions) - Understanding Firebase limitations
-- [Backup & Restore](writing-migrations/backup-restore) - Protecting your data
-- [Testing](writing-migrations/testing) - Testing with Firebase Emulator
-- [Migration Locking](writing-migrations/migration-locking) - Distributed environments
-- [Best Practices](writing-migrations/best-practices) - Firebase-specific patterns
-
----
-
-## About
-
-MSR Firebase is part of the [Migration Script Runner](https://github.com/migration-script-runner) ecosystem, providing database migration tooling for various database systems.
-
----
-
-## License
-
-This project is licensed under the **MIT License with Commons Clause and Attribution Requirements**.
-
-Based on [Migration Script Runner Core](https://github.com/migration-script-runner/msr-core) by Volodymyr Lavrynovych.
-
-### Quick Summary
-
-- ✅ **Free to use** in your applications (including commercial)
-- ✅ **Free to modify** and contribute
-- ❌ **Cannot sell** this adapter or Firebase-specific extensions as standalone products
-- 🔒 **Attribution required** for Firebase migration extensions
-
-See the [LICENSE](https://github.com/migration-script-runner/msr-firebase/blob/master/LICENSE) file and [NOTICE](https://github.com/migration-script-runner/msr-firebase/blob/master/NOTICE) file for detailed examples and FAQ.
-
----
-
-## Links
-
-- [GitHub Repository](https://github.com/migration-script-runner/msr-firebase)
-- [npm Package](https://www.npmjs.com/package/@migration-script-runner/firebase)
-- [MSR Core Documentation](https://core.migration-script-runner.dev)
-- [Report Issues](https://github.com/migration-script-runner/msr-firebase/issues)
 
 ---
 

@@ -3,13 +3,21 @@ layout: default
 title: API Reference
 nav_order: 6
 has_children: true
+has_toc: false
 ---
 
 # API Reference
+{: .no_toc }
 
 Complete API documentation for MSR Firebase classes, interfaces, and services.
 
-## Main Classes
+## Table of contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
+
+### Main Classes
 
 These are the primary classes for using MSR Firebase:
 
@@ -29,7 +37,7 @@ Configuration class for Firebase connection and migration settings.
 - Migration settings: `folder`, `tableName`, `locking`
 - Utility methods: `buildPath()`, `getRoot()`
 
-## Migration Writing API
+### Migration Writing API
 
 ### [Migration Interfaces](interfaces)
 
@@ -45,7 +53,7 @@ Optional helper services for Firebase operations within migrations:
 - **EntityService** - CRUD operations for typed entities
 - **FirebaseDataService** - Low-level Firebase data operations
 
-## Type Definitions
+### Type Definitions
 
 ### [Types](types)
 
