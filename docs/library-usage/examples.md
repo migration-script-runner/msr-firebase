@@ -45,7 +45,7 @@ async function runMigrations() {
   // 4. Validate before running
   const validation = await runner.validate();
   console.log(
-    `Validated ${validation.pending.length} pending and ${validation.migrated.length} executed migrations`
+    `Validated ${validation.pending.length} pending migrations; found ${validation.migrated.length} integrity issues in migrated files`
   );
 
   // 5. Run migrations; Core creates and cleans up the backup according to backupMode.

@@ -117,19 +117,22 @@ npx msr-firebase migrate \
 
 ### Staging
 
-Use an environment-specific config file:
+Core can load an ordered list of environment files. The first file takes precedence when the same variable appears more than once. Set `envFileSources` in the config file passed to the CLI:
 
-```bash
-npx msr-firebase migrate --config-file ./msr.config.staging.js
+```javascript
+// msr.config.staging.js
+module.exports = {
+  envFileSources: ['.env.staging.local', '.env.staging', '.env']
+};
 ```
 
-Or load `.env.staging` into the shell before running the CLI. For a simple shell-compatible file containing `KEY=value` lines:
+Core loads its standard `MSR_*` settings from these files. Provide Firebase-specific values using CLI flags or process environment variables:
 
 ```bash
-set -a
-. ./.env.staging
-set +a
-npx msr-firebase migrate
+npx msr-firebase migrate \
+  --config-file ./msr.config.staging.js \
+  --database-url "$FIREBASE_DATABASE_URL" \
+  --credentials "$GOOGLE_APPLICATION_CREDENTIALS"
 ```
 
 ### Production

@@ -79,8 +79,6 @@ migrate:
     - npx msr-firebase validate
     - >-
       npx msr-firebase migrate
-      --database-url "$FIREBASE_DATABASE_URL"
-      --credentials "$CI_PROJECT_DIR/firebase-key.json"
       --backup-mode full
   after_script:
     - rm -f "$CI_PROJECT_DIR/firebase-key.json"
