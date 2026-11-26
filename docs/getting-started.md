@@ -31,7 +31,7 @@ You can find the database URL in your Firebase project settings. Keep service-ac
 ## Install MSR Firebase
 
 ```bash
-npm install @migration-script-runner/firebase firebase-admin
+npm install @migration-script-runner/firebase
 ```
 
 ---

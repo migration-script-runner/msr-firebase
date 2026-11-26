@@ -22,7 +22,7 @@ Get started with MSR Firebase programmatically in minutes.
 ## Installation
 
 ```bash
-npm install @migration-script-runner/firebase firebase-admin
+npm install @migration-script-runner/firebase
 ```
 
 ---

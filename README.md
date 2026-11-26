@@ -2,250 +2,146 @@
   <img src="https://migration-script-runner.dev/images/msr-logo-color-glass-translucent.png" alt="Migration Script Runner logo" width="180">
 </p>
 
-# Firebase Migration Script Runner
+# MSR: Firebase
+
+[🌐 Official Website](https://migration-script-runner.dev/) · [📖 Documentation](https://firebase.migration-script-runner.dev/) · [📦 npm](https://www.npmjs.com/package/@migration-script-runner/firebase) · [💻 GitHub](https://github.com/migration-script-runner/msr-firebase)
 
 [![Test](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml/badge.svg)](https://github.com/migration-script-runner/msr-firebase/actions/workflows/test.yml)
 [![Coverage Status](https://coveralls.io/repos/github/migration-script-runner/msr-firebase/badge.svg?branch=master)](https://coveralls.io/github/migration-script-runner/msr-firebase?branch=master)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=migration-script-runner_msr-firebase&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=migration-script-runner_msr-firebase)
-[![NPM Version][npm-image]][npm-url]
-[![NPM Downloads][npm-downloads-image]][npm-url]
+[![npm version](https://img.shields.io/npm/v/@migration-script-runner/firebase.svg)](https://www.npmjs.com/package/@migration-script-runner/firebase)
+[![npm downloads](https://img.shields.io/npm/dm/@migration-script-runner/firebase.svg)](https://www.npmjs.com/package/@migration-script-runner/firebase)
 [![GitHub issues](https://img.shields.io/github/issues/migration-script-runner/msr-firebase.svg)](https://github.com/migration-script-runner/msr-firebase/issues)
-[![License](https://img.shields.io/badge/license-MIT%20%2B%20CC%20%2B%20Attribution-blue.svg)](https://raw.githubusercontent.com/migration-script-runner/msr-firebase/master/LICENSE)
-![Static Badge](https://img.shields.io/badge/in%20Ukraine-dodgerblue?label=Proudly%20made&labelColor=%23FFFF00)
+[![License](https://img.shields.io/badge/license-MIT%20%2B%20CC%20%2B%20Attribution-blue.svg)](LICENSE)
+![Proudly made in Ukraine](https://img.shields.io/badge/in%20Ukraine-dodgerblue?label=Proudly%20made&labelColor=%23FFFF00)
 
-[//]: # ([![NPM]&#40;https://nodei.co/npm/msr-firebase.png?downloads=true&#41;]&#40;https://nodei.co/npm/msr-firebase/&#41;)
-[//]: # ([![SonarCloud]&#40;https://sonarcloud.io/images/project_badges/sonarcloud-white.svg&#41;]&#40;https://sonarcloud.io/summary/new_code?id=vlavrynovych_msr-firebase&#41;)
+MSR: Firebase brings version-controlled migrations, backups, rollback, and distributed locking to Firebase Realtime Database. Use it from the command line or integrate it into a Node.js application with [MSR Core](https://github.com/migration-script-runner/msr-core).
 
-[npm-image]: https://img.shields.io/npm/v/@migration-script-runner/firebase.svg?style=flat
-[npm-url]: https://npmjs.org/package/@migration-script-runner/firebase
-[npm-downloads-image]: https://img.shields.io/npm/dm/@migration-script-runner/firebase.svg?style=flat
+## What's New in v1.0.0
 
-Firebase Realtime Database implementation for [Migration Script Runner (MSR Core)](https://github.com/migration-script-runner/msr-core). Provides version-controlled database migrations with built-in backup, rollback, and distributed locking for production deployments.
+MSR Firebase v1.0.0 adopts the MSR Core v1 runner API and updates the adapter for current Node.js releases.
 
-> **⚠️ UNSTABLE VERSION WARNING**
->
-> Version v0.2.0 is currently **unstable and not recommended for production use**. The project is under active development and may receive significant updates. Please use with caution and test thoroughly before deploying to production environments.
+- **Core v1 integration:** `FirebaseRunner`, CLI adapters, and lock records use the runner naming conventions ([#75](https://github.com/migration-script-runner/msr-firebase/issues/75)).
+- **Configuration loading:** `FirebaseRunner.getInstance()` can load configuration before initializing the Firebase handler when no explicit config is supplied ([#95](https://github.com/migration-script-runner/msr-firebase/issues/95)).
+- **Selective migration backups:** configure `backupPaths` or pass `--backup-paths`; omit it to keep full-database backups ([#87](https://github.com/migration-script-runner/msr-firebase/issues/87)).
+- **Simpler entity creation:** `IEntity.key` is optional ([#80](https://github.com/migration-script-runner/msr-firebase/issues/80)).
+- **Runtime and data fixes:** Node.js `>=22.13.0` is required, with fixes for Firebase paths and entity behavior ([#76](https://github.com/migration-script-runner/msr-firebase/issues/76), [#84](https://github.com/migration-script-runner/msr-firebase/issues/84), [#102](https://github.com/migration-script-runner/msr-firebase/issues/102)).
 
-## What's New in v0.2.0
-
-🎉 Major upgrade with production-ready features:
-
-- 🔒 **Migration Locking** - Prevent concurrent migrations in Kubernetes, Docker, and multi-instance deployments
-- ⬆️ **MSR Core v0.8.1** - Latest core with bug fixes, handler access API, and improved locking lifecycle
-- 🔧 **Type-Safe API** - Full TypeScript support with generic type parameters
-- 🖥️ **Lock Management CLI** - Commands for monitoring and managing migration locks
-- 📚 **Comprehensive Documentation** - 300+ line locking guide with deployment examples
-- 🧪 **Production Tested** - Battle-tested in distributed environments
-
-**Upgrading from v0.1.x?** See the [Migration Guide](https://firebase.migration-script-runner.dev/version-migration/v0.1-to-v0.2).
+See the [v0.2.x to v1.0.0 migration guide](https://firebase.migration-script-runner.dev/version-migration/v0.2-to-v1.0.html) and the [complete changelog](CHANGELOG.md).
 
 ## Table of Contents
-- [What's New in v0.2.0](#whats-new-in-v020)
+
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Key Features](#key-features)
+- [Use the Library](#use-the-library)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
-- [Support](#support)
 
 ## Features
 
-- 🔄 **Version-Controlled Migrations**: Track and apply database changes systematically
-- 🔒 **Distributed Locking**: Prevent concurrent migrations in Kubernetes, Docker, and multi-instance deployments
-- 💾 **Automatic Backups**: Built-in backup and restore functionality
-- ↩️ **Rollback Support**: Safely revert migrations with `down()` functions or backups
-- ✅ **Checksum Validation**: Detect modified migration files
-- 🎯 **Firebase-Specific**: Optimized for Firebase Realtime Database with atomic transactions
-- 🛠️ **CLI & Programmatic**: Use via command-line or integrate into your application
-- 🧪 **Emulator Support**: Test migrations locally with Firebase Emulator
-- 📊 **Migration Status**: Track applied, pending, and failed migrations
-- 🔐 **Production-Ready**: Battle-tested locking for distributed environments
+MSR Core is the shared migration engine behind the MSR family. MSR Firebase connects its migration, validation, locking, backup, and rollback capabilities to Firebase Realtime Database, then adds Firebase configuration, database services, and emulator support.
+
+### Migration workflow
+
+- 📝 **Versioned TypeScript and JavaScript migrations:** write typed scripts with Firebase database access.
+- 🔄 **Apply and roll back changes:** run pending migrations, target a version, and define `up()` and `down()` behavior.
+- ✅ **Validate migrations and checksums:** catch invalid scripts and changes to migration files.
+- 📊 **Track migration status:** inspect applied and pending migrations in the CLI or consume structured results in code.
+
+### Safety and recovery
+
+- 🔒 **Distributed migration locking:** coordinate concurrent migration runs using locks stored in Realtime Database, with expiration and ownership checks.
+- 🖥️ **Manage locks from the CLI:** inspect lock status and release a stale lock.
+- 💾 **Automatic backups and rollback strategies:** configure how backups are created and restored during migration runs.
+- 🎯 **Choose backup scope:** back up selected database paths or keep full-database backups.
+
+### Firebase integration and developer experience
+
+- 🔑 **Firebase Admin authentication:** use a service-account key or Application Default Credentials.
+- 🌐 **Environment path shifting:** run against separate data paths for development, staging, and production.
+- ⚙️ **Flexible configuration:** use environment variables, config files, or CLI flags, including Core-managed configuration loading.
+- 🔌 **Firebase CLI tools:** inspect connection details, test connectivity, and work with Firebase nodes.
+- 🧩 **Typed runner API:** integrate migrations into a Node.js application through `FirebaseRunner`.
+- 🔔 **Application integrations:** add custom logging, migration lifecycle hooks, and metrics collectors.
+- 📦 **Entity services:** use typed CRUD operations and batch entity updates.
+- ⚡ **Firebase-aware transactions:** perform atomic read-modify-write operations at a single database node.
+- 🧪 **Emulator testing:** exercise migration workflows against the local Firebase Realtime Database Emulator.
+
+Explore the [complete feature list](https://firebase.migration-script-runner.dev/features.html) for details and links to the relevant guides.
 
 ## Installation
 
+Requires Node.js `>=22.13.0` and npm.
+
 ```bash
 npm install @migration-script-runner/firebase
-```
-
-Or with yarn:
-```bash
-yarn add @migration-script-runner/firebase
 ```
 
 ## Quick Start
 
+Set the URL of your Realtime Database and credentials. The URL format depends on the database location; replace the placeholder with the URL shown in Firebase Console.
+
 ```bash
-# Install
-npm install @migration-script-runner/firebase
+export DATABASE_URL="https://DATABASE-NAME.REGION.firebasedatabase.app"
+export GOOGLE_APPLICATION_CREDENTIALS="./serviceAccountKey.json"
+```
 
-# Run migrations with inline credentials
-npx msr-firebase migrate \
-  --database-url https://your-project.firebaseio.com \
-  --credentials ./serviceAccountKey.json
+Then run pending migrations from the default `./migrations` folder:
 
-# Or use environment variables
-export DATABASE_URL=https://your-project.firebaseio.com
-export GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
+```bash
 npx msr-firebase migrate
 ```
 
-**👉 [View Full Getting Started Guide](https://migration-script-runner.github.io/msr-firebase/getting-started)** for complete setup instructions, migration examples, and configuration options.
-
-## Key Features
-
-### 🔒 Migration Locking for Distributed Environments
-
-Perfect for Kubernetes, Docker Swarm, and auto-scaling deployments:
-
-```javascript
-// msr.config.js
-module.exports = {
-  locking: {
-    enabled: true,
-    timeout: 600000  // 10 minutes
-  }
-};
-```
-
-**Benefits:**
-- Prevents race conditions in multi-pod deployments
-- Automatic lock expiration and cleanup
-- Force-release stuck locks with CLI commands
-- Works seamlessly across distributed instances
-
-**CLI Commands:**
-```bash
-# Check lock status
-msr-firebase lock:status
-
-# Force-release stuck lock
-msr-firebase lock:release --force
-```
-
-See [Migration Locking Guide](https://migration-script-runner.github.io/msr-firebase/writing-migrations/migration-locking) for details.
-
-### 💾 Backup & Restore
-
-Automatic backups before migrations:
+You can also pass connection settings directly:
 
 ```bash
-# Create backup
-msr-firebase backup
-
-# List backups
-msr-firebase list-backups
-
-# Restore from backup
-msr-firebase restore backup-1234567890.json
+npx msr-firebase migrate \
+  --database-url "https://DATABASE-NAME.REGION.firebasedatabase.app" \
+  --credentials "./serviceAccountKey.json"
 ```
 
-### ↩️ Safe Rollbacks
-
-Multiple rollback strategies:
+To roll back migrations newer than a target version, pass the numeric target:
 
 ```bash
-# Roll back last migration
-msr-firebase down
-
-# Roll back multiple migrations
-msr-firebase down --steps 3
+npx msr-firebase down 202501150001
 ```
 
-### 🧪 Firebase Emulator Support
+See the [Getting Started guide](https://firebase.migration-script-runner.dev/getting-started.html) for setup details and the [CLI guide](https://firebase.migration-script-runner.dev/cli-usage/) for commands and options.
 
-Test migrations locally before deploying:
+## Use the Library
 
-```bash
-# Start emulator
-firebase emulators:start --only database
+Create a runner with a Firebase configuration and run migrations from Node.js:
 
-# Run migrations against emulator
-export FIREBASE_DATABASE_URL=http://localhost:9000
-msr-firebase migrate
+```typescript
+import { FirebaseConfig, FirebaseRunner } from '@migration-script-runner/firebase';
+
+const config = new FirebaseConfig();
+config.databaseUrl = process.env.DATABASE_URL;
+config.applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+config.folder = './migrations';
+
+const runner = await FirebaseRunner.getInstance({ config });
+await runner.migrate();
 ```
+
+For Core-managed configuration loading, call `FirebaseRunner.getInstance({})` without supplying `config`. Explore [Library Usage](https://firebase.migration-script-runner.dev/library-usage/) and the [API Reference](https://firebase.migration-script-runner.dev/api/).
 
 ## Documentation
 
-Full documentation available at [https://migration-script-runner.github.io/msr-firebase/](https://migration-script-runner.github.io/msr-firebase/)
+- [Getting Started](https://firebase.migration-script-runner.dev/getting-started.html)
+- [CLI commands and configuration](https://firebase.migration-script-runner.dev/cli-usage/)
+- [Library usage and configuration](https://firebase.migration-script-runner.dev/library-usage/)
+- [Writing migrations](https://firebase.migration-script-runner.dev/writing-migrations/)
+- [Backup and restore](https://firebase.migration-script-runner.dev/writing-migrations/backup-restore.html)
+- [Firebase Emulator testing](https://firebase.migration-script-runner.dev/writing-migrations/testing.html)
+- [API Reference](https://firebase.migration-script-runner.dev/api/)
 
-### Quick Links
+## Contributing
 
-**Getting Started:**
-- [Getting Started](https://migration-script-runner.github.io/msr-firebase/getting-started) - Installation and quick start
+Contributions are welcome. Read the [Contributing Guide](CONTRIBUTING.md), review [open issues](https://github.com/migration-script-runner/msr-firebase/issues), and follow the [Code of Conduct](CODE_OF_CONDUCT.md). For security concerns, use the process in [SECURITY.md](SECURITY.md).
 
-**Using MSR Firebase:**
-- [CLI Usage](https://migration-script-runner.github.io/msr-firebase/cli-usage/) - Command-line interface guide
-- [Library Usage](https://migration-script-runner.github.io/msr-firebase/library-usage/) - Programmatic API usage
-- [API Reference](https://migration-script-runner.github.io/msr-firebase/api/) - Complete API documentation
+## License
 
-**Writing Migrations:**
-- [Migration Scripts](https://migration-script-runner.github.io/msr-firebase/writing-migrations/migration-scripts) - How to write migrations
-- [Migration Locking](https://migration-script-runner.github.io/msr-firebase/writing-migrations/migration-locking) - Distributed environments
-- [Transactions](https://migration-script-runner.github.io/msr-firebase/writing-migrations/transactions) - Firebase transaction limitations
-- [Testing](https://migration-script-runner.github.io/msr-firebase/writing-migrations/testing) - Testing with Firebase Emulator
-- [Backup & Restore](https://migration-script-runner.github.io/msr-firebase/writing-migrations/backup-restore) - Backup strategies
-
-## How to obtain Service Account Key
-
-To use the Firebase Admin SDK in non-Google environments, you need a service account key file.
-
-**Official Documentation:** [Initialize the SDK in non-Google environments](https://firebase.google.com/docs/admin/setup#initialize_the_sdk_in_non-google_environments)
-
-**Quick Steps:**
-1. Open `https://console.firebase.google.com/project/{your_project_id}/settings/serviceaccounts/adminsdk`
-   (replace `{your_project_id}` with your actual project ID)
-2. Click **Generate new private key** button
-3. Download the JSON file and store it securely
-4. Set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the file path
-
----
-
-## Migration from v0.1.x
-
-**Breaking Change:** Package name changed from `msr-firebase` to `@migration-script-runner/firebase`.
-
-For complete upgrade instructions, troubleshooting, and migration scenarios, see the [**Migration Guide**](https://firebase.migration-script-runner.dev/version-migration/v0.1-to-v0.2).
-
-For the v0.2.x to v1.0.0 upgrade, see the [v1.0.0 Migration Guide](https://firebase.migration-script-runner.dev/version-migration/v0.2-to-v1.0). The complete change history is in [`CHANGELOG.md`](CHANGELOG.md).
-
----
-
-<a id="contributing"></a>
-
-## 🤝 Contributing
-
-Contributions are welcome. Read the [Contributing Guide](CONTRIBUTING.md) for the project setup, checks, and pull request process. See [GitHub Issues](https://github.com/migration-script-runner/msr-firebase/issues) for planned work. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and read the [Security Policy](SECURITY.md) before reporting community or security concerns.
-
----
-
-<a id="license"></a>
-
-## 📄 License
-
-This project is licensed under the **MIT License with Commons Clause and Attribution Requirements**.
-
-Based on [Migration Script Runner](https://github.com/migration-script-runner/msr-core) by Volodymyr Lavrynovych.
-
-**Quick Summary:**
-- ✅ Free to use in your applications (including commercial)
-- ✅ Free to modify and contribute
-- ❌ Cannot sell this adapter or Firebase-specific extensions as standalone products
-- 🔒 Firebase migration extensions require attribution
-
-See the [LICENSE](LICENSE) file and [NOTICE](NOTICE) file for detailed examples and FAQ.
-
----
-
-<a id="support"></a>
-
-## 📞 Support
-
-- **📚 Documentation:** [MSR Firebase documentation](https://migration-script-runner.github.io/msr-firebase/)
-- **🐛 Issues:** [GitHub Issues](https://github.com/migration-script-runner/msr-firebase/issues)
-- **📦 npm:** [@migration-script-runner/firebase](https://www.npmjs.com/package/@migration-script-runner/firebase)
-
----
-
-**By [Volodymyr Lavrynovych](https://github.com/vlavrynovych)** • Created in Ukraine 🇺🇦
+MSR Firebase uses the [MIT License with Commons Clause and Attribution Requirements](LICENSE). See [NOTICE](NOTICE) for additional details.
