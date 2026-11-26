@@ -50,7 +50,7 @@ The tables group MSR Firebase capabilities by the work they support. Feature nam
 | Feature | What it provides |
 |---------|------------------|
 | **🔥 [Realtime Database support](getting-started)** | Connect migrations to Firebase Realtime Database through the Firebase Admin SDK. |
-| **🔑 [Firebase authentication](getting-started#configure-firebase-credentials)** | Authenticate with a service-account key or Application Default Credentials. |
+| **🔑 [Firebase authentication](getting-started#configure-firebase-credentials)** | Authenticate with a service-account JSON key file. |
 | **🌐 [Path shifting](library-usage/configuration#shift)** | Keep environment data under a configured path prefix in a shared database. |
 | **🧪 [Firebase Emulator support](writing-migrations/testing)** | Run migration tests against a local Realtime Database Emulator. |
 | **🔌 [Connection diagnostics](cli-usage/commands)** | Inspect Firebase connection information and test connectivity with Firebase-specific CLI commands. |

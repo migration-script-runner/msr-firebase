@@ -22,7 +22,7 @@ Install MSR Firebase, connect it to Firebase Realtime Database, and run your fir
 
 - Node.js `22.13.0` or later and npm.
 - A Firebase project with Realtime Database enabled.
-- Firebase Admin credentials: a service-account key or Application Default Credentials.
+- A Firebase service-account JSON key file and the Realtime Database URL.
 
 You can find the database URL in your Firebase project settings. Keep service-account keys out of source control; add any local key file to `.gitignore`.
 
@@ -64,14 +64,14 @@ Add a `down()` method when you need the migration to support rollback. Firebase 
 
 ## Configure Firebase credentials
 
-Set the database URL and, when using a service-account key, its path in the environment:
+Set the database URL and the path to your service-account JSON key file:
 
 ```bash
 export DATABASE_URL="<your-Realtime-Database-URL>"
 export GOOGLE_APPLICATION_CREDENTIALS="./serviceAccountKey.json"
 ```
 
-If your environment provides Application Default Credentials, omit `GOOGLE_APPLICATION_CREDENTIALS`. See [CLI Configuration](cli-usage/configuration) for config files, environment variables, and command-line options.
+The current Firebase adapter requires this credential file; it does not use Application Default Credentials when the path is omitted. See [CLI Configuration](cli-usage/configuration) for config files, environment variables, and command-line options.
 
 ---
 

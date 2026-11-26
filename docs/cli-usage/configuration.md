@@ -24,7 +24,7 @@ Configure MSR Firebase CLI through flags, environment variables, and config file
 Configuration sources are applied in this order (highest to lowest priority):
 
 1. **CLI Flags** - Command-line arguments
-2. **Environment Variables** - `.env` file or shell exports
+2. **Environment Variables** - values exported into the process environment. The CLI does not load `.env` files automatically; load them with your shell or a dotenv tool first.
 3. **Config File** - `msr.config.js` or via `--config-file`
 
 ---
@@ -223,6 +223,8 @@ npx msr-firebase migrate --log-level debug
 
 ### Firebase-Specific
 
+The CLI reads these values from the process environment. If you keep them in a `.env` file, load that file before starting the CLI.
+
 ```bash
 DATABASE_URL=https://DATABASE-NAME.REGION.firebasedatabase.app
 GOOGLE_APPLICATION_CREDENTIALS=./serviceAccountKey.json
@@ -306,7 +308,7 @@ npx msr-firebase migrate --config-file ./msr.config.prod.js
 Combining all configuration methods:
 
 ```bash
-# .env file
+# Values from .env must be loaded into the shell before running the CLI.
 DATABASE_URL=https://STAGING-DATABASE.REGION.firebasedatabase.app
 MSR_FOLDER=./migrations
 

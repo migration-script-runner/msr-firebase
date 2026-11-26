@@ -12,7 +12,7 @@ permalink: /
 Database migrations for Firebase Realtime Database with full TypeScript support.
 {: .fs-6 .fw-300 }
 
-[Get started now](#getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Get started now]({% link getting-started.md %}){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/migration-script-runner/msr-firebase){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
@@ -252,7 +252,11 @@ const runner = await FirebaseRunner.getInstance({ config: appConfig });
 
 // Run migrations
 const result = await runner.migrate();
-console.log(`Applied ${result.executed.length} migrations`);
+if (!result.success) {
+  console.error('Migration failed:', result.errors);
+} else {
+  console.log(`Applied ${result.executed.length} migrations`);
+}
 
 // Roll back migrations newer than the chosen numeric target version
 await runner.down(202501010001)

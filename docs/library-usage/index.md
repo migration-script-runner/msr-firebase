@@ -65,17 +65,18 @@ config.folder = './migrations';
 const runner = await FirebaseRunner.getInstance({ config });
 const result = await runner.migrate();
 
-console.log(`Applied ${result.executed.length} migrations`);
+if (!result.success) {
+  console.error('Migration failed:', result.errors);
+} else {
+  console.log(`Applied ${result.executed.length} migrations`);
+}
 ```
 
 ### Check Migration Status
 
 ```typescript
-const migrations = await runner.list();
-
-migrations.forEach(m => {
-  console.log(`${m.name}: ${m.status}`);
-});
+// Prints migration status through the configured renderer.
+await runner.list();
 ```
 
 ### Rollback Migrations
@@ -83,7 +84,11 @@ migrations.forEach(m => {
 ```typescript
 // Rollback to specific version
 const result = await runner.down(202501150001);
-console.log(`Rolled back ${result.executed.length} migrations`);
+if (!result.success) {
+  console.error('Rollback failed:', result.errors);
+} else {
+  console.log(`Rolled back ${result.executed.length} migrations`);
+}
 ```
 
 ---

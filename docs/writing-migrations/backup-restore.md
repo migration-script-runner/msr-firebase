@@ -38,6 +38,8 @@ console.log(`Backup created at ${backupPath}`);
 
 ### From the CLI
 
+Set `DATABASE_URL` and `GOOGLE_APPLICATION_CREDENTIALS` in the CLI process environment before using these commands.
+
 ```bash
 npx msr-firebase backup create
 ```
@@ -139,11 +141,10 @@ config.backupMode = 'manual';
 const runner = await FirebaseRunner.getInstance({ config });
 const backupPath = await runner.createBackup();
 
-try {
-  await runner.migrate();
-} catch (error) {
+const result = await runner.migrate();
+if (!result.success) {
   await runner.restoreFromBackup(backupPath);
-  throw error;
+  throw result.errors?.[0] ?? new Error('Migration failed');
 }
 ```
 

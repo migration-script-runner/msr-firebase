@@ -46,21 +46,21 @@ npm run test:integration
 
 ## Configure a Test Runner
 
-Use an isolated project namespace and a unique `shift` so test data does not overlap. For local emulator runs, the Admin SDK still needs valid credentials; the repository uses a test-only service account fixture.
+Use an isolated project namespace and a unique `shift` so test data does not overlap. For local emulator runs, the Admin SDK still needs valid credentials; provide a test-only service-account fixture that cannot access production.
 
 ```typescript
 import { FirebaseConfig, FirebaseRunner } from '@migration-script-runner/firebase';
 
 const config = new FirebaseConfig();
 config.databaseUrl = 'http://localhost:9000?ns=test-project';
-config.applicationCredentials = './test/resources/fake-service-account.json';
+config.applicationCredentials = './test/resources/emulator-service-account.json';
 config.folder = './test/integration/migrations';
 config.shift = `/test-${Date.now()}`;
 
 const runner = await FirebaseRunner.getInstance({ config });
 ```
 
-Use a disposable project ID and credentials that cannot access production. Do not put real production credentials or data in test fixtures.
+Provide a test-only service-account JSON fixture at that path; the fixture in the MSR Firebase repository is not included in the published npm package. Use a disposable project ID and credentials that cannot access production. Do not put real production credentials or data in test fixtures.
 
 ## Unit Test Pure Migration Logic
 
@@ -107,7 +107,7 @@ describe('Create users migration', () => {
   before(async () => {
     config = new FirebaseConfig();
     config.databaseUrl = 'http://localhost:9000?ns=test-project';
-    config.applicationCredentials = './test/resources/fake-service-account.json';
+    config.applicationCredentials = './test/resources/emulator-service-account.json';
     config.folder = './test/integration/migrations';
     config.shift = shift;
     runner = await FirebaseRunner.getInstance({ config });
@@ -212,13 +212,13 @@ Add this step to a CI job after installing Node.js, Java, Firebase Tools, and th
          --header "Content-Type: application/json" \
          --data-binary @test-data/rtdb-snapshot.json \
          "http://127.0.0.1:9000/.json?ns=demo-msr-firebase&print=silent" && \
+       export DATABASE_URL="http://127.0.0.1:9000?ns=demo-msr-firebase" && \
+       export GOOGLE_APPLICATION_CREDENTIALS="./test/resources/emulator-service-account.json" && \
        npx msr-firebase validate && \
-       npx msr-firebase migrate \
-         --database-url "http://127.0.0.1:9000?ns=demo-msr-firebase" \
-         --credentials ./test/resources/fake-service-account.json'
+       npx msr-firebase migrate --backup-mode full'
 ```
 
-`firebase emulators:exec` starts the Realtime Database Emulator, runs the command, and stops the emulator. The `PUT` restores the JSON file at the database root; it replaces the emulator's current data. The project ID and the `ns` in the emulator URL must match. Use credentials that cannot access production; the repository's `test/resources/fake-service-account.json` is a test-only fixture.
+`firebase emulators:exec` starts the Realtime Database Emulator, runs the command, and stops the emulator. The `PUT` restores the JSON file at the database root; it replaces the emulator's current data. The project ID and the `ns` in the emulator URL must match. Provide your own test-only service-account fixture at the path shown; the fixture in the MSR Firebase repository is not included in the published package.
 
 The snapshot's MSR migration-history node must represent the starting release you want to test. MSR applies pending migrations, so a snapshot marked as already migrated will not run those scripts again. This rehearsal checks that the pending migrations can run against this baseline; it does not prove behavior for every possible database state.
 

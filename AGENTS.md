@@ -4,7 +4,7 @@ These instructions apply to this repository. Prefer checked-in code, configurati
 
 ## Project Overview
 
-MSR Firebase is the Firebase Realtime Database adapter for MSR Core. The package is `@migration-script-runner/firebase`, written in TypeScript. It currently depends on Core `^0.8.4`; issue [#75](https://github.com/migration-script-runner/msr-firebase/issues/75) tracks the Core v1 API migration. Do not copy Core API names from memory or assume the next Core version is compatible.
+MSR Firebase is the Firebase Realtime Database adapter for MSR Core. The package is `@migration-script-runner/firebase`, written in TypeScript. Check `package.json`, the installed Core package, and its source for the current Core version and API; do not copy API names from memory or assume a Core version is compatible.
 
 Use Firebase Admin's modular imports, such as `Database` and `getDatabase` from `firebase-admin/database`. Avoid `any` and double assertions such as `as unknown as`; keep Firebase and Core types explicit.
 
@@ -21,10 +21,9 @@ Use Firebase Admin's modular imports, such as `Database` and `getDatabase` from 
 - `src/`: adapter implementation; `test/unit/` and `test/integration/`: tests.
 - `docs/`: Jekyll documentation. `docs/version-migration/index.md` defines when migration guides are needed and what they contain.
 - `README.md`: user-facing overview and current release highlights.
-- There is currently no root `CHANGELOG.md`; check the repository before referring to or editing one.
-- Issue [#82](https://github.com/migration-script-runner/msr-firebase/issues/82) owns creating the root `CHANGELOG.md` and the v0.2.x → v1.0.0 migration guide; do not duplicate that work under other issues.
+- `CHANGELOG.md`: release history; verify entries against merged issues and package metadata.
 
-Check these files directly before relying on a command, threshold, API name, CI rule, release version, or path. Issue [#75](https://github.com/migration-script-runner/msr-firebase/issues/75) owns migration to Core v1.
+Check these files directly before relying on a command, threshold, API name, CI rule, release version, or path.
 
 ## Architecture
 
@@ -33,7 +32,7 @@ Check these files directly before relying on a command, threshold, API name, CI 
 - `src/service/FirebaseDB.ts` wraps the Admin SDK `Database` with the adapter's `IFirebaseDB` contract; `src/service/DBConnector.ts` initializes the Firebase app and database.
 - `src/service/` contains backup, locking, migration-data, schema-version, and entity services. `src/model/FirebaseConfig.ts` owns Firebase-specific configuration.
 - `src/cli.ts` connects the Firebase runner to the Core CLI.
-- Check the installed Core version and source before changing integration points; Core v1 compatibility is tracked separately in #75.
+- Check the installed Core version and source before changing integration points.
 
 ## Runtime and Commands
 
@@ -131,7 +130,7 @@ For each versioned release milestone, maintain one code review issue and one doc
 - `package.json` is the source of truth for the package version. Check GitHub tags and releases before preparing a new version.
 - The npm publish workflow runs for `v*` tags and manual dispatch; `prepublishOnly` runs build, lint, and unit tests. Do not create tags, publish packages, or publish GitHub releases without an explicit request.
 - Follow `docs/version-migration/index.md` when deciding whether a migration guide is required. Keep its index/navigation synchronized with any new guide.
-- Use the [GitHub Release notes skill](.agents/skills/msr-github-release-notes/SKILL.md) for release text and README highlights, and the [CHANGELOG and migration guide skill](.agents/skills/msr-release-changelog/SKILL.md) for those documentation files. Issue #82 owns the CHANGELOG and v0.2.x → v1.0.0 migration guide. This repository currently has no root `CHANGELOG.md`.
+- Use the [GitHub Release notes skill](.agents/skills/msr-github-release-notes/SKILL.md) for release text and README highlights, and the [CHANGELOG and migration guide skill](.agents/skills/msr-release-changelog/SKILL.md) for those documentation files.
 
 ## Project Skills
 

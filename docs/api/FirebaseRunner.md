@@ -59,8 +59,8 @@ Custom Core-compatible loader for resolving Firebase configuration before the ha
 **options.logger** - `ILogger` (optional)
 Custom logger implementation. Defaults to console logger.
 
-**options.hooks** - `IHooks` (optional)
-Lifecycle hooks for migration events (beforeMigrate, afterMigrate, etc).
+**options.hooks** - `IMigrationHooks<IFirebaseDB>` (optional)
+Lifecycle hooks such as `onStart`, `onBeforeMigrate`, `onAfterMigrate`, `onMigrationError`, `onComplete`, and `onError`.
 
 **options.metricsCollectors** - `IMetricsCollector[]` (optional)
 Array of metrics collectors for tracking migration performance.
@@ -125,11 +125,11 @@ const runner = await FirebaseRunner.getInstance({
   config,
   logger: new ConsoleLogger({ level: 'debug' }),
   hooks: {
-    beforeMigrate: async (info) => {
-      console.log(`Starting migration: ${info.name}`);
+    onBeforeMigrate: async (script) => {
+      console.log(`Starting migration: ${script.name}`);
     },
-    afterMigrate: async (info, result) => {
-      console.log(`Completed: ${result}`);
+    onAfterMigrate: async (script, result) => {
+      console.log(`Completed ${script.name}: ${result}`);
     }
   }
 });

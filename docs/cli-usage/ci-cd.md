@@ -46,6 +46,9 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > "$RUNNER_TEMP/firebase-key.json"
       - name: Validate migrations
+        env:
+          DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-key.json
         run: npx msr-firebase validate
       - name: Run migrations
         env:
@@ -57,7 +60,7 @@ jobs:
         run: rm -f "$RUNNER_TEMP/firebase-key.json"
 ```
 
-This example assumes the package is already in the application's dependencies. For keyless authentication, use the identity mechanism supported by your CI platform and Firebase project.
+This example assumes the package is already in the application's dependencies. The current adapter requires a service-account JSON key file; the CLI does not support keyless Application Default Credentials.
 
 ## GitLab CI
 
@@ -70,6 +73,8 @@ migrate:
   before_script:
     - npm ci
     - printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > "$CI_PROJECT_DIR/firebase-key.json"
+    - export DATABASE_URL="$FIREBASE_DATABASE_URL"
+    - export GOOGLE_APPLICATION_CREDENTIALS="$CI_PROJECT_DIR/firebase-key.json"
   script:
     - npx msr-firebase validate
     - >-
@@ -105,13 +110,16 @@ jobs:
           command: printf '%s' "$FIREBASE_SERVICE_ACCOUNT_KEY" > /tmp/firebase-key.json
       - run:
           name: Validate migrations
-          command: npx msr-firebase validate
+          command: >-
+            export DATABASE_URL="$FIREBASE_DATABASE_URL"
+            GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-key.json
+            && npx msr-firebase validate
       - run:
           name: Run migrations
-          command: npx msr-firebase migrate --backup-mode full
-          environment:
-            DATABASE_URL: $FIREBASE_DATABASE_URL
-            GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-key.json
+          command: >-
+            export DATABASE_URL="$FIREBASE_DATABASE_URL"
+            GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-key.json
+            && npx msr-firebase migrate --backup-mode full
       - run:
           name: Remove service account key
           command: rm -f /tmp/firebase-key.json
