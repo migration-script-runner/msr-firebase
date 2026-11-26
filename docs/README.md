@@ -84,7 +84,8 @@ docs/
 │   └── entityservice-examples.md
 ├── version-migration/           # Version Migration (nav_order: 8, has_children: true)
 │   ├── index.md
-│   └── v0.1-to-v0.2.md
+│   ├── v0.2-to-v1.0.md           # v1.0.0 migration guide
+│   └── v0.1-to-v0.2.md           # Historical migration guide
 ├── _includes/                   # Custom Just the Docs includes
 └── assets/
     └── css/

@@ -37,7 +37,7 @@ Firebase Realtime Database implementation for [Migration Script Runner (MSR Core
 - 📚 **Comprehensive Documentation** - 300+ line locking guide with deployment examples
 - 🧪 **Production Tested** - Battle-tested in distributed environments
 
-**Upgrading from v0.1.x?** See the [Migration Guide](https://migration-script-runner.github.io/msr-firebase/version-migration/v0.1-to-v0.2).
+**Upgrading from v0.1.x?** See the [Migration Guide](https://firebase.migration-script-runner.dev/version-migration/v0.1-to-v0.2).
 
 ## Table of Contents
 - [What's New in v0.2.0](#whats-new-in-v020)
@@ -206,7 +206,9 @@ To use the Firebase Admin SDK in non-Google environments, you need a service acc
 
 **Breaking Change:** Package name changed from `msr-firebase` to `@migration-script-runner/firebase`.
 
-For complete upgrade instructions, troubleshooting, and migration scenarios, see the [**Migration Guide**](https://migration-script-runner.github.io/msr-firebase/version-migration/v0.1-to-v0.2).
+For complete upgrade instructions, troubleshooting, and migration scenarios, see the [**Migration Guide**](https://firebase.migration-script-runner.dev/version-migration/v0.1-to-v0.2).
+
+For the v0.2.x to v1.0.0 upgrade, see the [v1.0.0 Migration Guide](https://firebase.migration-script-runner.dev/version-migration/v0.2-to-v1.0). The complete change history is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 

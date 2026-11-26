@@ -3,6 +3,7 @@ layout: default
 title: CLI Usage
 nav_order: 4
 has_children: true
+has_toc: false
 ---
 
 # CLI Usage
@@ -13,21 +14,11 @@ Complete guide for using MSR Firebase from the command line.
 
 Use the Realtime Database URL shown in Firebase Console. Its hostname varies by database location; the examples use `DATABASE-NAME.REGION.firebasedatabase.app` as a placeholder.
 
-## Quick Start
+## Table of contents
+{: .no_toc .text-delta }
 
-Install and run migrations with a single command:
-
-```bash
-# Install
-npm install @migration-script-runner/firebase
-
-# Run migrations
-npx msr-firebase migrate \
-  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
-  --credentials ./serviceAccountKey.json
-```
-
-## CLI Sections
+1. TOC
+{:toc}
 
 ### [Commands](commands)
 Firebase-specific commands for managing migrations and database operations.
@@ -42,6 +33,20 @@ Real-world CLI workflows and usage patterns.
 Using MSR Firebase CLI in continuous integration and deployment pipelines.
 
 ---
+
+## Quick Start
+
+Install and run migrations with a single command:
+
+```bash
+# Install
+npm install @migration-script-runner/firebase
+
+# Run migrations
+npx msr-firebase migrate \
+  --database-url https://DATABASE-NAME.REGION.firebasedatabase.app \
+  --credentials ./serviceAccountKey.json
+```
 
 ## Common Commands
 

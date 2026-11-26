@@ -3,6 +3,7 @@ layout: default
 title: Writing Migrations
 nav_order: 7
 has_children: true
+has_toc: false
 ---
 
 # Writing Migrations
@@ -15,7 +16,11 @@ Complete guide to writing and managing Firebase Realtime Database migrations.
 
 This section covers everything you need to know about writing, testing, and managing migration scripts for Firebase Realtime Database using MSR Firebase.
 
-## Guides
+## Table of contents
+{: .no_toc .text-delta }
+
+1. TOC
+{:toc}
 
 ### [Migration Scripts](migration-scripts)
 Learn the fundamentals of writing migration scripts, including file naming conventions, up/down functions, common patterns, and best practices for idempotent migrations.
