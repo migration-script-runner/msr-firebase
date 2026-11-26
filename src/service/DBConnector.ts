@@ -10,10 +10,9 @@ export class DBConnector {
         const filePath = cfg.applicationCredentials
         if(!filePath) throw new TypeError("Application credentials not found in configuration")
 
-        const serviceAccount = await import(filePath)
         const name = randomUUID()
         const options: AppOptions = {
-            credential: cert(serviceAccount),
+            credential: cert(filePath),
             databaseURL: cfg.databaseUrl,
         }
 
